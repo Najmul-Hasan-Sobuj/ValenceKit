@@ -13,6 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -35,7 +36,7 @@ use Laravel\Fortify\PasskeyAuthenticatable;
 class Admin extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<AdminFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable;
+    use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable;
 
     /**
      * Get the passkeys associated with the admin.
