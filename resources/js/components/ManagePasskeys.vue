@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { UrlMethodPair } from '@inertiajs/core';
 import { router } from '@inertiajs/vue3';
 import { KeyRound } from '@lucide/vue';
 import type { Passkey } from '@/types/auth';
@@ -10,15 +11,20 @@ import { destroy } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyRegi
 export type Props = {
     canManagePasskeys?: boolean;
     passkeys?: Passkey[];
+    routes?: {
+        options: UrlMethodPair;
+        submit: UrlMethodPair;
+        destroy: (id: number) => UrlMethodPair;
+    };
 };
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     canManagePasskeys: false,
     passkeys: () => [],
 });
 
 const handleDelete = (id: number, onError: () => void) => {
-    router.delete(destroy.url(id), {
+    router.delete(props.routes?.destroy(id).url ?? destroy.url(id), {
         preserveScroll: true,
         onError,
     });
@@ -60,6 +66,6 @@ const handleRegisterSuccess = () => {
             </div>
         </div>
 
-        <PasskeyRegister @success="handleRegisterSuccess" />
+        <PasskeyRegister :routes="routes" @success="handleRegisterSuccess" />
     </div>
 </template>
