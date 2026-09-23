@@ -56,6 +56,10 @@ Route::prefix(config('admin.alias'))
             Route::get('dashboard', DashboardController::class)
                 ->name('dashboard');
 
+            Route::inertia('authorization/users', 'admin/authorization/Users')->name('authorization.users');
+            Route::inertia('authorization/roles', 'admin/authorization/Roles')->name('authorization.roles');
+            Route::inertia('authorization/groups', 'admin/authorization/Groups')->name('authorization.groups');
+
             Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');

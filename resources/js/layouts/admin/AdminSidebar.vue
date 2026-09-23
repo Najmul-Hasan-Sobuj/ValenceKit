@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { ChevronsUpDown, LayoutGrid, LogOut, Settings } from '@lucide/vue';
+import {
+    ChevronsUpDown,
+    KeyRound,
+    LayoutGrid,
+    LogOut,
+    Settings,
+    ShieldCheck,
+    Tags,
+    Users,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -24,6 +33,7 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard, logout } from '@/routes/admin';
+import { groups, roles, users } from '@/routes/admin/authorization';
 import { edit as editProfile } from '@/routes/admin/profile';
 import type { Admin, NavItem } from '@/types';
 
@@ -36,6 +46,28 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Authorization',
+        href: users(),
+        icon: ShieldCheck,
+        children: [
+            {
+                title: 'Users',
+                href: users(),
+                icon: Users,
+            },
+            {
+                title: 'Roles',
+                href: roles(),
+                icon: KeyRound,
+            },
+            {
+                title: 'Groups',
+                href: groups(),
+                icon: Tags,
+            },
+        ],
     },
 ];
 
