@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { Blobatar } from '@blobatar/vue';
 import { computed } from 'vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/composables/useInitials';
-import type { User } from '@/types';
+import type { Admin, User } from '@/types';
 
 type Props = {
-    user: User;
+    user: User | Admin;
     showEmail?: boolean;
+    blobatar?: boolean;
 };
 
 const props = withDefaults(defineProps<Props>(), {
     showEmail: false,
+    blobatar: false,
 });
 
 const { getInitials } = useInitials();
@@ -23,8 +26,19 @@ const showAvatar = computed(
 
 <template>
     <Avatar class="h-8 w-8 overflow-hidden rounded-lg">
-        <AvatarImage v-if="showAvatar" :src="user.avatar!" :alt="user.name" />
-        <AvatarFallback class="rounded-lg text-black dark:text-white">
+        <AvatarImage
+            v-if="showAvatar"
+            :src="user.avatar as string"
+            :alt="user.name"
+        />
+        <Blobatar
+            v-else-if="blobatar"
+            :name="user.email || user.name"
+            :size="32"
+            animate="hover"
+            class="h-full w-full object-cover"
+        />
+        <AvatarFallback v-else class="rounded-lg text-black dark:text-white">
             {{ getInitials(user.name) }}
         </AvatarFallback>
     </Avatar>

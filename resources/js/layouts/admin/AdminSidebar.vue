@@ -103,7 +103,7 @@ const handleLogout = () => {
                                 size="lg"
                                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                             >
-                                <UserInfo :user="admin" />
+                                <UserInfo :user="admin" :blobatar="true" />
                                 <ChevronsUpDown class="ml-auto size-4" />
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
@@ -126,6 +126,7 @@ const handleLogout = () => {
                                     <UserInfo
                                         :user="admin"
                                         :show-email="true"
+                                        :blobatar="true"
                                     />
                                 </div>
                             </DropdownMenuLabel>
