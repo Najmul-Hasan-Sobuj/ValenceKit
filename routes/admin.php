@@ -58,6 +58,10 @@ Route::prefix(config('admin.alias'))
 
             Route::inertia('authorization/users', 'admin/authorization/Users')->name('authorization.users');
             Route::inertia('authorization/roles', 'admin/authorization/Roles')->name('authorization.roles');
+            Route::inertia('authorization/roles/create', 'admin/authorization/RoleCreate')->name('authorization.roles.create');
+            Route::get('authorization/roles/{id}/edit', function ($id) {
+                return inertia('admin/authorization/RoleEdit', ['roleId' => (int) $id]);
+            })->name('authorization.roles.edit');
 
             Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');

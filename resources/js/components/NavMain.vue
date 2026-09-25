@@ -23,7 +23,7 @@ defineProps<{
     items: NavItem[];
 }>();
 
-const { isCurrentUrl } = useCurrentUrl();
+const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 </script>
 
 <template>
@@ -34,7 +34,7 @@ const { isCurrentUrl } = useCurrentUrl();
                 <Collapsible
                     v-if="item.children?.length"
                     as-child
-                    :default-open="item.children?.some((child) => isCurrentUrl(child.href))"
+                    :default-open="item.children?.some((child) => isCurrentOrParentUrl(child.href))"
                     class="group/collapsible"
                 >
                     <SidebarMenuItem>
@@ -48,7 +48,7 @@ const { isCurrentUrl } = useCurrentUrl();
                         <CollapsibleContent>
                             <SidebarMenuSub>
                                 <SidebarMenuSubItem v-for="child in item.children" :key="child.title">
-                                    <SidebarMenuSubButton as-child :is-active="isCurrentUrl(child.href)">
+                                    <SidebarMenuSubButton as-child :is-active="isCurrentOrParentUrl(child.href)">
                                         <Link :href="child.href">
                                             <component :is="child.icon" />
                                             <span>{{ child.title }}</span>

@@ -2,7 +2,8 @@
 import { Head } from '@inertiajs/vue3';
 import type { DateRange } from '@internationalized/date';
 import { computed, ref, watch } from 'vue';
-import { MoreHorizontal, Plus, Search, Shield, ShieldCheck, ShieldOff, Trash2, UserCheck, UserX, Users } from '@lucide/vue';
+import { MoreHorizontal, Pencil, Plus, Search, Shield, ShieldCheck, ShieldOff, Trash2, UserCheck, UserX, Users } from '@lucide/vue';
+import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import Heading from '@/components/Heading.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,13 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from '@/components/ui/drawer';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -71,6 +79,8 @@ const loginDateRange = ref<DateRange | undefined>(undefined);
 const selectedUser = ref<AdminUser | null>(null);
 const formStatus = ref<'Active' | 'Inactive'>('Active');
 const drawerOpen = ref(false);
+const userToDelete = ref<AdminUser | null>(null);
+const deleteDialogOpen = ref(false);
 const currentPage = ref(1);
 const pageSize = 3;
 
@@ -158,6 +168,21 @@ function bulkDeactivate(): void {
 function bulkRemove(): void {
     adminUsers.value = adminUsers.value.filter((u) => !selectedIds.value.has(u.id));
     selectedIds.value = new Set();
+}
+
+function promptDeleteUser(user: AdminUser): void {
+    userToDelete.value = user;
+    deleteDialogOpen.value = true;
+}
+
+function confirmDeleteUser(): void {
+    if (userToDelete.value) {
+        adminUsers.value = adminUsers.value.filter((u) => u.id !== userToDelete.value!.id);
+        selectedIds.value.delete(userToDelete.value.id);
+        selectedIds.value = new Set(selectedIds.value);
+        userToDelete.value = null;
+    }
+    deleteDialogOpen.value = false;
 }
 
 defineOptions({
@@ -334,10 +359,29 @@ defineOptions({
                             </TooltipProvider>
                         </TableCell>
                         <TableCell class="text-muted-foreground">{{ user.lastLoginAt }}</TableCell>
-                        <TableCell class="pr-5 text-right">
-                            <Button variant="ghost" size="icon-sm" aria-label="Open user actions" @click.stop="openUserDrawer(user)">
-                                <MoreHorizontal class="size-4" />
-                            </Button>
+                        <TableCell class="pr-5 text-right" @click.stop>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger as-child>
+                                    <Button variant="ghost" size="icon-sm" aria-label="Open user actions">
+                                        <MoreHorizontal class="size-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" class="w-36">
+                                    <DropdownMenuItem class="cursor-pointer gap-2" @click="openUserDrawer(user)">
+                                        <Pencil class="size-4 text-muted-foreground" />
+                                        <span>Edit</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        class="cursor-pointer gap-2"
+                                        @click="promptDeleteUser(user)"
+                                    >
+                                        <Trash2 class="size-4" />
+                                        <span>Delete</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </TableCell>
                     </TableRow>
                     <TableRow v-if="paginatedUsers.length === 0">
@@ -417,11 +461,36 @@ defineOptions({
                     </div>
                 </div>
 
-                <DrawerFooter class="px-4">
-                    <Button @click="drawerOpen = false">{{ selectedUser ? 'Save changes' : 'Send invite' }}</Button>
-                    <Button variant="outline" @click="drawerOpen = false">Cancel</Button>
+                <DrawerFooter class="px-4 flex flex-row items-center justify-between gap-2">
+                    <Button
+                        v-if="selectedUser"
+                        variant="ghost"
+                        size="sm"
+                        class="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 cursor-pointer"
+                        @click="() => { if (selectedUser) { const u = selectedUser; drawerOpen = false; promptDeleteUser(u); } }"
+                    >
+                        <Trash2 class="size-4" />
+                        Delete user
+                    </Button>
+                    <span v-else />
+
+                    <div class="flex items-center gap-2">
+                        <Button variant="outline" size="sm" @click="drawerOpen = false">Cancel</Button>
+                        <Button size="sm" @click="drawerOpen = false">{{ selectedUser ? 'Save changes' : 'Send invite' }}</Button>
+                    </div>
                 </DrawerFooter>
             </div>
         </DrawerContent>
     </Drawer>
+
+    <!-- Reusable Delete Confirmation Dialog -->
+    <ConfirmDeleteDialog
+        v-model:open="deleteDialogOpen"
+        :title="`Delete ${userToDelete?.name}?`"
+        :item-name="userToDelete?.name"
+        item-type="User"
+        description="This will permanently delete this administrator account. They will immediately lose access to the administration dashboard and all associated privileges."
+        confirm-text="Delete user"
+        @confirm="confirmDeleteUser"
+    />
 </template>
