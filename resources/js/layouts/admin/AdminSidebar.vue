@@ -7,7 +7,6 @@ import {
     LogOut,
     Settings,
     ShieldCheck,
-    Tags,
     Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
@@ -33,7 +32,7 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard, logout } from '@/routes/admin';
-import { groups, roles, users } from '@/routes/admin/authorization';
+import { roles, users } from '@/routes/admin/authorization';
 import { edit as editProfile } from '@/routes/admin/profile';
 import type { Admin, NavItem } from '@/types';
 
@@ -61,11 +60,6 @@ const mainNavItems: NavItem[] = [
                 title: 'Roles',
                 href: roles(),
                 icon: KeyRound,
-            },
-            {
-                title: 'Groups',
-                href: groups(),
-                icon: Tags,
             },
         ],
     },

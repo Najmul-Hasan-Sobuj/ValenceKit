@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import {
     Check,
     CheckCheck,
+    Copy,
     FileText,
     KeyRound,
     Lock,
@@ -173,17 +174,34 @@ const nameError = ref('');
 
 const search = ref('');
 const selectedType = ref('All types');
+const memberFilterRole = ref<string | null>(null);
 const currentPage = ref(1);
 const pageSize = 3;
 const roleTypes = ['All types', 'System', 'Custom'];
+
+/** Returns a Tailwind color class based on permission action type */
+function permissionBadgeClass(permissionId: string): string {
+    if (permissionId.includes('.delete') || permissionId.includes('mfa') || permissionId.includes('tokens') || permissionId.includes('export')) {
+        return 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400';
+    }
+    if (permissionId.includes('.edit') || permissionId.includes('.update') || permissionId.includes('.audit')) {
+        return 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400';
+    }
+    if (permissionId.includes('.create') || permissionId.includes('.invite') || permissionId.includes('.roles')) {
+        return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+    }
+    // view / read — default blue
+    return 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400';
+}
 
 const filteredRoles = computed(() =>
     roles.value.filter((role) => {
         const matchesSearch = `${role.name} ${role.description}`.toLowerCase().includes(search.value.toLowerCase());
         const roleType = role.system ? 'System' : 'Custom';
         const matchesType = !selectedType.value || selectedType.value === 'All types' || selectedType.value === roleType;
+        const matchesMemberFilter = !memberFilterRole.value || role.name === memberFilterRole.value;
 
-        return matchesSearch && matchesType;
+        return matchesSearch && matchesType && matchesMemberFilter;
     }),
 );
 
@@ -211,7 +229,7 @@ const filteredPermissionGroups = computed(() => {
     }).filter((group) => group.permissions.length > 0);
 });
 
-watch([search, selectedType], () => {
+watch([search, selectedType, memberFilterRole], () => {
     currentPage.value = 1;
 });
 
@@ -332,6 +350,24 @@ function removeRole(): void {
     closeDrawer();
 }
 
+function cloneRole(): void {
+    if (!selectedRole.value) return;
+    const source = selectedRole.value;
+    // pre-fill drawer as a new role based on the selected one
+    selectedRole.value = null;
+    formRoleName.value = `${source.name} (Copy)`;
+    formRoleDescription.value = source.description;
+    selectedPermissionIds.value = [...source.permissionKeys];
+    nameError.value = '';
+    permissionSearchQuery.value = '';
+    // drawer stays open
+}
+
+function filterByRole(roleName: string): void {
+    memberFilterRole.value = memberFilterRole.value === roleName ? null : roleName;
+    closeDrawer();
+}
+
 function goToPage(page: number): void {
     currentPage.value = Math.min(Math.max(page, 1), totalPages.value);
 }
@@ -400,6 +436,9 @@ defineOptions({
                         <TableHead>Members</TableHead>
                         <TableHead>Permissions</TableHead>
                         <TableHead>Type</TableHead>
+                        <TableHead v-if="memberFilterRole" class="text-xs text-muted-foreground font-normal">
+                            Filtered by: <button class="underline" @click="memberFilterRole = null">{{ memberFilterRole }} ✕</button>
+                        </TableHead>
                         <TableHead class="w-12 pr-5"><span class="sr-only">Actions</span></TableHead>
                     </TableRow>
                 </TableHeader>
@@ -421,7 +460,14 @@ defineOptions({
                                 </div>
                             </div>
                         </TableCell>
-                        <TableCell>{{ role.members }}</TableCell>
+                        <TableCell>
+                            <button
+                                class="text-sm font-medium underline decoration-dotted underline-offset-4 hover:text-primary transition-colors"
+                                @click.stop="filterByRole(role.name)"
+                            >
+                                {{ role.members }}
+                            </button>
+                        </TableCell>
                         <TableCell>
                             <Badge variant="secondary">{{ role.permissionKeys.length }} permissions</Badge>
                         </TableCell>
@@ -665,8 +711,15 @@ defineOptions({
                                         @update:model-value="togglePermission(permission.id, $event)"
                                     />
                                     <div class="min-w-0 flex-1">
-                                        <div class="text-sm font-medium leading-none text-foreground">
-                                            {{ permission.name }}
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-medium leading-none text-foreground">{{ permission.name }}</span>
+                                            <Badge
+                                                class="text-[10px] px-1.5 py-0 h-4 font-normal border"
+                                                :class="permissionBadgeClass(permission.id)"
+                                                variant="outline"
+                                            >
+                                                {{ permission.id.split('.')[1] ?? permission.id.split('.')[0] }}
+                                            </Badge>
                                         </div>
                                         <div class="text-xs text-muted-foreground mt-1 leading-snug">
                                             {{ permission.description }}
@@ -703,7 +756,17 @@ defineOptions({
 
             <!-- Footer (Pinned at bottom) -->
             <DrawerFooter class="mt-0 border-t bg-card/60 backdrop-blur px-6 py-3.5 shrink-0 flex flex-row items-center justify-between gap-3">
-                <div class="flex items-center">
+                <div class="flex items-center gap-2">
+                    <Button
+                        v-if="selectedRole && !selectedRole.system"
+                        variant="outline"
+                        size="sm"
+                        class="gap-1.5"
+                        @click="cloneRole"
+                    >
+                        <Copy class="size-4" />
+                        Duplicate
+                    </Button>
                     <AlertDialog v-if="selectedRole && !selectedRole.system" v-model:open="deleteDialogOpen">
                         <AlertDialogTrigger as-child>
                             <Button
@@ -733,7 +796,7 @@ defineOptions({
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
-                    <span v-else />
+                    <span v-else-if="!selectedRole" />
                 </div>
 
                 <div class="flex items-center gap-2">
