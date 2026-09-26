@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\McpUsageLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,6 +19,19 @@ class McpSettingsController extends Controller
 
         $admin = $request->user('admin');
 
+        $dates = collect(range(6, 0))->map(function ($daysAgo) {
+            $date = now()->subDays($daysAgo);
+            $start = $date->copy()->startOfDay();
+            $end = $date->copy()->endOfDay();
+            $count = McpUsageLog::whereBetween('created_at', [$start, $end])->count();
+
+            return [
+                'day' => $date->format('D'),
+                'date' => $date->format('M d'),
+                'requests' => $count,
+            ];
+        });
+
         return Inertia::render('admin/settings/Mcp', [
             'tokens' => $admin->tokens()->orderBy('created_at', 'desc')->get()->map(fn ($token) => [
                 'id' => $token->id,
@@ -27,6 +40,12 @@ class McpSettingsController extends Controller
                 'created_at' => $token->created_at,
             ]),
             'serverUrl' => url('/mcp/valencekit'),
+            'activityChart' => $dates,
+            'stats' => [
+                'totalRequests' => McpUsageLog::count(),
+                'uniqueClients' => McpUsageLog::distinct('ip_address')->count('ip_address'),
+                'activeTokensCount' => $admin->tokens()->count(),
+            ],
         ]);
     }
 
@@ -42,7 +61,7 @@ class McpSettingsController extends Controller
         ]);
 
         $admin = $request->user('admin');
-        
+
         $token = $admin->createToken($request->name, ['mcp:access']);
 
         return back()->with('flash', [
@@ -59,7 +78,7 @@ class McpSettingsController extends Controller
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 
         $admin = $request->user('admin');
-        
+
         $admin->tokens()->where('id', $tokenId)->delete();
 
         return back()->with('success', 'Token revoked successfully.');
