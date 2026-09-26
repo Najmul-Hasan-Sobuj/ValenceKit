@@ -26,6 +26,12 @@ class EnsureAdminIsActive
                 : redirect()->route('admin.login');
         }
 
+        if ($admin->must_change_password && ! $request->routeIs('admin.security.*') && ! $request->routeIs('admin.logout')) {
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Please change your password first.'], 403)
+                : redirect()->route('admin.security.edit')->with('error', 'Please change your default password before continuing.');
+        }
+
         return $next($request);
     }
 }

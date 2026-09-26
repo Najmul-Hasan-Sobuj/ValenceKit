@@ -24,7 +24,7 @@ class AdminSeeder extends Seeder
             throw new \InvalidArgumentException('Set ADMIN_BOOTSTRAP_EMAIL and a strong ADMIN_BOOTSTRAP_PASSWORD (at least 12 characters) before seeding admins.');
         }
 
-        Admin::firstOrCreate(
+        $admin = Admin::firstOrCreate(
             ['email' => $email],
             [
                 'name' => 'Super Admin',
@@ -33,5 +33,7 @@ class AdminSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+
+        $admin->assignRole('Super Admin');
     }
 }

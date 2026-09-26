@@ -32,7 +32,8 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard, logout } from '@/routes/admin';
-import { roles, users } from '@/routes/admin/authorization';
+import { roles } from '@/routes/admin/authorization';
+import { index as users } from '@/routes/admin/users';
 import { edit as editProfile } from '@/routes/admin/profile';
 import type { Admin, NavItem } from '@/types';
 

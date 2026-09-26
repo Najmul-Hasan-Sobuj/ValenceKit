@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasskeyController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
 use App\Http\Controllers\Admin\Settings\ProfileController;
@@ -56,7 +57,7 @@ Route::prefix(config('admin.alias'))
             Route::get('dashboard', DashboardController::class)
                 ->name('dashboard');
 
-            Route::inertia('authorization/users', 'admin/authorization/Users')->name('authorization.users');
+            Route::apiResource('authorization/users', UserController::class);
             Route::inertia('authorization/roles', 'admin/authorization/Roles')->name('authorization.roles');
             Route::inertia('authorization/roles/create', 'admin/authorization/RoleCreate')->name('authorization.roles.create');
             Route::get('authorization/roles/{id}/edit', function ($id) {

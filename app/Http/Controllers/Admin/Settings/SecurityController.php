@@ -39,7 +39,10 @@ class SecurityController extends Controller
             'password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user('admin')->update(['password' => $validated['password']]);
+        $request->user('admin')->update([
+            'password' => $validated['password'],
+            'must_change_password' => false,
+        ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 
