@@ -49,6 +49,9 @@ class RoleAndPermissionSeeder extends Seeder
             'settings.security.edit' => 'Update password and manage passkeys',
             'settings.appearance.view' => 'View theme and appearance preferences tab',
             'settings.appearance.edit' => 'Customize theme and visual preferences',
+            'settings.mcp.view' => 'View MCP (AI Tools) integrations and tokens tab',
+            'settings.mcp.edit' => 'Manage MCP tools and generate new AI tokens',
+            'settings.mcp.usage.view' => 'View MCP usage logs to monitor who uses the server',
         ],
     ];
 
@@ -75,6 +78,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'settings.profile.edit',
                 'settings.security.view',
                 'settings.appearance.view',
+                'settings.mcp.view',
             ],
         ],
         'Support' => [

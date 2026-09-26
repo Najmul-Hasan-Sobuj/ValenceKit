@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import {
+    Activity,
     ChevronsUpDown,
     KeyRound,
     LayoutGrid,
@@ -38,6 +39,7 @@ import { index as users } from '@/routes/admin/users';
 import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import { edit as editAppearance } from '@/routes/admin/appearance';
+import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -85,6 +87,14 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: children[0].href,
             icon: ShieldCheck,
             children,
+        });
+    }
+
+    if (can('settings.mcp.usage.view')) {
+        items.push({
+            title: 'MCP Usage',
+            href: indexMcpUsage(),
+            icon: Activity,
         });
     }
 

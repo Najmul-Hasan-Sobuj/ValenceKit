@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/admin/appearance';
+import { edit as editMcp } from '@/routes/admin/mcp';
 import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import type { NavItem } from '@/types';
@@ -25,6 +26,10 @@ const sidebarNavItems = computed<NavItem[]>(() => {
         items.push({ title: 'Security', href: editSecurity() });
     }
 
+    if (can('settings.mcp.view')) {
+        items.push({ title: 'MCP (AI Tools)', href: editMcp() });
+    }
+
     if (can('settings.appearance.view')) {
         items.push({ title: 'Appearance', href: editAppearance() });
     }
@@ -33,6 +38,7 @@ const sidebarNavItems = computed<NavItem[]>(() => {
 });
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
+const isMcpPage = computed(() => isCurrentOrParentUrl(editMcp()));
 </script>
 
 <template>
@@ -65,8 +71,8 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 
             <Separator class="my-6 lg:hidden" />
 
-            <div class="flex-1 md:max-w-2xl">
-                <section class="max-w-xl space-y-12"><slot /></section>
+            <div :class="['flex-1', { 'md:max-w-2xl': !isMcpPage }]">
+                <section :class="['space-y-12', { 'max-w-xl': !isMcpPage }]"><slot /></section>
             </div>
         </div>
     </div>

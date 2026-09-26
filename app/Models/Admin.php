@@ -13,6 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -36,7 +37,7 @@ use Spatie\Permission\Traits\HasRoles;
 class Admin extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<AdminFactory> */
-    use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable;
 
     /**
      * Get the passkeys associated with the admin.
