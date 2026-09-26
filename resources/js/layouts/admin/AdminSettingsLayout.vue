@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -9,12 +10,27 @@ import { edit as editAppearance } from '@/routes/admin/appearance';
 import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import type { NavItem } from '@/types';
+import { usePermissions } from '@/composables/usePermissions';
 
-const sidebarNavItems: NavItem[] = [
-    { title: 'Profile', href: editProfile() },
-    { title: 'Security', href: editSecurity() },
-    { title: 'Appearance', href: editAppearance() },
-];
+const { can } = usePermissions();
+
+const sidebarNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [];
+
+    if (can('settings.profile.view')) {
+        items.push({ title: 'Profile', href: editProfile() });
+    }
+
+    if (can('settings.security.view')) {
+        items.push({ title: 'Security', href: editSecurity() });
+    }
+
+    if (can('settings.appearance.view')) {
+        items.push({ title: 'Appearance', href: editAppearance() });
+    }
+
+    return items;
+});
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
 </script>

@@ -25,7 +25,16 @@ class UpdateUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('admins')->ignore($adminId),
             ],
-            'role' => ['required', 'string', 'exists:roles,name'],
+            'role' => [
+                'required',
+                'string',
+                'exists:roles,name',
+                function ($attribute, $value, $fail) {
+                    if ($value === 'Super Admin' && ! $this->user('admin')->hasRole('Super Admin')) {
+                        $fail('Only Super Admins can assign the Super Admin role.');
+                    }
+                },
+            ],
             'is_active' => ['boolean'],
         ];
     }

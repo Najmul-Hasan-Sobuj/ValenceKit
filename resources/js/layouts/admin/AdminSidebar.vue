@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import {
     ChevronsUpDown,
     KeyRound,
@@ -32,39 +32,64 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { dashboard, logout } from '@/routes/admin';
-import { roles } from '@/routes/admin/authorization';
+import authorization from '@/routes/admin/authorization';
+const roles = authorization.roles;
 import { index as users } from '@/routes/admin/users';
 import { edit as editProfile } from '@/routes/admin/profile';
+import { edit as editSecurity } from '@/routes/admin/security';
+import { edit as editAppearance } from '@/routes/admin/appearance';
 import type { Admin, NavItem } from '@/types';
 
-const page = usePage();
-const admin = computed(() => page.props.auth.admin as Admin);
+import { usePermissions } from '@/composables/usePermissions';
+
+const { admin, can } = usePermissions();
 const { isMobile, state } = useSidebar();
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Authorization',
-        href: users(),
-        icon: ShieldCheck,
-        children: [
-            {
-                title: 'Users',
-                href: users(),
-                icon: Users,
-            },
-            {
-                title: 'Roles',
-                href: roles(),
-                icon: KeyRound,
-            },
-        ],
-    },
-];
+const firstAvailableSettingsUrl = computed(() => {
+    if (can('settings.profile.view')) return editProfile();
+    if (can('settings.security.view')) return editSecurity();
+    if (can('settings.appearance.view')) return editAppearance();
+    return null;
+});
+
+const mainNavItems = computed<NavItem[]>(() => {
+    const children: NavItem[] = [];
+
+    if (can('users.view')) {
+        children.push({
+            title: 'Users',
+            href: users(),
+            icon: Users,
+        });
+    }
+
+    if (can('roles.view')) {
+        children.push({
+            title: 'Roles',
+            href: roles.index.url(),
+            icon: KeyRound,
+        });
+    }
+
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+
+    if (children.length > 0) {
+        items.push({
+            title: 'Authorization',
+            href: children[0].href,
+            icon: ShieldCheck,
+            children,
+        });
+    }
+
+    return items;
+});
 
 const handleLogout = () => {
     router.flushAll();
@@ -126,17 +151,17 @@ const handleLogout = () => {
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem :as-child="true">
+                            <DropdownMenuItem v-if="firstAvailableSettingsUrl" :as-child="true">
                                 <Link
                                     class="block w-full cursor-pointer"
-                                    :href="editProfile()"
+                                    :href="firstAvailableSettingsUrl"
                                     prefetch
                                 >
                                     <Settings class="mr-2 h-4 w-4" />
                                     Settings
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            <DropdownMenuSeparator v-if="firstAvailableSettingsUrl" />
                             <DropdownMenuItem :as-child="true">
                                 <Link
                                     class="block w-full cursor-pointer"

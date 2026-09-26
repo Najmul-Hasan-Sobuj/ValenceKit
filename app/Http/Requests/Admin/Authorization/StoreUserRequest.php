@@ -16,7 +16,16 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:admins,email'],
-            'role' => ['required', 'string', 'exists:roles,name'],
+            'role' => [
+                'required',
+                'string',
+                'exists:roles,name',
+                function ($attribute, $value, $fail) {
+                    if ($value === 'Super Admin' && ! $this->user('admin')->hasRole('Super Admin')) {
+                        $fail('Only Super Admins can assign the Super Admin role.');
+                    }
+                },
+            ],
             'is_active' => ['boolean'],
         ];
     }

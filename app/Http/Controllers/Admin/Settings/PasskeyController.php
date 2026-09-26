@@ -18,6 +18,8 @@ class PasskeyController extends Controller
 {
     public function options(Request $request, GenerateRegistrationOptions $generate): JsonResponse
     {
+        abort_unless($request->user('admin')->can('settings.security.edit'), 403);
+
         $options = $generate($request->user('admin'));
 
         $request->session()->put('admin_passkey.registration_options', WebAuthn::toJson($options));
@@ -27,6 +29,8 @@ class PasskeyController extends Controller
 
     public function store(PasskeyRegistrationRequest $request, StorePasskey $store): JsonResponse
     {
+        abort_unless($request->user('admin')->can('settings.security.edit'), 403);
+
         $serialized = $request->session()->pull('admin_passkey.registration_options');
 
         abort_unless(is_string($serialized), 422, 'Passkey registration session expired. Please try again.');
@@ -41,8 +45,9 @@ class PasskeyController extends Controller
         return response()->json(['status' => 'passkey-registered', 'id' => (string) $passkey->id]);
     }
 
-    public function destroy(AdminPasskey $adminPasskey): RedirectResponse
+    public function destroy(Request $request, AdminPasskey $adminPasskey): RedirectResponse
     {
+        abort_unless($request->user('admin')->can('settings.security.edit'), 403);
         abort_unless($adminPasskey->admin_id === Auth::guard('admin')->id(), 404);
 
         $adminPasskey->delete();

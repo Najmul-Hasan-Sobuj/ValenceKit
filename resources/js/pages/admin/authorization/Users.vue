@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { MoreHorizontal, Pencil, Plus, Search, Shield, ShieldCheck, ShieldOff, Trash2, UserCheck, Users as UsersIcon } from '@lucide/vue';
-import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Heading from '@/components/Heading.vue';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Blobatar } from '@blobatar/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +52,9 @@ import { index as usersRoute } from '@/routes/admin/users';
 import UserDrawer from './UserDrawer.vue';
 import { destroy } from '@/actions/App/Http/Controllers/Admin/Authorization/UserController';
 import RelativeTime from '@/components/RelativeTime.vue';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { parseDate } from '@internationalized/date';
+import type { DateRange } from '@internationalized/date';
 
 const props = defineProps<{
     admins: any;
@@ -52,11 +65,61 @@ const props = defineProps<{
         mfaEnabled: number;
         mfaMissing: number;
     };
-    filters: { search?: string; role?: string };
+    filters: { search?: string; role?: string; from?: string; to?: string };
 }>();
 
-const search = ref(props.filters.search ?? '');
-const selectedRole = ref(props.filters.role ?? 'All roles');
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can, canEditUser, canDeleteUser } = usePermissions();
+const canInviteUsers = computed(() => can('users.invite'));
+
+const search = ref(Array.isArray(props.filters) ? '' : (props.filters?.search ?? ''));
+const selectedRole = ref(Array.isArray(props.filters) ? 'All roles' : (props.filters?.role ?? 'All roles'));
+
+function initDateRange(): DateRange | undefined {
+    if (!props.filters || Array.isArray(props.filters) || !props.filters.from) return undefined;
+    try {
+        const start = parseDate(props.filters.from);
+        return {
+            start,
+            end: props.filters.to ? parseDate(props.filters.to) : start,
+        };
+    } catch {
+        return undefined;
+    }
+}
+
+const dateRange = ref<DateRange | undefined>(initDateRange());
+
+watch(
+    () => props.filters,
+    (newFilters) => {
+        if (!newFilters || Array.isArray(newFilters)) {
+            search.value = '';
+            selectedRole.value = 'All roles';
+            if (dateRange.value) {
+                dateRange.value = undefined;
+            }
+            return;
+        }
+        search.value = newFilters.search ?? '';
+        selectedRole.value = newFilters.role ?? 'All roles';
+        if (!newFilters.from) {
+            if (dateRange.value) {
+                dateRange.value = undefined;
+            }
+        } else {
+            try {
+                const s = parseDate(newFilters.from);
+                const e = newFilters.to ? parseDate(newFilters.to) : s;
+                dateRange.value = { start: s, end: e };
+            } catch {
+                dateRange.value = undefined;
+            }
+        }
+    },
+    { deep: true }
+);
 
 const drawerOpen = ref(false);
 const selectedUser = ref<any | null>(null);
@@ -66,13 +129,38 @@ const userToDelete = ref<any | null>(null);
 
 // Debounce filtering
 watchDebounced(
-    [search, selectedRole],
+    [search, selectedRole, dateRange],
     () => {
+        // Wait until full range is selected (or cleared)
+        if (dateRange.value?.start && !dateRange.value?.end) {
+            return;
+        }
+
+        const fromStr = dateRange.value?.start ? dateRange.value.start.toString() : '';
+        const toStr = dateRange.value?.end ? dateRange.value.end.toString() : '';
+
+        const currentSearch = Array.isArray(props.filters) ? '' : (props.filters?.search ?? '');
+        const currentRole = Array.isArray(props.filters) ? '' : (props.filters?.role ?? '');
+        const currentFrom = Array.isArray(props.filters) ? '' : (props.filters?.from ?? '');
+        const currentTo = Array.isArray(props.filters) ? '' : (props.filters?.to ?? '');
+
+        // Avoid duplicate requests if filters didn't change
+        if (
+            search.value === currentSearch &&
+            (selectedRole.value === 'All roles' ? '' : selectedRole.value) === currentRole &&
+            fromStr === currentFrom &&
+            toStr === currentTo
+        ) {
+            return;
+        }
+
         router.get(
             usersRoute.url(),
             {
                 search: search.value,
                 role: selectedRole.value === 'All roles' ? '' : selectedRole.value,
+                from: fromStr,
+                to: toStr,
             },
             {
                 preserveState: true,
@@ -98,20 +186,27 @@ function openInviteDrawer(): void {
     drawerOpen.value = true;
 }
 
+const isDeleting = ref(false);
+
 function promptDeleteUser(user: any): void {
     userToDelete.value = user;
     drawerOpen.value = false;
     deleteDialogOpen.value = true;
 }
 
-function confirmDeleteUser(): void {
-    if (userToDelete.value) {
+function confirmDeleteUser(event?: Event): void {
+    event?.preventDefault();
+    if (userToDelete.value && !isDeleting.value) {
+        isDeleting.value = true;
         router.delete(destroy.url(userToDelete.value.id), {
             preserveScroll: true,
             onSuccess: () => {
                 deleteDialogOpen.value = false;
                 userToDelete.value = null;
-            }
+            },
+            onFinish: () => {
+                isDeleting.value = false;
+            },
         });
     }
 }
@@ -132,7 +227,7 @@ defineOptions({
                 title="Users"
                 description="Manage administrator access across your workspace"
             />
-            <Button class="w-fit" @click="openInviteDrawer">
+            <Button v-if="canInviteUsers" class="w-fit" @click="openInviteDrawer">
                 <Plus class="size-4" />
                 Add user
             </Button>
@@ -171,23 +266,31 @@ defineOptions({
         </div>
 
         <!-- Filters -->
-        <div class="grid gap-3 rounded-xl border bg-card p-3 shadow-sm md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_14rem] xl:items-center">
-            <div class="relative min-w-0 md:col-span-2 xl:col-span-1">
+        <div class="flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-xs lg:flex-row lg:items-center">
+            <div class="relative min-w-0 flex-1">
                 <Search class="text-muted-foreground absolute top-2.5 left-3 size-4" />
                 <Input v-model="search" class="pl-9" placeholder="Search users" aria-label="Search users" />
             </div>
-            <Combobox v-model="selectedRole">
-                <ComboboxAnchor class="w-full">
-                    <ComboboxInput aria-label="Filter by role" :display-value="(value) => String(value || 'All roles')" placeholder="Filter by role" />
-                </ComboboxAnchor>
-                <ComboboxList>
-                    <ComboboxEmpty>No matching roles.</ComboboxEmpty>
-                    <ComboboxItem value="All roles">All roles</ComboboxItem>
-                    <ComboboxItem v-for="role in roles" :key="role.id" :value="role.name">
-                        {{ role.name }}
-                    </ComboboxItem>
-                </ComboboxList>
-            </Combobox>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Combobox v-model="selectedRole">
+                    <ComboboxAnchor class="w-full sm:w-48">
+                        <ComboboxInput aria-label="Filter by role" :display-value="(value) => String(value || 'All roles')" placeholder="Filter by role" />
+                    </ComboboxAnchor>
+                    <ComboboxList>
+                        <ComboboxEmpty>No matching roles.</ComboboxEmpty>
+                        <ComboboxItem value="All roles">All roles</ComboboxItem>
+                        <ComboboxItem v-for="role in roles" :key="role.id" :value="role.name">
+                            {{ role.name }}
+                        </ComboboxItem>
+                    </ComboboxList>
+                </Combobox>
+
+                <DateRangePicker
+                    v-model="dateRange"
+                    placeholder="Last login date"
+                    class="w-full sm:w-72"
+                />
+            </div>
         </div>
 
         <!-- Table -->
@@ -204,14 +307,28 @@ defineOptions({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-for="user in admins.data" :key="user.id" class="cursor-pointer" @click="openUserDrawer(user)">
+                    <TableRow
+                        v-for="user in admins.data"
+                        :key="user.id"
+                        :class="{ 'cursor-pointer': canEditUser(user) }"
+                        @click="canEditUser(user) ? openUserDrawer(user) : null"
+                    >
                         <TableCell class="pl-4">
                             <div class="flex items-center gap-3">
                                 <div class="relative shrink-0">
-                                    <Avatar class="size-9">
-                                        <AvatarFallback class="bg-primary/10 text-primary text-xs font-semibold">
-                                            {{ getInitials(user.name) }}
-                                        </AvatarFallback>
+                                    <Avatar class="size-9 rounded-lg overflow-hidden bg-muted/40 ring-1 ring-border/50">
+                                        <AvatarImage
+                                            v-if="user.avatar"
+                                            :src="user.avatar"
+                                            :alt="user.name"
+                                        />
+                                        <Blobatar
+                                            v-else
+                                            :name="user.email || user.name"
+                                            :size="36"
+                                            animate="hover"
+                                            class="size-full object-cover"
+                                        />
                                     </Avatar>
                                     <span
                                         :class="user.is_active ? 'bg-emerald-500' : 'bg-muted-foreground'"
@@ -253,19 +370,20 @@ defineOptions({
                             <RelativeTime :date="user.last_login_at" fallback="Never" />
                         </TableCell>
                         <TableCell class="pr-5 text-right" @click.stop>
-                            <DropdownMenu>
+                            <DropdownMenu v-if="canEditUser(user) || canDeleteUser(user)">
                                 <DropdownMenuTrigger as-child>
                                     <Button variant="ghost" size="icon-sm" aria-label="Open user actions">
                                         <MoreHorizontal class="size-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" class="w-36">
-                                    <DropdownMenuItem class="cursor-pointer gap-2" @click="openUserDrawer(user)">
+                                    <DropdownMenuItem v-if="canEditUser(user)" class="cursor-pointer gap-2" @click="openUserDrawer(user)">
                                         <Pencil class="size-4 text-muted-foreground" />
                                         <span>Edit</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator v-if="canEditUser(user) && canDeleteUser(user)" />
                                     <DropdownMenuItem
+                                        v-if="canDeleteUser(user)"
                                         variant="destructive"
                                         class="cursor-pointer gap-2"
                                         @click="promptDeleteUser(user)"
@@ -303,14 +421,40 @@ defineOptions({
         @request-delete="promptDeleteUser"
     />
 
-    <!-- Reusable Delete Confirmation Dialog -->
-    <ConfirmDeleteDialog
-        v-model:open="deleteDialogOpen"
-        :title="`Delete ${userToDelete?.name}?`"
-        :item-name="userToDelete?.name"
-        item-type="User"
-        description="This will permanently delete this administrator account. They will immediately lose access to the administration dashboard and all associated privileges."
-        confirm-text="Delete user"
-        @confirm="confirmDeleteUser"
-    />
+    <!-- Delete User Confirmation Dialog -->
+    <AlertDialog v-model:open="deleteDialogOpen">
+        <AlertDialogContent class="sm:max-w-md">
+            <AlertDialogHeader>
+                <div class="flex items-center gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <Trash2 class="size-5" />
+                    </div>
+                    <div>
+                        <AlertDialogTitle>Delete User</AlertDialogTitle>
+                        <AlertDialogDescription class="mt-1">
+                            Are you sure you want to delete <span class="font-medium text-foreground">{{ userToDelete?.name }}</span>?
+                        </AlertDialogDescription>
+                    </div>
+                </div>
+            </AlertDialogHeader>
+            <div class="text-sm text-muted-foreground">
+                This action cannot be undone. This administrator account will be permanently deleted and immediately lose access to the administration dashboard and all permissions.
+            </div>
+            <AlertDialogFooter class="gap-2 sm:gap-0">
+                <AlertDialogCancel as-child>
+                    <Button variant="outline" :disabled="isDeleting">Cancel</Button>
+                </AlertDialogCancel>
+                <AlertDialogAction as-child>
+                    <Button
+                        variant="destructive"
+                        :disabled="isDeleting"
+                        @click="confirmDeleteUser"
+                    >
+                        <Trash2 class="size-4" />
+                        <span>{{ isDeleting ? 'Deleting...' : 'Delete User' }}</span>
+                    </Button>
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 </template>

@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\Admin;
+use App\Notifications\AdminInviteNotification;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -13,7 +16,9 @@ beforeEach(function () {
     $this->admin->assignRole($role);
 });
 
-it('can store a new user', function () {
+it('can store a new user and queues invitation notification', function () {
+    Notification::fake();
+
     $role = Role::firstOrCreate(['name' => 'Support', 'guard_name' => 'admin']);
 
     $this->actingAs($this->admin, 'admin')
@@ -34,4 +39,8 @@ it('can store a new user', function () {
 
     $user = Admin::where('email', 'test@example.com')->first();
     expect($user->hasRole('Support'))->toBeTrue();
+
+    Notification::assertSentTo($user, AdminInviteNotification::class, function ($notification) {
+        return $notification instanceof ShouldQueue;
+    });
 });

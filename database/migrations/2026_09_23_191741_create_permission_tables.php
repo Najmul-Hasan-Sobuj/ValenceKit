@@ -43,6 +43,8 @@ return new class extends Migration
                 $table->index($columnNames['team_foreign_key'], 'roles_team_foreign_key_index');
             }
             $table->string('name');
+            $table->string('description')->nullable();
+            $table->tinyInteger('is_system')->default(0);
             $table->string('guard_name');
             $table->timestamps();
             if ($teams || config('permission.testing')) {

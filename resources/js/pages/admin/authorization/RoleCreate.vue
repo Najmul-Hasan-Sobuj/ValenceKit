@@ -14,14 +14,58 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { roles as rolesRoute } from '@/routes/admin/authorization';
-import { PERMISSION_GROUPS, allPermissionKeys, roles, type PermissionGroup } from './mockData';
+import { useForm } from '@inertiajs/vue3';
+import { FileText, KeyRound, Settings as SettingsIcon, ShieldCheck, Users } from '@lucide/vue';
+import authorization from '@/routes/admin/authorization';
+const rolesRoute = authorization.roles;
 
-const formRoleName = ref('');
-const formRoleDescription = ref('');
-const selectedPermissionIds = ref<string[]>(['users.view', 'content.view', 'content.create']);
+const props = defineProps<{
+    permissions: Record<string, { id: number; name: string; guard_name: string; group_name: string }[]>;
+    initialRole?: {
+        source_id?: number;
+        source_name?: string;
+        name: string;
+        description: string | null;
+        permissions: string[];
+    } | null;
+}>();
+
+const PERMISSION_GROUPS_META: Record<string, { description: string; icon: any }> = {
+    'User Management': { description: 'Manage administrator accounts, invitations, and profiles', icon: Users },
+    'Role Management': { description: 'Manage access control roles, privileges, and boundaries', icon: KeyRound },
+    'System Settings': { description: 'Configure profile, security, and appearance settings', icon: SettingsIcon },
+};
+
+const PERMISSION_GROUPS = computed(() => {
+    return Object.entries(props.permissions).map(([groupName, perms]) => {
+        const meta = PERMISSION_GROUPS_META[groupName] || { description: '', icon: SettingsIcon };
+        return {
+            id: groupName,
+            name: groupName,
+            description: meta.description,
+            icon: meta.icon,
+            permissions: perms.map((p) => ({
+                id: p.name,
+                name: p.name,
+                description: '',
+            })),
+        };
+    });
+});
+
+const allPermissionKeys = computed(() => {
+    return Object.values(props.permissions).flatMap((p) => p).map((p) => p.name);
+});
+
+const isDuplicating = computed(() => !!props.initialRole);
+
+const form = useForm({
+    name: props.initialRole?.name ?? '',
+    description: props.initialRole?.description ?? '',
+    permissions: props.initialRole?.permissions ? [...props.initialRole.permissions] : [],
+});
+
 const permissionSearchQuery = ref('');
-const nameError = ref('');
 
 function permissionBadgeClass(permissionId: string): string {
     if (permissionId.includes('.delete') || permissionId.includes('mfa') || permissionId.includes('tokens') || permissionId.includes('export')) {
@@ -30,7 +74,7 @@ function permissionBadgeClass(permissionId: string): string {
     if (permissionId.includes('.edit') || permissionId.includes('.update') || permissionId.includes('.audit')) {
         return 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400';
     }
-    if (permissionId.includes('.create') || permissionId.includes('.invite') || permissionId.includes('.roles')) {
+    if (permissionId.includes('.create') || permissionId.includes('.invite')) {
         return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
     }
     return 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400';
@@ -39,9 +83,9 @@ function permissionBadgeClass(permissionId: string): string {
 const filteredPermissionGroups = computed(() => {
     const q = permissionSearchQuery.value.trim().toLowerCase();
     if (!q) {
-        return PERMISSION_GROUPS;
+        return PERMISSION_GROUPS.value;
     }
-    return PERMISSION_GROUPS.map((group) => {
+    return PERMISSION_GROUPS.value.map((group) => {
         const matching = group.permissions.filter((p) =>
             p.name.toLowerCase().includes(q) ||
             p.description.toLowerCase().includes(q) ||
@@ -55,96 +99,84 @@ const filteredPermissionGroups = computed(() => {
 });
 
 function isPermissionSelected(id: string): boolean {
-    return selectedPermissionIds.value.includes(id);
+    return form.permissions.includes(id);
 }
 
 function togglePermission(id: string, checked: boolean | 'indeterminate'): void {
     if (checked === true) {
-        if (!selectedPermissionIds.value.includes(id)) {
-            selectedPermissionIds.value.push(id);
+        if (!form.permissions.includes(id)) {
+            form.permissions.push(id);
         }
     } else {
-        selectedPermissionIds.value = selectedPermissionIds.value.filter((p) => p !== id);
+        form.permissions = form.permissions.filter((p) => p !== id);
     }
 }
 
 function selectAllPermissions(): void {
-    selectedPermissionIds.value = [...allPermissionKeys];
+    form.permissions = [...allPermissionKeys.value];
 }
 
 function clearAllPermissions(): void {
-    selectedPermissionIds.value = [];
+    form.permissions = [];
 }
 
-function toggleGroupPermissions(group: PermissionGroup): void {
-    const groupIds = group.permissions.map((p) => p.id);
-    const allSelected = groupIds.every((id) => selectedPermissionIds.value.includes(id));
+function toggleGroupPermissions(group: any): void {
+    const groupIds = group.permissions.map((p: any) => p.id);
+    const allSelected = groupIds.every((id: string) => form.permissions.includes(id));
 
     if (allSelected) {
-        selectedPermissionIds.value = selectedPermissionIds.value.filter((id) => !groupIds.includes(id));
+        form.permissions = form.permissions.filter((id) => !groupIds.includes(id));
     } else {
-        const toAdd = groupIds.filter((id) => !selectedPermissionIds.value.includes(id));
-        selectedPermissionIds.value.push(...toAdd);
+        const toAdd = groupIds.filter((id: string) => !form.permissions.includes(id));
+        form.permissions.push(...toAdd);
     }
 }
 
-function isGroupAllSelected(group: PermissionGroup): boolean {
-    return group.permissions.every((p) => selectedPermissionIds.value.includes(p.id));
+function isGroupAllSelected(group: any): boolean {
+    return group.permissions.every((p: any) => form.permissions.includes(p.id));
 }
 
-function groupSelectedCount(group: PermissionGroup): number {
-    return group.permissions.filter((p) => selectedPermissionIds.value.includes(p.id)).length;
+function groupSelectedCount(group: any): number {
+    return group.permissions.filter((p: any) => form.permissions.includes(p.id)).length;
 }
 
 function saveRole(): void {
-    const trimmedName = formRoleName.value.trim();
-    if (!trimmedName) {
-        nameError.value = 'Role name is required';
-        return;
-    }
-
-    const nextId = Math.max(...roles.value.map((r) => r.id), 0) + 1;
-    roles.value.push({
-        id: nextId,
-        name: trimmedName,
-        description: formRoleDescription.value.trim() || 'Custom access profile',
-        members: 0,
-        permissionKeys: [...selectedPermissionIds.value],
-        system: false,
-    });
-
-    router.get(rolesRoute.url());
+    form.post(rolesRoute.store.url());
 }
 
 defineOptions({
-    layout: { breadcrumbs: [{ title: 'Roles', href: rolesRoute.url() }, { title: 'Create Role', href: '' }] },
+    layout: { breadcrumbs: [{ title: 'Roles', href: authorization.roles.index.url() }, { title: 'Create Role', href: '' }] },
 });
 </script>
 
 <template>
-    <Head title="Create Role" />
+    <Head :title="isDuplicating ? `Duplicate ${props.initialRole?.source_name ?? 'Role'}` : 'Create Role'" />
 
     <div class="flex flex-1 flex-col gap-6 p-4 md:p-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-4">
                 <Button variant="outline" size="icon" as-child class="shrink-0">
-                    <Link :href="rolesRoute.url()">
+                    <Link :href="rolesRoute.index.url()">
                         <ArrowLeft class="size-4" />
                         <span class="sr-only">Back</span>
                     </Link>
                 </Button>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Create New Role</h1>
-                    <p class="text-sm text-muted-foreground mt-1">Define a new role and configure its operational access boundaries.</p>
+                    <h1 class="text-xl font-bold tracking-tight">
+                        {{ isDuplicating ? `Duplicate Role: ${props.initialRole?.source_name}` : 'Create New Role' }}
+                    </h1>
+                    <p class="text-sm text-muted-foreground mt-1">
+                        {{ isDuplicating ? 'Review and adjust operational boundaries for this copied role.' : 'Define a new role and configure its operational access boundaries.' }}
+                    </p>
                 </div>
             </div>
             <div class="flex items-center gap-3 self-end sm:self-auto">
                 <Button variant="outline" as-child>
-                    <Link :href="rolesRoute.url()">Cancel</Link>
+                    <Link :href="rolesRoute.index.url()">Cancel</Link>
                 </Button>
-                <Button :disabled="!formRoleName.trim()" @click="saveRole">
+                <Button :disabled="!form.name.trim() || form.processing" @click="saveRole">
                     <Check class="size-4 mr-1.5" />
-                    Create role
+                    {{ isDuplicating ? 'Duplicate role' : 'Create role' }}
                 </Button>
             </div>
         </div>
@@ -160,20 +192,21 @@ defineOptions({
                         </Label>
                         <Input
                             id="role-name"
-                            v-model="formRoleName"
-                            placeholder="e.g. Content Manager"
-                            :class="nameError ? 'border-destructive focus-visible:ring-destructive' : ''"
+                            v-model="form.name"
+                            placeholder="e.g. Support Specialist"
+                            :class="form.errors.name ? 'border-destructive focus-visible:ring-destructive' : ''"
                         />
-                        <p v-if="nameError" class="text-destructive text-sm">{{ nameError }}</p>
+                        <p v-if="form.errors.name" class="text-destructive text-sm">{{ form.errors.name }}</p>
                     </div>
 
                     <div class="space-y-2">
                         <Label for="role-description" class="font-medium">Description</Label>
                         <Input
                             id="role-description"
-                            v-model="formRoleDescription"
-                            placeholder="e.g. Manage content and media workflows"
+                            v-model="form.description"
+                            placeholder="e.g. Manage user accounts and view system settings"
                         />
+                        <p v-if="form.errors.description" class="text-destructive text-sm">{{ form.errors.description }}</p>
                     </div>
                 </div>
             </div>
@@ -185,8 +218,9 @@ defineOptions({
                     <div class="flex items-center gap-3">
                         <h3 class="text-base font-semibold text-foreground">Permissions</h3>
                         <Badge variant="outline" class="font-normal">
-                            {{ selectedPermissionIds.length }} of {{ allPermissionKeys.length }} granted
+                            {{ form.permissions.length }} of {{ allPermissionKeys.length }} granted
                         </Badge>
+                        <p v-if="form.errors.permissions" class="text-destructive text-sm ml-4">{{ form.errors.permissions }}</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="relative w-full sm:w-64">

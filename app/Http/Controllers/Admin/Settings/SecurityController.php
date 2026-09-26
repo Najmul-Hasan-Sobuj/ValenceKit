@@ -17,6 +17,8 @@ class SecurityController extends Controller
         /** @var Admin $admin */
         $admin = $request->user('admin');
 
+        abort_unless($admin->must_change_password || $admin->can('settings.security.view'), 403);
+
         return Inertia::render('admin/settings/Security', [
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
             'passkeys' => $admin->passkeys()
@@ -34,6 +36,11 @@ class SecurityController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        /** @var Admin $admin */
+        $admin = $request->user('admin');
+
+        abort_unless($admin->must_change_password || $admin->can('settings.security.edit'), 403);
+
         $validated = $request->validate([
             'current_password' => ['required', 'current_password:admin'],
             'password' => ['required', 'string', Password::defaults(), 'confirmed'],

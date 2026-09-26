@@ -20,6 +20,8 @@ export type Admin = {
     last_login_ip: string | null;
     created_at: string;
     updated_at: string;
+    roles?: string[];
+    permissions?: string[];
     [key: string]: unknown;
 };
 

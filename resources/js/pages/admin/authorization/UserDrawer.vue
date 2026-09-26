@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Shield, ShieldCheck, ShieldOff, Trash2 } from '@lucide/vue';
+import { Blobatar } from '@blobatar/vue';
 import { Button } from '@/components/ui/button';
 import {
     Drawer,
@@ -24,11 +25,18 @@ import {
 import InputError from '@/components/InputError.vue';
 import { store, update } from '@/actions/App/Http/Controllers/Admin/Authorization/UserController';
 
+import { usePermissions } from '@/composables/usePermissions';
+
 const props = defineProps<{
     open: boolean;
     user: any | null; // null for create
     roles: Array<{id: number, name: string}>;
 }>();
+
+const { filterAssignableRoles, canDeleteUser } = usePermissions();
+
+const selectableRoles = computed(() => filterAssignableRoles(props.roles));
+const canDeleteTarget = computed(() => canDeleteUser(props.user));
 
 const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
@@ -74,10 +82,25 @@ function submit() {
         <DrawerContent class="md:inset-x-auto md:right-2 md:left-64">
             <div class="w-full">
                 <DrawerHeader>
-                    <DrawerTitle>{{ user ? 'Edit user access' : 'Invite an admin' }}</DrawerTitle>
-                    <DrawerDescription>
-                        {{ user ? `Update ${user.name}'s role and access level.` : 'Create an administrator account and assign a role.' }}
-                    </DrawerDescription>
+                    <div class="flex items-center gap-3">
+                        <div
+                            v-if="user"
+                            class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/40 ring-1 ring-border/50"
+                        >
+                            <Blobatar
+                                :name="user.email || user.name"
+                                :size="44"
+                                animate="hover"
+                                class="size-9 object-cover"
+                            />
+                        </div>
+                        <div>
+                            <DrawerTitle>{{ user ? 'Edit user access' : 'Invite an admin' }}</DrawerTitle>
+                            <DrawerDescription>
+                                {{ user ? `Update ${user.name}'s role and access level.` : 'Create an administrator account and assign a role.' }}
+                            </DrawerDescription>
+                        </div>
+                    </div>
                 </DrawerHeader>
 
                 <div class="grid gap-5 px-4 pb-2 sm:grid-cols-2">
@@ -99,7 +122,7 @@ function submit() {
                             </ComboboxAnchor>
                             <ComboboxList side="top" align="start">
                                 <ComboboxEmpty>No roles found.</ComboboxEmpty>
-                                <ComboboxItem v-for="r in roles" :key="r.id" :value="r.name">
+                                <ComboboxItem v-for="r in selectableRoles" :key="r.id" :value="r.name">
                                     {{ r.name }}
                                 </ComboboxItem>
                             </ComboboxList>
@@ -136,7 +159,7 @@ function submit() {
 
                 <DrawerFooter class="px-4 flex flex-row items-center justify-between gap-2">
                     <Button
-                        v-if="user"
+                        v-if="user && canDeleteTarget"
                         variant="ghost"
                         size="sm"
                         class="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 cursor-pointer"

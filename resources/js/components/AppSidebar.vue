@@ -15,7 +15,8 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { roles } from '@/routes/admin/authorization';
+import authorization from '@/routes/admin/authorization';
+const roles = authorization.roles;
 import { index as users } from '@/routes/admin/users';
 import type { NavItem } from '@/types';
 
@@ -37,7 +38,7 @@ const mainNavItems: NavItem[] = [
             },
             {
                 title: 'Roles',
-                href: roles(),
+                href: roles.index.url(),
                 icon: KeyRound,
             },
         ],

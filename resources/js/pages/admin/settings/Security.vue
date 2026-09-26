@@ -10,6 +10,9 @@ import { edit, update } from '@/routes/admin/security';
 import { destroy, register } from '@/routes/admin/passkeys';
 import { options } from '@/routes/admin/passkeys/register';
 import type { Passkey } from '@/types';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 defineProps<{ passwordRules: string; passkeys: Passkey[] }>();
 
@@ -64,12 +67,12 @@ defineOptions({
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
-            <Button :disabled="processing">Save</Button>
+            <Button :disabled="processing || !can('settings.security.edit')">Save</Button>
         </Form>
     </div>
 
     <ManagePasskeys
-        :can-manage-passkeys="true"
+        :can-manage-passkeys="can('settings.security.edit')"
         :passkeys="passkeys"
         :routes="{
             options: options(),

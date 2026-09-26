@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit, update } from '@/routes/admin/profile';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 const admin = computed(() => usePage().props.auth.admin!);
 const avatarRef = ref();
@@ -79,7 +82,7 @@ defineOptions({
                 />
                 <InputError :message="errors.email" />
             </div>
-            <Button :disabled="processing">Save</Button>
+            <Button :disabled="processing || !can('settings.profile.edit')">Save</Button>
         </Form>
     </div>
 </template>

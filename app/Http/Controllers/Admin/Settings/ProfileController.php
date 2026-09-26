@@ -12,13 +12,17 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function edit(): Response
+    public function edit(Request $request): Response
     {
+        abort_unless($request->user('admin')->can('settings.profile.view'), 403);
+
         return Inertia::render('admin/settings/Profile');
     }
 
     public function update(Request $request): RedirectResponse
     {
+        abort_unless($request->user('admin')->can('settings.profile.edit'), 403);
+
         /** @var Admin $admin */
         $admin = $request->user('admin');
 

@@ -10,7 +10,16 @@ import {
     Search,
     Trash2,
 } from '@lucide/vue';
-import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,8 +47,31 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { roles as rolesRoute } from '@/routes/admin/authorization';
-import { allPermissionKeys, roles, type Role } from './mockData';
+import authorization from '@/routes/admin/authorization';
+const rolesRoute = authorization.roles;
+import { useForm, router } from '@inertiajs/vue3';
+import { watchDebounced } from '@vueuse/core';
+import { usePermissions } from '@/composables/usePermissions';
+
+const props = defineProps<{
+    roles: { data: Role[] };
+    allPermissionKeys: string[];
+}>();
+
+const { can, canEditRole, canDeleteRole, canDuplicateRole } = usePermissions();
+
+const canCreateRoles = computed(() => can('roles.create'));
+const canEditRoles = computed(() => can('roles.edit'));
+const canDeleteRoles = computed(() => can('roles.delete'));
+
+interface Role {
+    id: number;
+    name: string;
+    description: string | null;
+    system: boolean;
+    members: number;
+    permissionKeys: string[];
+}
 
 const roleToDelete = ref<Role | null>(null);
 const deleteDialogOpen = ref(false);
@@ -52,8 +84,8 @@ const pageSize = 3;
 const roleTypes = ['All types', 'System', 'Custom'];
 
 const filteredRoles = computed(() =>
-    roles.value.filter((role) => {
-        const matchesSearch = `${role.name} ${role.description}`.toLowerCase().includes(search.value.toLowerCase());
+    props.roles.data.filter((role) => {
+        const matchesSearch = `${role.name} ${role.description ?? ''}`.toLowerCase().includes(search.value.toLowerCase());
         const roleType = role.system ? 'System' : 'Custom';
         const matchesType = !selectedType.value || selectedType.value === 'All types' || selectedType.value === roleType;
         const matchesMemberFilter = !memberFilterRole.value || role.name === memberFilterRole.value;
@@ -76,35 +108,32 @@ watch(totalPages, (value) => {
     currentPage.value = Math.min(currentPage.value, value);
 });
 
+const isDeleting = ref(false);
+
 function promptDeleteRole(role: Role): void {
     roleToDelete.value = role;
     deleteDialogOpen.value = true;
 }
 
-function confirmDeleteRole(): void {
-    if (roleToDelete.value) {
-        roles.value = roles.value.filter((role) => role.id !== roleToDelete.value!.id);
-        roleToDelete.value = null;
+function confirmDeleteRole(event?: Event): void {
+    event?.preventDefault();
+    if (roleToDelete.value && !isDeleting.value) {
+        isDeleting.value = true;
+        router.delete(rolesRoute.destroy.url(roleToDelete.value.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                deleteDialogOpen.value = false;
+                roleToDelete.value = null;
+            },
+            onFinish: () => {
+                isDeleting.value = false;
+            },
+        });
     }
-    deleteDialogOpen.value = false;
 }
 
 function duplicateRole(role: Role): void {
-    const nextId = Math.max(0, ...roles.value.map((r) => r.id)) + 1;
-    const newRole: Role = {
-        id: nextId,
-        name: `${role.name} (Copy)`,
-        description: role.description ? `Copy of ${role.description}` : `Copy of ${role.name}`,
-        members: 0,
-        permissionKeys: [...role.permissionKeys],
-        system: false,
-    };
-    const index = roles.value.findIndex((r) => r.id === role.id);
-    if (index !== -1) {
-        roles.value.splice(index + 1, 0, newRole);
-    } else {
-        roles.value.push(newRole);
-    }
+    router.get(rolesRoute.create.url({ query: { duplicate: role.id } }));
 }
 
 function filterByRole(roleName: string): void {
@@ -116,7 +145,7 @@ function goToPage(page: number): void {
 }
 
 defineOptions({
-    layout: { breadcrumbs: [{ title: 'Roles', href: rolesRoute.url() }] },
+    layout: { breadcrumbs: [{ title: 'Roles', href: authorization.roles.index.url() }] },
 });
 </script>
 
@@ -130,7 +159,7 @@ defineOptions({
                 title="Roles"
                 description="Create reusable access profiles for your administrators"
             />
-            <Button class="w-fit" as-child>
+            <Button v-if="canCreateRoles" class="w-fit" as-child>
                 <Link :href="rolesRoute.create.url()">
                     <Plus class="size-4" />
                     Create role
@@ -141,15 +170,15 @@ defineOptions({
         <div class="grid gap-4 sm:grid-cols-3">
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="text-muted-foreground text-xs font-medium uppercase tracking-wide">Roles</div>
-                <div class="mt-2 text-2xl font-semibold">{{ roles.length }}</div>
+                <div class="mt-2 text-2xl font-semibold">{{ props.roles.data.length }}</div>
             </div>
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="text-muted-foreground text-xs font-medium uppercase tracking-wide">Total permissions</div>
-                <div class="mt-2 text-2xl font-semibold">{{ allPermissionKeys.length }}</div>
+                <div class="mt-2 text-2xl font-semibold">{{ props.allPermissionKeys.length }}</div>
             </div>
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="text-muted-foreground text-xs font-medium uppercase tracking-wide">Assigned admins</div>
-                <div class="mt-2 text-2xl font-semibold">{{ roles.reduce((total, role) => total + role.members, 0) }}</div>
+                <div class="mt-2 text-2xl font-semibold">{{ props.roles.data.reduce((total, role) => total + role.members, 0) }}</div>
             </div>
         </div>
 
@@ -231,18 +260,27 @@ defineOptions({
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" class="w-40">
-                                    <DropdownMenuItem class="cursor-pointer gap-2" as-child>
+                                    <DropdownMenuItem
+                                        v-if="canEditRole(role)"
+                                        class="cursor-pointer gap-2"
+                                        as-child
+                                    >
                                         <Link :href="rolesRoute.edit.url(role.id)" class="flex w-full items-center">
                                             <Pencil class="size-4 text-muted-foreground mr-2" />
                                             <span>Edit</span>
                                         </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem class="cursor-pointer gap-2" @click="duplicateRole(role)">
+                                    <DropdownMenuItem
+                                        v-if="canDuplicateRole(role)"
+                                        class="cursor-pointer gap-2"
+                                        @click="duplicateRole(role)"
+                                    >
                                         <Copy class="size-4 text-muted-foreground mr-2" />
                                         <span>Duplicate</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator v-if="(canEditRole(role) || canDuplicateRole(role)) && canDeleteRole(role)" />
                                     <DropdownMenuItem
+                                        v-if="canDeleteRole(role)"
                                         variant="destructive"
                                         class="cursor-pointer gap-2"
                                         @click="promptDeleteRole(role)"
@@ -291,13 +329,40 @@ defineOptions({
         </div>
     </div>
 
-    <ConfirmDeleteDialog
-        v-model:open="deleteDialogOpen"
-        :title="`Delete ${roleToDelete?.name}?`"
-        :item-name="roleToDelete?.name"
-        item-type="Role"
-        description="This removes the role from your authorization setup. Admin users will keep their accounts but lose this role's specific permissions."
-        confirm-text="Delete role"
-        @confirm="confirmDeleteRole"
-    />
+    <!-- Delete Role Confirmation Dialog -->
+    <AlertDialog v-model:open="deleteDialogOpen">
+        <AlertDialogContent class="sm:max-w-md">
+            <AlertDialogHeader>
+                <div class="flex items-center gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <Trash2 class="size-5" />
+                    </div>
+                    <div>
+                        <AlertDialogTitle>Delete Role</AlertDialogTitle>
+                        <AlertDialogDescription class="mt-1">
+                            Are you sure you want to delete the <span class="font-medium text-foreground">{{ roleToDelete?.name }}</span> role?
+                        </AlertDialogDescription>
+                    </div>
+                </div>
+            </AlertDialogHeader>
+            <div class="text-sm text-muted-foreground">
+                This action cannot be undone. This removes the role from your authorization setup. Admin users with this role will keep their accounts but lose this role's specific permissions.
+            </div>
+            <AlertDialogFooter class="gap-2 sm:gap-0">
+                <AlertDialogCancel as-child>
+                    <Button variant="outline" :disabled="isDeleting">Cancel</Button>
+                </AlertDialogCancel>
+                <AlertDialogAction as-child>
+                    <Button
+                        variant="destructive"
+                        :disabled="isDeleting"
+                        @click="confirmDeleteRole"
+                    >
+                        <Trash2 class="size-4" />
+                        <span>{{ isDeleting ? 'Deleting...' : 'Delete Role' }}</span>
+                    </Button>
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 </template>

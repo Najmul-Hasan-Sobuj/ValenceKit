@@ -24,6 +24,8 @@ class UserController extends Controller
         $admins = Admin::with(['roles', 'passkeys'])
             ->when($request->input('search'), fn ($q, $search) => $q->where(fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
             ->when($request->input('role'), fn ($q, $roleName) => $q->whereHas('roles', fn ($q) => $q->where('name', $roleName)))
+            ->when($request->input('from'), fn ($q, $from) => $q->whereDate('last_login_at', '>=', $from))
+            ->when($request->input('to'), fn ($q, $to) => $q->whereDate('last_login_at', '<=', $to))
             ->paginate(10)->withQueryString();
 
         // Passkeys typically determine if MFA is enabled
@@ -41,7 +43,7 @@ class UserController extends Controller
                 'mfaEnabled' => $mfaEnabled,
                 'mfaMissing' => $mfaMissing,
             ],
-            'filters' => $request->only(['search', 'role']),
+            'filters' => $request->only(['search', 'role', 'from', 'to']),
         ]);
     }
 
@@ -72,6 +74,10 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, Admin $user)
     {
+        if ($user->hasRole('Super Admin') && ! $request->user('admin')->hasRole('Super Admin')) {
+            return back()->with('error', 'Only Super Admins can modify a Super Admin account.');
+        }
+
         $user->update([
             'name' => $request->validated('name'),
             'email' => $request->validated('email'),
@@ -94,8 +100,14 @@ class UserController extends Controller
             return back()->with('error', 'You cannot delete yourself.');
         }
 
-        if ($user->hasRole('Super Admin') && Admin::role('Super Admin')->count() <= 1) {
-            return back()->with('error', 'Cannot delete the last Super Admin.');
+        if ($user->hasRole('Super Admin')) {
+            if (Admin::role('Super Admin')->count() <= 1) {
+                return back()->with('error', 'Cannot delete the last Super Admin.');
+            }
+
+            if (! $request->user('admin')->hasRole('Super Admin')) {
+                return back()->with('error', 'Only Super Admins can delete a Super Admin account.');
+            }
         }
 
         $user->delete();

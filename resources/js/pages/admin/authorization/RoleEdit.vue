@@ -15,30 +15,61 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { roles as rolesRoute } from '@/routes/admin/authorization';
-import { PERMISSION_GROUPS, allPermissionKeys, roles, type PermissionGroup, type Role } from './mockData';
+import { useForm } from '@inertiajs/vue3';
+import { FileText, KeyRound, Settings as SettingsIcon, ShieldCheck, Users } from '@lucide/vue';
+import authorization from '@/routes/admin/authorization';
+const rolesRoute = authorization.roles;
 
-const page = usePage();
-const roleId = page.props.roleId as number;
+interface Role {
+    id: number;
+    name: string;
+    description: string | null;
+    system: boolean;
+    members: number;
+    permissionKeys: string[];
+}
 
-const formRoleName = ref('');
-const formRoleDescription = ref('');
-const selectedPermissionIds = ref<string[]>([]);
-const permissionSearchQuery = ref('');
-const nameError = ref('');
-const selectedRole = ref<Role | null>(null);
+const props = defineProps<{
+    role: { data: Role };
+    permissions: Record<string, { id: number; name: string; guard_name: string; group_name: string }[]>;
+}>();
 
-onMounted(() => {
-    const foundRole = roles.value.find((r) => r.id === roleId);
-    if (foundRole) {
-        selectedRole.value = foundRole;
-        formRoleName.value = foundRole.name;
-        formRoleDescription.value = foundRole.description;
-        selectedPermissionIds.value = [...foundRole.permissionKeys];
-    } else {
-        router.get(rolesRoute.url());
-    }
+const PERMISSION_GROUPS_META: Record<string, { description: string; icon: any }> = {
+    'User Management': { description: 'Manage administrator accounts, invitations, and profiles', icon: Users },
+    'Role Management': { description: 'Manage access control roles, privileges, and boundaries', icon: KeyRound },
+    'System Settings': { description: 'Configure profile, security, and appearance settings', icon: SettingsIcon },
+};
+
+const PERMISSION_GROUPS = computed(() => {
+    return Object.entries(props.permissions).map(([groupName, perms]) => {
+        const meta = PERMISSION_GROUPS_META[groupName] || { description: '', icon: SettingsIcon };
+        return {
+            id: groupName,
+            name: groupName,
+            description: meta.description,
+            icon: meta.icon,
+            permissions: perms.map(p => ({
+                id: p.name,
+                name: p.name,
+                description: '',
+            })),
+        };
+    });
 });
+
+const allPermissionKeys = computed(() => {
+    return Object.values(props.permissions).flatMap(p => p).map(p => p.name);
+});
+
+const form = useForm({
+    name: props.role.data.name,
+    description: props.role.data.description ?? '',
+    permissions: props.role.data.permissionKeys,
+});
+
+const permissionSearchQuery = ref('');
+
+
 
 function permissionBadgeClass(permissionId: string): string {
     if (permissionId.includes('.delete') || permissionId.includes('mfa') || permissionId.includes('tokens') || permissionId.includes('export')) {
@@ -47,7 +78,7 @@ function permissionBadgeClass(permissionId: string): string {
     if (permissionId.includes('.edit') || permissionId.includes('.update') || permissionId.includes('.audit')) {
         return 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400';
     }
-    if (permissionId.includes('.create') || permissionId.includes('.invite') || permissionId.includes('.roles')) {
+    if (permissionId.includes('.create') || permissionId.includes('.invite')) {
         return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
     }
     return 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400';
@@ -56,9 +87,9 @@ function permissionBadgeClass(permissionId: string): string {
 const filteredPermissionGroups = computed(() => {
     const q = permissionSearchQuery.value.trim().toLowerCase();
     if (!q) {
-        return PERMISSION_GROUPS;
+        return PERMISSION_GROUPS.value;
     }
-    return PERMISSION_GROUPS.map((group) => {
+    return PERMISSION_GROUPS.value.map((group) => {
         const matching = group.permissions.filter((p) =>
             p.name.toLowerCase().includes(q) ||
             p.description.toLowerCase().includes(q) ||
@@ -72,90 +103,75 @@ const filteredPermissionGroups = computed(() => {
 });
 
 function isPermissionSelected(id: string): boolean {
-    return selectedPermissionIds.value.includes(id);
+    return form.permissions.includes(id);
 }
 
 function togglePermission(id: string, checked: boolean | 'indeterminate'): void {
-    if (selectedRole.value?.system) return;
+    if (props.role.data.system) return;
 
     if (checked === true) {
-        if (!selectedPermissionIds.value.includes(id)) {
-            selectedPermissionIds.value.push(id);
+        if (!form.permissions.includes(id)) {
+            form.permissions.push(id);
         }
     } else {
-        selectedPermissionIds.value = selectedPermissionIds.value.filter((p) => p !== id);
+        form.permissions = form.permissions.filter((p) => p !== id);
     }
 }
 
 function selectAllPermissions(): void {
-    if (selectedRole.value?.system) return;
-    selectedPermissionIds.value = [...allPermissionKeys];
+    if (props.role.data.system) return;
+    form.permissions = [...allPermissionKeys.value];
 }
 
 function clearAllPermissions(): void {
-    if (selectedRole.value?.system) return;
-    selectedPermissionIds.value = [];
+    if (props.role.data.system) return;
+    form.permissions = [];
 }
 
-function toggleGroupPermissions(group: PermissionGroup): void {
-    if (selectedRole.value?.system) return;
+function toggleGroupPermissions(group: any): void {
+    if (props.role.data.system) return;
 
-    const groupIds = group.permissions.map((p) => p.id);
-    const allSelected = groupIds.every((id) => selectedPermissionIds.value.includes(id));
+    const groupIds = group.permissions.map((p: any) => p.id);
+    const allSelected = groupIds.every((id: string) => form.permissions.includes(id));
 
     if (allSelected) {
-        selectedPermissionIds.value = selectedPermissionIds.value.filter((id) => !groupIds.includes(id));
+        form.permissions = form.permissions.filter((id: string) => !groupIds.includes(id));
     } else {
-        const toAdd = groupIds.filter((id) => !selectedPermissionIds.value.includes(id));
-        selectedPermissionIds.value.push(...toAdd);
+        const toAdd = groupIds.filter((id: string) => !form.permissions.includes(id));
+        form.permissions.push(...toAdd);
     }
 }
 
-function isGroupAllSelected(group: PermissionGroup): boolean {
-    return group.permissions.every((p) => selectedPermissionIds.value.includes(p.id));
+function isGroupAllSelected(group: any): boolean {
+    return group.permissions.every((p: any) => form.permissions.includes(p.id));
 }
 
-function groupSelectedCount(group: PermissionGroup): number {
-    return group.permissions.filter((p) => selectedPermissionIds.value.includes(p.id)).length;
+function groupSelectedCount(group: any): number {
+    return group.permissions.filter((p: any) => form.permissions.includes(p.id)).length;
 }
 
 function saveRole(): void {
-    if (selectedRole.value?.system) {
-        router.get(rolesRoute.url());
+    if (props.role.data.system) {
+        router.get(rolesRoute.index.url());
         return;
     }
 
-    const trimmedName = formRoleName.value.trim();
-    if (!trimmedName) {
-        nameError.value = 'Role name is required';
-        return;
-    }
-
-    if (selectedRole.value) {
-        const target = roles.value.find((r) => r.id === selectedRole.value!.id);
-        if (target) {
-            target.name = trimmedName;
-            target.description = formRoleDescription.value.trim() || 'Custom access profile';
-            target.permissionKeys = [...selectedPermissionIds.value];
-        }
-    }
-
-    router.get(rolesRoute.url());
+    form.put(rolesRoute.update.url(props.role.data.id));
 }
 
 defineOptions({
-    layout: { breadcrumbs: [{ title: 'Roles', href: rolesRoute.url() }, { title: 'Edit Role', href: '' }] },
+    layout: { breadcrumbs: [{ title: 'Roles', href: authorization.roles.index.url() }, { title: 'Edit Role', href: '' }] },
 });
 </script>
 
 <template>
-    <Head :title="selectedRole?.name ? `Edit ${selectedRole.name}` : 'Edit Role'" />
+    <Head :title="props.role.data.name ? `Edit ${props.role.data.name}` : 'Edit Role'" />
 
     <div class="flex flex-1 flex-col gap-6 p-4 md:p-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-4">
                 <Button variant="outline" size="icon" as-child class="shrink-0">
-                    <Link :href="rolesRoute.url()">
+                    <Link :href="rolesRoute.index.url()">
                         <ArrowLeft class="size-4" />
                         <span class="sr-only">Back</span>
                     </Link>
@@ -163,10 +179,10 @@ defineOptions({
                 <div>
                     <div class="flex items-center gap-3">
                         <h1 class="text-xl font-bold tracking-tight">
-                            {{ selectedRole?.system ? 'System Role Details' : 'Edit Role' }}
+                            {{ props.role.data.system ? 'System Role Details' : 'Edit Role' }}
                         </h1>
                         <Badge
-                            v-if="selectedRole?.system"
+                            v-if="props.role.data.system"
                             variant="outline"
                             class="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 gap-1"
                         >
@@ -179,9 +195,9 @@ defineOptions({
             </div>
             <div class="flex items-center gap-3 self-end sm:self-auto">
                 <Button variant="outline" as-child>
-                    <Link :href="rolesRoute.url()">Cancel</Link>
+                    <Link :href="rolesRoute.index.url()">Cancel</Link>
                 </Button>
-                <Button :disabled="selectedRole?.system || !formRoleName.trim()" @click="saveRole">
+                <Button :disabled="props.role.data.system || !form.name.trim() || form.processing" @click="saveRole">
                     <Check class="size-4 mr-1.5" />
                     Save changes
                 </Button>
@@ -193,7 +209,7 @@ defineOptions({
             <div class="space-y-4">
             <!-- System Role Notice -->
             <div
-                v-if="selectedRole?.system"
+                v-if="props.role.data.system"
                 class="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 text-sm text-muted-foreground"
             >
                 <Lock class="size-5 shrink-0 text-amber-500 mt-0.5" />
@@ -209,26 +225,27 @@ defineOptions({
                     <div class="space-y-2">
                         <Label for="role-name" class="font-medium">
                             Role name
-                            <span v-if="!selectedRole?.system" class="text-destructive">*</span>
+                            <span v-if="!props.role.data.system" class="text-destructive">*</span>
                         </Label>
                         <Input
                             id="role-name"
-                            v-model="formRoleName"
-                            :disabled="selectedRole?.system"
-                            placeholder="e.g. Content Manager"
-                            :class="nameError ? 'border-destructive focus-visible:ring-destructive' : ''"
+                            v-model="form.name"
+                            :disabled="props.role.data.system"
+                            placeholder="e.g. Support Specialist"
+                            :class="form.errors.name ? 'border-destructive focus-visible:ring-destructive' : ''"
                         />
-                        <p v-if="nameError" class="text-destructive text-sm">{{ nameError }}</p>
+                        <p v-if="form.errors.name" class="text-destructive text-sm">{{ form.errors.name }}</p>
                     </div>
 
                     <div class="space-y-2">
                         <Label for="role-description" class="font-medium">Description</Label>
                         <Input
                             id="role-description"
-                            v-model="formRoleDescription"
-                            :disabled="selectedRole?.system"
-                            placeholder="e.g. Manage content and media workflows"
+                            v-model="form.description"
+                            :disabled="props.role.data.system"
+                            placeholder="e.g. Manage user accounts and view system settings"
                         />
+                        <p v-if="form.errors.description" class="text-destructive text-sm">{{ form.errors.description }}</p>
                     </div>
                 </div>
             </div>
@@ -241,8 +258,9 @@ defineOptions({
                     <div class="flex items-center gap-3">
                         <h3 class="text-base font-semibold text-foreground">Permissions</h3>
                         <Badge variant="outline" class="font-normal">
-                            {{ selectedPermissionIds.length }} of {{ allPermissionKeys.length }} granted
+                            {{ form.permissions.length }} of {{ allPermissionKeys.length }} granted
                         </Badge>
+                        <p v-if="form.errors.permissions" class="text-destructive text-sm ml-4">{{ form.errors.permissions }}</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="relative w-full sm:w-64">
@@ -263,7 +281,7 @@ defineOptions({
                                 <span class="sr-only">Clear search</span>
                             </button>
                         </div>
-                        <div v-if="!selectedRole?.system" class="flex items-center gap-2">
+                        <div v-if="!props.role.data.system" class="flex items-center gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -312,7 +330,7 @@ defineOptions({
                                 </div>
                             </div>
                             <Button
-                                v-if="!selectedRole?.system"
+                                v-if="!props.role.data.system"
                                 variant="ghost"
                                 type="button"
                                 class="text-sm text-muted-foreground hover:text-foreground self-start sm:self-auto"
@@ -337,7 +355,7 @@ defineOptions({
                             >
                                 <Checkbox
                                     :model-value="isPermissionSelected(permission.id)"
-                                    :disabled="selectedRole?.system"
+                                    :disabled="props.role.data.system"
                                     class="mt-1"
                                     @update:model-value="togglePermission(permission.id, $event)"
                                 />

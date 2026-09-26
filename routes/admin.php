@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasskeyController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Admin\Authorization\RoleController;
 use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
@@ -12,7 +13,9 @@ use App\Http\Controllers\Admin\Settings\SecurityController;
 use App\Http\Middleware\Admin\Authenticate;
 use App\Http\Middleware\Admin\EnsureAdminIsActive;
 use App\Http\Middleware\Admin\RedirectIfAuthenticated;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::prefix(config('admin.alias'))
     ->name('admin.')
@@ -58,17 +61,17 @@ Route::prefix(config('admin.alias'))
                 ->name('dashboard');
 
             Route::apiResource('authorization/users', UserController::class);
-            Route::inertia('authorization/roles', 'admin/authorization/Roles')->name('authorization.roles');
-            Route::inertia('authorization/roles/create', 'admin/authorization/RoleCreate')->name('authorization.roles.create');
-            Route::get('authorization/roles/{id}/edit', function ($id) {
-                return inertia('admin/authorization/RoleEdit', ['roleId' => (int) $id]);
-            })->name('authorization.roles.edit');
+            Route::resource('authorization/roles', RoleController::class)->names('authorization.roles')->except(['show']);
 
             Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');
             Route::put('settings/password', [SecurityController::class, 'update'])->name('security.update');
-            Route::inertia('settings/appearance', 'admin/settings/Appearance')->name('appearance.edit');
+            Route::get('settings/appearance', function (Request $request) {
+                abort_unless($request->user('admin')->can('settings.appearance.view'), 403);
+
+                return Inertia::render('admin/settings/Appearance');
+            })->name('appearance.edit');
 
             Route::get('passkeys/register/options', [SettingsPasskeyController::class, 'options'])->name('passkeys.register.options');
             Route::post('passkeys/register', [SettingsPasskeyController::class, 'store'])->name('passkeys.register');

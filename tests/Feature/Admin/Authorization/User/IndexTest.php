@@ -34,3 +34,37 @@ it('can list users with metrics', function () {
             )
         );
 });
+
+it('can filter users by last login date range', function () {
+    // Admin with login 10 days ago
+    Admin::factory()->create([
+        'name' => 'Old Login Admin',
+        'last_login_at' => now()->subDays(10),
+    ]);
+
+    // Admin with login today
+    Admin::factory()->create([
+        'name' => 'Today Login Admin',
+        'last_login_at' => now(),
+    ]);
+
+    // Admin with login 30 days ago
+    Admin::factory()->create([
+        'name' => 'Ancient Login Admin',
+        'last_login_at' => now()->subDays(30),
+    ]);
+
+    $this->actingAs($this->admin, 'admin')
+        ->get(route('admin.users.index', [
+            'from' => now()->subDays(12)->toDateString(),
+            'to' => now()->subDays(8)->toDateString(),
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/authorization/Users')
+            ->has('admins.data', 1)
+            ->where('admins.data.0.name', 'Old Login Admin')
+            ->where('filters.from', now()->subDays(12)->toDateString())
+            ->where('filters.to', now()->subDays(8)->toDateString())
+        );
+});

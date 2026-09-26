@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
+use Spatie\Permission\Models\Permission;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -41,7 +42,15 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => Auth::guard('web')->user(),
-                'admin' => Auth::guard('admin')->user(),
+                'admin' => Auth::guard('admin')->check() ? array_merge(
+                    Auth::guard('admin')->user()->toArray(),
+                    [
+                        'roles' => Auth::guard('admin')->user()->roles->pluck('name')->values()->all(),
+                        'permissions' => Auth::guard('admin')->user()->hasRole('Super Admin')
+                            ? Permission::pluck('name')->values()->all()
+                            : Auth::guard('admin')->user()->getAllPermissions()->pluck('name')->values()->all(),
+                    ]
+                ) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
