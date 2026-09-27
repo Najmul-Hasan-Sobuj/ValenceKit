@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\Authorization\RoleController;
 use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\McpUsageController;
+use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\McpController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
@@ -81,6 +83,17 @@ Route::prefix(config('admin.alias'))
             Route::patch('settings/mcp/tools/{mcpTool}', [McpController::class, 'update'])->name('mcp.tools.update');
             Route::post('settings/mcp/tokens', [McpSettingsController::class, 'store'])->name('mcp.tokens.store');
             Route::delete('settings/mcp/tokens/{tokenId}', [McpSettingsController::class, 'destroy'])->name('mcp.tokens.destroy');
+
+            Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
+            Route::get('finance/summary', [FinanceController::class, 'summary'])->name('finance.summary');
+            Route::post('finance/transactions', [FinanceController::class, 'store'])->name('finance.transactions.store');
+            Route::put('finance/transactions/{transaction}', [FinanceController::class, 'update'])->name('finance.transactions.update');
+            Route::delete('finance/transactions/{transaction}', [FinanceController::class, 'destroy'])->name('finance.transactions.destroy');
+            Route::post('finance/transactions/bulk-destroy', [FinanceController::class, 'bulkDestroy'])->name('finance.transactions.bulk-destroy');
+            Route::get('finance/export', [FinanceController::class, 'export'])->name('finance.export');
+
+            Route::get('settings/finance', [FinanceSettingsController::class, 'edit'])->name('finance.settings.edit');
+            Route::patch('settings/finance', [FinanceSettingsController::class, 'update'])->name('finance.settings.update');
 
             Route::get('passkeys/register/options', [SettingsPasskeyController::class, 'options'])->name('passkeys.register.options');
             Route::post('passkeys/register', [SettingsPasskeyController::class, 'store'])->name('passkeys.register');

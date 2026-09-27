@@ -52,6 +52,16 @@ class RoleAndPermissionSeeder extends Seeder
             'settings.mcp.view' => 'View MCP (AI Tools) integrations and tokens tab',
             'settings.mcp.edit' => 'Manage MCP tools and generate new AI tokens',
             'settings.mcp.usage.view' => 'View MCP usage logs to monitor who uses the server',
+            'settings.finance.view' => 'View global finance currency and budget settings',
+            'settings.finance.edit' => 'Update global currency and financial configuration',
+        ],
+
+        'Finance Tracker' => [
+            'finance.view' => 'Browse financial dashboard, metrics, and transaction ledger',
+            'finance.create' => 'Log new income and expense transactions',
+            'finance.edit' => 'Modify existing transaction details',
+            'finance.delete' => 'Delete transactions and execute bulk deletions',
+            'finance.export' => 'Export financial transaction ledger to Excel',
         ],
     ];
 
@@ -79,6 +89,12 @@ class RoleAndPermissionSeeder extends Seeder
                 'settings.security.view',
                 'settings.appearance.view',
                 'settings.mcp.view',
+                'finance.view',
+                'finance.create',
+                'finance.edit',
+                'finance.export',
+                'settings.finance.view',
+                'settings.finance.edit',
             ],
         ],
         'Support' => [

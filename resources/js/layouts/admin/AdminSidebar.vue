@@ -9,10 +9,12 @@ import {
     Settings,
     ShieldCheck,
     Users,
+    Wallet,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
+import SidebarFinanceTracker from '@/components/SidebarFinanceTracker.vue';
 import UserInfo from '@/components/UserInfo.vue';
 import {
     DropdownMenu,
@@ -39,7 +41,9 @@ import { index as users } from '@/routes/admin/users';
 import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import { edit as editAppearance } from '@/routes/admin/appearance';
+import { edit as editFinanceSettings } from '@/routes/admin/finance/settings';
 import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
+import { index as indexFinance } from '@/routes/admin/finance';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -50,6 +54,7 @@ const { isMobile, state } = useSidebar();
 const firstAvailableSettingsUrl = computed(() => {
     if (can('settings.profile.view')) return editProfile();
     if (can('settings.security.view')) return editSecurity();
+    if (can('settings.finance.view')) return editFinanceSettings();
     if (can('settings.appearance.view')) return editAppearance();
     return null;
 });
@@ -98,6 +103,14 @@ const mainNavItems = computed<NavItem[]>(() => {
         });
     }
 
+    if (can('finance.view')) {
+        items.push({
+            title: 'Finance Tracker',
+            href: indexFinance(),
+            icon: Wallet,
+        });
+    }
+
     return items;
 });
 
@@ -121,7 +134,11 @@ const handleLogout = () => {
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="mainNavItems">
+                <template #action="{ item }">
+                    <SidebarFinanceTracker v-if="item.title === 'Finance Tracker'" />
+                </template>
+            </NavMain>
         </SidebarContent>
 
         <SidebarFooter>

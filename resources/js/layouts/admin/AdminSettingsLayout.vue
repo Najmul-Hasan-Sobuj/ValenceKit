@@ -10,6 +10,7 @@ import { edit as editAppearance } from '@/routes/admin/appearance';
 import { edit as editMcp } from '@/routes/admin/mcp';
 import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
+import { edit as editFinanceSettings } from '@/routes/admin/finance/settings';
 import type { NavItem } from '@/types';
 import { usePermissions } from '@/composables/usePermissions';
 
@@ -28,6 +29,10 @@ const sidebarNavItems = computed<NavItem[]>(() => {
 
     if (can('settings.mcp.view')) {
         items.push({ title: 'MCP (AI Tools)', href: editMcp() });
+    }
+
+    if (can('settings.finance.view')) {
+        items.push({ title: 'Finance', href: editFinanceSettings() });
     }
 
     if (can('settings.appearance.view')) {

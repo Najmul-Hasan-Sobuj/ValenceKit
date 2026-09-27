@@ -70,6 +70,7 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                             <span>{{ item.title }}</span>
                         </Link>
                     </SidebarMenuButton>
+                    <slot name="action" :item="item" />
                 </SidebarMenuItem>
             </template>
         </SidebarMenu>

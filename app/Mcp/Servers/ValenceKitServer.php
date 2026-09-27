@@ -2,6 +2,10 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Resources\SystemLogs;
+use App\Mcp\Tools\GetFinancialSummaryTool;
+use App\Mcp\Tools\GetUserRoles;
+use App\Mcp\Tools\RecordTransactionTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -13,11 +17,13 @@ use Laravel\Mcp\Server\Attributes\Version;
 class ValenceKitServer extends Server
 {
     protected array $tools = [
-        \App\Mcp\Tools\GetUserRoles::class,
+        GetUserRoles::class,
+        RecordTransactionTool::class,
+        GetFinancialSummaryTool::class,
     ];
 
     protected array $resources = [
-        \App\Mcp\Resources\SystemLogs::class,
+        SystemLogs::class,
     ];
 
     protected array $prompts = [

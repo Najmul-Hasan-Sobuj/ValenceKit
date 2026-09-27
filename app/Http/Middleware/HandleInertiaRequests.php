@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\FinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
@@ -55,6 +56,11 @@ class HandleInertiaRequests extends Middleware
                 ) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'finance' => [
+                'currency' => app(FinanceService::class)->getActiveCurrency(),
+                'categories' => app(FinanceService::class)->getCategories(),
+                'payment_methods' => config('finance.payment_methods', []),
+            ],
         ];
     }
 }
