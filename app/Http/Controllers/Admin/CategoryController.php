@@ -40,6 +40,7 @@ class CategoryController extends Controller
             ->withQueryString();
 
         $parentCategories = Category::query()
+            ->whereNull('parent_id')
             ->select('id', 'name', 'module', 'type', 'is_active')
             ->orderBy('name')
             ->get();

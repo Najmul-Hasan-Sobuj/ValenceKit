@@ -144,7 +144,7 @@ function formatNumber(num: number): string {
                 <!-- Budget Progress Bar -->
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between text-[11px]">
-                        <span class="text-muted-foreground">Budget pacing</span>
+                        <span class="text-muted-foreground">Monthly Global Budget Target</span>
                         <span
                             class="font-semibold"
                             :class="budgetPercentage > 100 ? 'text-rose-500' : budgetPercentage > 80 ? 'text-amber-500' : 'text-sidebar-foreground'"

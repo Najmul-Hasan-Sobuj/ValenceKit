@@ -528,7 +528,7 @@ defineOptions({
             <!-- Monthly Budget Health -->
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monthly Budget</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monthly Global Budget Target</span>
                     <div class="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <Activity class="size-4" />
                     </div>

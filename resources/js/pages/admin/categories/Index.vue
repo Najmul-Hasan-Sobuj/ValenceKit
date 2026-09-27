@@ -304,6 +304,8 @@ const toggleStatus = (category: any, newStatus: boolean) => {
                             <div v-else>
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium text-foreground text-sm">{{ category.name }}</span>
+                                    <span class="text-muted-foreground/60 text-xs">under</span>
+                                    <span class="font-medium text-foreground/80 text-sm">{{ category.parent?.name || parentCategories.find(c => c.id === category.parent_id)?.name }}</span>
                                     <Badge 
                                         variant="outline" 
                                         class="h-4.5 px-1.5 text-[10px] text-muted-foreground font-normal border-border/70 border-dashed"
@@ -311,10 +313,8 @@ const toggleStatus = (category: any, newStatus: boolean) => {
                                         Subcategory
                                     </Badge>
                                 </div>
-                                <div class="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <div class="text-xs text-muted-foreground mt-0.5">
                                     <span class="font-mono">{{ category.slug }}</span>
-                                    <span class="text-muted-foreground/40">•</span>
-                                    <span>under <strong class="font-medium text-foreground/80">{{ category.parent?.name || parentCategories.find(c => c.id === category.parent_id)?.name }}</strong></span>
                                 </div>
                             </div>
                         </TableCell>

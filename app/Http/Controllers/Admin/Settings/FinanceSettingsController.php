@@ -44,6 +44,11 @@ class FinanceSettingsController extends Controller
         $this->financeService->setActiveCurrency($validated['currency']);
         $this->financeService->setMonthlyBudget((float) $validated['monthly_budget']);
 
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Finance configuration updated successfully.'),
+        ]);
+
         return back()->with('success', 'Finance configuration updated successfully.');
     }
 }

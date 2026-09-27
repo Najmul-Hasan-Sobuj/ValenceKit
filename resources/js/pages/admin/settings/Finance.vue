@@ -108,9 +108,6 @@ defineOptions({
                 <Label for="monthly_budget" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Monthly Global Budget Target
                 </Label>
-                <p class="text-xs text-muted-foreground">
-                    Set a monthly expenditure ceiling. The sidebar and dashboard will pace your spending against this target.
-                </p>
 
                 <div class="relative flex max-w-sm items-center">
                     <span class="absolute left-3.5 text-base font-bold text-muted-foreground select-none">
