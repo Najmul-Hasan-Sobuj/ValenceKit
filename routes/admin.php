@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\Authorization\RoleController;
 use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\McpUsageController;
+use App\Http\Controllers\Admin\Settings\McpController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
 use App\Http\Controllers\Admin\Settings\ProfileController;
@@ -73,9 +75,10 @@ Route::prefix(config('admin.alias'))
 
                 return Inertia::render('admin/settings/Appearance');
             })->name('appearance.edit');
-            
-            Route::get('mcp/usage', [App\Http\Controllers\Admin\McpUsageController::class, 'index'])->name('mcp.usage.index');
+
+            Route::get('mcp/usage', [McpUsageController::class, 'index'])->name('mcp.usage.index');
             Route::get('settings/mcp', [McpSettingsController::class, 'edit'])->name('mcp.edit');
+            Route::patch('settings/mcp/tools/{mcpTool}', [McpController::class, 'update'])->name('mcp.tools.update');
             Route::post('settings/mcp/tokens', [McpSettingsController::class, 'store'])->name('mcp.tokens.store');
             Route::delete('settings/mcp/tokens/{tokenId}', [McpSettingsController::class, 'destroy'])->name('mcp.tokens.destroy');
 

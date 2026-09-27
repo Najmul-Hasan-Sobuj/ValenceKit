@@ -7,7 +7,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Resource;
 
-#[Description('A description of what this resource contains.')]
+#[Description('Retrieve recent application system error and debug logs.')]
 class SystemLogs extends Resource
 {
     /**
@@ -15,8 +15,15 @@ class SystemLogs extends Resource
      */
     public function handle(Request $request): Response
     {
-        //
+        $logFile = storage_path('logs/laravel.log');
 
-        return Response::text('The resource content.');
+        if (! file_exists($logFile)) {
+            return Response::text('No system log file found.');
+        }
+
+        $lines = file($logFile, FILE_IGNORE_NEW_LINES);
+        $recent = array_slice($lines, -100);
+
+        return Response::text(implode("\n", $recent));
     }
 }

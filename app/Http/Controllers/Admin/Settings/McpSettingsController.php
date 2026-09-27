@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\McpTool;
 use App\Models\McpUsageLog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -46,6 +47,7 @@ class McpSettingsController extends Controller
                 'uniqueClients' => McpUsageLog::distinct('ip_address')->count('ip_address'),
                 'activeTokensCount' => $admin->tokens()->count(),
             ],
+            'mcpTools' => McpTool::orderBy('name')->get(),
         ]);
     }
 

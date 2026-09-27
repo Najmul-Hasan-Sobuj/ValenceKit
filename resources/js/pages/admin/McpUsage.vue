@@ -15,11 +15,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Blobatar } from '@blobatar/vue'
 import RelativeTime from '@/components/RelativeTime.vue'
 import { Button } from '@/components/ui/button'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { VisXYContainer, VisStackedBar, VisAxis, VisCrosshair } from '@unovis/vue'
-import { computed } from 'vue'
+
+import { computed, ref, watch } from 'vue'
 import { index as indexMcpUsage } from '@/routes/admin/mcp/usage'
 import { BarChart3, Activity, Users, Radio } from '@lucide/vue'
+import DateRangePicker from '@/components/ui/date-range-picker/DateRangePicker.vue'
+import { parseDate } from '@internationalized/date'
+import { Bar } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const props = defineProps<{
   logs: {
@@ -51,24 +56,82 @@ const props = defineProps<{
     uniqueClients: number
     todayRequests: number
   }
+  chartInterval?: 'day' | 'month'
+  filters?: {
+    from?: string
+    to?: string
+  }
 }>()
 
-const maxRequests = computed(() => {
-  if (!props.activityChart || props.activityChart.length === 0) return 10
-  const max = Math.max(...props.activityChart.map(item => item.requests))
-  return max > 0 ? max : 10
+const chartData = computed(() => {
+  return {
+    labels: props.activityChart?.map(item => item.date) || [],
+    datasets: [
+      {
+        label: 'Requests',
+        backgroundColor: '#6366f1',
+        borderRadius: 4,
+        maxBarThickness: 32,
+        data: props.activityChart?.map(item => item.requests) || []
+      }
+    ]
+  }
 })
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false }
+  },
+  scales: {
+    y: { beginAtZero: true, ticks: { precision: 0 } },
+    x: { grid: { display: false } }
+  }
+}
 
 const formattedLogs = computed(() => {
   return props.logs.data
 })
 
-const chartConfig = {
-  requests: {
-    label: 'Requests',
-    color: 'hsl(var(--primary))'
+const dateRange = ref<{
+  start: any
+  end: any
+} | undefined>(undefined)
+
+watch(() => props.filters, (newFilters) => {
+  if (newFilters?.from && newFilters?.to) {
+    const s = parseDate(newFilters.from)
+    const e = parseDate(newFilters.to)
+    if (
+      !dateRange.value?.start ||
+      dateRange.value.start.toString() !== newFilters.from ||
+      !dateRange.value?.end ||
+      dateRange.value.end.toString() !== newFilters.to
+    ) {
+      dateRange.value = { start: s, end: e }
+    }
+  } else {
+    dateRange.value = undefined
   }
-}
+}, { immediate: true, deep: true })
+
+watch(dateRange, (newRange) => {
+  if (newRange?.start && newRange?.end) {
+    const newFrom = newRange.start.toString()
+    const newTo = newRange.end.toString()
+    if (newFrom !== props.filters?.from || newTo !== props.filters?.to) {
+      router.get(indexMcpUsage(), {
+        from: newFrom,
+        to: newTo,
+      }, { preserveState: true, replace: true })
+    }
+  } else if (!newRange || (!newRange.start && !newRange.end)) {
+    if (props.filters?.from || props.filters?.to) {
+      router.get(indexMcpUsage(), {}, { preserveState: true, replace: true })
+    }
+  }
+})
 
 defineOptions({
     layout: { breadcrumbs: [{ title: 'MCP Usage Logs', href: indexMcpUsage() }] },
@@ -85,10 +148,13 @@ defineOptions({
           title="MCP Usage Logs"
           description="Monitor who is connecting to your MCP server and using AI tools."
       />
-      <Badge variant="outline" class="gap-1.5 py-1 px-2.5 text-xs text-emerald-500 border-emerald-500/30 bg-emerald-500/10">
-        <Radio class="size-3 animate-pulse text-emerald-500" />
-        Live Logging Active
-      </Badge>
+      <div class="flex items-center gap-3">
+        <DateRangePicker v-model="dateRange" class="w-64 bg-background" />
+        <Badge variant="outline" class="gap-1.5 py-1 px-2.5 text-xs text-emerald-500 border-emerald-500/30 bg-emerald-500/10">
+          <Radio class="size-3 animate-pulse text-emerald-500" />
+          Live Logging Active
+        </Badge>
+      </div>
     </div>
 
     <!-- Usage Activity Chart & Stats -->
@@ -98,7 +164,7 @@ defineOptions({
           <div class="space-y-1">
             <CardTitle class="flex items-center gap-2 text-base">
               <BarChart3 class="size-4 text-primary" />
-              Invocations & Traffic (Past 7 Days)
+              Invocations & Traffic
             </CardTitle>
             <CardDescription>
               Volume of MCP requests received from AI agents (Cursor, Claude Desktop).
@@ -127,33 +193,15 @@ defineOptions({
           </div>
         </div>
 
-        <!-- Usage Activity Bar Chart (Shadcn Vue / Unovis) -->
+        <!-- Activity Bar Chart -->
         <div class="rounded-xl border bg-muted/20 p-4">
           <div class="flex items-center justify-between mb-4">
-            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Daily Request Distribution</span>
-            <span class="text-xs text-muted-foreground">Peak: {{ maxRequests }} reqs/day</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{{ chartInterval === 'month' ? 'Monthly Request Distribution' : 'Daily Request Distribution' }}</span>
           </div>
-          
-          <ChartContainer :config="chartConfig" class="h-48 w-full mt-4">
-            <VisXYContainer :data="activityChart" :margin="{ left: 0, right: 0, top: 0, bottom: 0 }">
-              <VisStackedBar
-                :x="(d, i) => i"
-                :y="[(d) => d.requests]"
-                :color="() => 'var(--color-requests)'"
-                :roundedCorners="4"
-                :barPadding="0.15"
-              />
-              <VisAxis 
-                type="x" 
-                :tickFormat="(i) => activityChart[i]?.day" 
-                :gridLine="false"
-                :domainLine="false"
-                :tickLine="false"
-              />
-              <VisCrosshair :color="() => 'var(--color-requests)'" />
-              <VisTooltip :customComponent="ChartTooltipContent" />
-            </VisXYContainer>
-          </ChartContainer>
+
+          <div class="h-64">
+            <Bar :data="chartData" :options="chartOptions" />
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -189,8 +237,13 @@ defineOptions({
                   </Avatar>
                 </div>
                 <div>
-                  <div class="font-medium">{{ log.user ? log.user.name : 'Unknown User' }}</div>
-                  <div class="text-xs text-muted-foreground break-all" v-if="!log.user || log.token_used">{{ log.token_used }}</div>
+                  <div class="font-medium">
+                    {{ log.user ? log.user.name : (log.token_used === 'default_env_token' ? 'System Application' : 'Unauthenticated') }}
+                  </div>
+                  <div class="text-xs text-muted-foreground break-all" v-if="!log.user || log.token_used">
+                    <span v-if="log.token_used === 'default_env_token'">Environment Configuration (.env)</span>
+                    <span v-else>{{ log.token_used }}</span>
+                  </div>
                 </div>
               </div>
             </TableCell>

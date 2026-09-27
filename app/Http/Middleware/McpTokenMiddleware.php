@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\McpUsageLog;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,12 +30,12 @@ class McpTokenMiddleware
             abort(401, 'Unauthorized MCP Access');
         }
 
-        \App\Models\McpUsageLog::create([
+        McpUsageLog::create([
             'token_used' => $tokenUsed,
             'user_id' => $userId,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'endpoint' => $request->fullUrl(),
+            'endpoint' => '/'.ltrim($request->path(), '/'),
         ]);
 
         return $next($request);
