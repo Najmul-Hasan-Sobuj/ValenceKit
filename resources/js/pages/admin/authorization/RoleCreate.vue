@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from '@inertiajs/vue3';
-import { FileText, KeyRound, Settings as SettingsIcon, ShieldCheck, Users } from '@lucide/vue';
+import { FileText, KeyRound, Settings as SettingsIcon, ShieldCheck, Users, FolderOpen, Wallet } from '@lucide/vue';
 import authorization from '@/routes/admin/authorization';
 const rolesRoute = authorization.roles;
 
@@ -34,6 +34,8 @@ const PERMISSION_GROUPS_META: Record<string, { description: string; icon: any }>
     'User Management': { description: 'Manage administrator accounts, invitations, and profiles', icon: Users },
     'Role Management': { description: 'Manage access control roles, privileges, and boundaries', icon: KeyRound },
     'System Settings': { description: 'Configure profile, security, and appearance settings', icon: SettingsIcon },
+    'Category Management': { description: 'Manage dynamic categories for all modules', icon: FolderOpen },
+    'Finance Tracker': { description: 'Manage financial transactions and budgets', icon: Wallet },
 };
 
 const PERMISSION_GROUPS = computed(() => {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Category;
 use App\Models\FinanceSetting;
 use App\Models\FinanceTransaction;
 use Carbon\Carbon;
@@ -60,21 +61,51 @@ class FinanceService
     /**
      * Get defined categories from config.
      *
-     * @return array<string, list<array{id: string, name: string, icon: string, color: string, monthly_budget?: float}>>
+     * @return array<string, list<array{id: string, name: string, icon: string, color: string}>>
      */
     public function getCategories(): array
     {
-        return config('finance.categories', ['income' => [], 'expense' => []]);
+        $rows = Category::forModule('finance')->latest()->get();
+
+        // Fallback to config during transition
+        if ($rows->isEmpty()) {
+            return config('finance.categories', ['income' => [], 'expense' => []]);
+        }
+
+        return [
+            'income' => $rows->where('type', 'income')->map(fn ($c) => [
+                'id' => $c->slug,
+                'name' => $c->name,
+                'icon' => $c->icon,
+                'color' => $c->color,
+            ])->values()->toArray(),
+            'expense' => $rows->where('type', 'expense')->map(fn ($c) => [
+                'id' => $c->slug,
+                'name' => $c->name,
+                'icon' => $c->icon,
+                'color' => $c->color,
+            ])->values()->toArray(),
+        ];
     }
 
     /**
      * Find a category definition by key.
      *
-     * @return array{id: string, name: string, icon: string, color: string, monthly_budget?: float}|null
+     * @return array{id: string, name: string, icon: string, color: string}|null
      */
     public function findCategory(string $key): ?array
     {
-        $categories = $this->getCategories();
+        $category = Category::forModule('finance')->where('slug', $key)->first();
+        if ($category) {
+            return [
+                'id' => $category->slug,
+                'name' => $category->name,
+                'icon' => $category->icon,
+                'color' => $category->color,
+            ];
+        }
+
+        $categories = config('finance.categories', ['income' => [], 'expense' => []]);
         foreach (['income', 'expense'] as $type) {
             foreach ($categories[$type] ?? [] as $cat) {
                 if ($cat['id'] === $key) {
@@ -392,95 +423,21 @@ class FinanceService
     public function exportExcel(Builder $query): StreamedResponse
     {
         $filename = 'finance_transactions_'.now()->format('Y-m-d_His').'.xls';
-        $activeCurrency = $this->getActiveCurrency();
+        $exportService = app(ExportService::class);
 
-        $headers = [
-            'Content-Type' => 'application/vnd.ms-excel; charset=utf-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
+        $columns = [
+            'ID' => fn ($tx) => $tx->id,
+            'Date' => fn ($tx) => $tx->transaction_date->toDateString(),
+            'Type' => fn ($tx) => strtoupper($tx->type),
+            'Amount' => fn ($tx) => ($tx->type === 'income' ? '+' : '-').number_format((float) $tx->amount, 2),
+            'Currency' => fn ($tx) => $tx->currency,
+            'Category' => fn ($tx) => $tx->category_name,
+            'Description' => fn ($tx) => $tx->description,
+            'Payment Method' => fn ($tx) => ucwords(str_replace('_', ' ', $tx->payment_method)),
+            'Reference' => fn ($tx) => $tx->reference ?? '-',
+            'Recorded By' => fn ($tx) => $tx->admin->name ?? 'System',
         ];
 
-        return new StreamedResponse(function () use ($query) {
-            $output = fopen('php://output', 'w');
-
-            // XML Spreadsheet 2003 / SpreadsheetML header
-            fwrite($output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-            fwrite($output, "<?mso-application progid=\"Excel.Sheet\"?>\n");
-            fwrite($output, "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n");
-            fwrite($output, " xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n");
-            fwrite($output, " xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n");
-            fwrite($output, " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n");
-            fwrite($output, " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n");
-
-            // Styles
-            fwrite($output, " <Styles>\n");
-            fwrite($output, "  <Style ss:ID=\"Default\" ss:Name=\"Normal\">\n");
-            fwrite($output, "   <Alignment ss:Vertical=\"Center\"/>\n");
-            fwrite($output, "  </Style>\n");
-            fwrite($output, "  <Style ss:ID=\"HeaderStyle\">\n");
-            fwrite($output, "   <Font ss:Bold=\"1\" ss:Color=\"#FFFFFF\"/>\n");
-            fwrite($output, "   <Interior ss:Color=\"#1E293B\" ss:Pattern=\"Solid\"/>\n");
-            fwrite($output, "   <Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/>\n");
-            fwrite($output, "  </Style>\n");
-            fwrite($output, "  <Style ss:ID=\"IncomeStyle\">\n");
-            fwrite($output, "   <Font ss:Color=\"#059669\" ss:Bold=\"1\"/>\n");
-            fwrite($output, "   <Alignment ss:Horizontal=\"Right\"/>\n");
-            fwrite($output, "  </Style>\n");
-            fwrite($output, "  <Style ss:ID=\"ExpenseStyle\">\n");
-            fwrite($output, "   <Font ss:Color=\"#DC2626\" ss:Bold=\"1\"/>\n");
-            fwrite($output, "   <Alignment ss:Horizontal=\"Right\"/>\n");
-            fwrite($output, "  </Style>\n");
-            fwrite($output, " </Styles>\n");
-
-            fwrite($output, " <Worksheet ss:Name=\"Transactions\">\n");
-            fwrite($output, "  <Table>\n");
-            fwrite($output, "   <Column ss:Width=\"50\"/>\n");  // ID
-            fwrite($output, "   <Column ss:Width=\"90\"/>\n");  // Date
-            fwrite($output, "   <Column ss:Width=\"70\"/>\n");  // Type
-            fwrite($output, "   <Column ss:Width=\"90\"/>\n");  // Amount
-            fwrite($output, "   <Column ss:Width=\"60\"/>\n");  // Currency
-            fwrite($output, "   <Column ss:Width=\"150\"/>\n"); // Category
-            fwrite($output, "   <Column ss:Width=\"220\"/>\n"); // Description
-            fwrite($output, "   <Column ss:Width=\"110\"/>\n"); // Payment Method
-            fwrite($output, "   <Column ss:Width=\"90\"/>\n");  // Reference
-            fwrite($output, "   <Column ss:Width=\"120\"/>\n"); // Recorded By
-
-            // Header row
-            fwrite($output, "   <Row ss:StyleID=\"HeaderStyle\" ss:Height=\"25\">\n");
-            foreach (['ID', 'Date', 'Type', 'Amount', 'Currency', 'Category', 'Description', 'Payment Method', 'Reference', 'Recorded By'] as $col) {
-                fwrite($output, '    <Cell><Data ss:Type="String">'.htmlspecialchars($col)."</Data></Cell>\n");
-            }
-            fwrite($output, "   </Row>\n");
-
-            // Data rows
-            $query->with('admin')->chunk(100, function ($transactions) use ($output) {
-                foreach ($transactions as $tx) {
-                    $typeStyle = $tx->type === 'income' ? 'IncomeStyle' : 'ExpenseStyle';
-                    $amountPrefix = $tx->type === 'income' ? '+' : '-';
-                    $formattedAmount = $amountPrefix.number_format((float) $tx->amount, 2);
-
-                    fwrite($output, "   <Row>\n");
-                    fwrite($output, "    <Cell><Data ss:Type=\"Number\">{$tx->id}</Data></Cell>\n");
-                    fwrite($output, "    <Cell><Data ss:Type=\"String\">{$tx->transaction_date->toDateString()}</Data></Cell>\n");
-                    fwrite($output, '    <Cell><Data ss:Type="String">'.strtoupper($tx->type)."</Data></Cell>\n");
-                    fwrite($output, "    <Cell ss:StyleID=\"{$typeStyle}\"><Data ss:Type=\"String\">".htmlspecialchars($formattedAmount)."</Data></Cell>\n");
-                    fwrite($output, "    <Cell><Data ss:Type=\"String\">{$tx->currency}</Data></Cell>\n");
-                    fwrite($output, '    <Cell><Data ss:Type="String">'.htmlspecialchars($tx->category_name)."</Data></Cell>\n");
-                    fwrite($output, '    <Cell><Data ss:Type="String">'.htmlspecialchars($tx->description)."</Data></Cell>\n");
-                    fwrite($output, '    <Cell><Data ss:Type="String">'.htmlspecialchars(ucwords(str_replace('_', ' ', $tx->payment_method)))."</Data></Cell>\n");
-                    fwrite($output, '    <Cell><Data ss:Type="String">'.htmlspecialchars($tx->reference ?? '-')."</Data></Cell>\n");
-                    fwrite($output, '    <Cell><Data ss:Type="String">'.htmlspecialchars($tx->admin->name ?? 'System')."</Data></Cell>\n");
-                    fwrite($output, "   </Row>\n");
-                }
-            });
-
-            fwrite($output, "  </Table>\n");
-            fwrite($output, " </Worksheet>\n");
-            fwrite($output, "</Workbook>\n");
-
-            fclose($output);
-        }, 200, $headers);
+        return $exportService->exportExcel($query->with('admin'), $filename, $columns);
     }
 }

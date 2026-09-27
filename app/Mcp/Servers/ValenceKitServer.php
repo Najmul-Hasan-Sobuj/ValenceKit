@@ -3,6 +3,7 @@
 namespace App\Mcp\Servers;
 
 use App\Mcp\Resources\SystemLogs;
+use App\Mcp\Tools\GetCategoriesForModuleTool;
 use App\Mcp\Tools\GetFinancialSummaryTool;
 use App\Mcp\Tools\GetUserRoles;
 use App\Mcp\Tools\RecordTransactionTool;
@@ -20,6 +21,7 @@ class ValenceKitServer extends Server
         GetUserRoles::class,
         RecordTransactionTool::class,
         GetFinancialSummaryTool::class,
+        GetCategoriesForModuleTool::class,
     ];
 
     protected array $resources = [

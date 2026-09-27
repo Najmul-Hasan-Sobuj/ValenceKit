@@ -10,6 +10,7 @@ import {
     ShieldCheck,
     Users,
     Wallet,
+    FolderOpen,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -44,6 +45,7 @@ import { edit as editAppearance } from '@/routes/admin/appearance';
 import { edit as editFinanceSettings } from '@/routes/admin/finance/settings';
 import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
 import { index as indexFinance } from '@/routes/admin/finance';
+import { index as indexCategories } from '@/routes/admin/categories';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -108,6 +110,14 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'Finance Tracker',
             href: indexFinance(),
             icon: Wallet,
+        });
+    }
+
+    if (can('categories.view')) {
+        items.push({
+            title: 'Categories',
+            href: indexCategories(),
+            icon: FolderOpen,
         });
     }
 

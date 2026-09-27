@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Auth\PasskeyController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\Authorization\RoleController;
 use App\Http\Controllers\Admin\Authorization\UserController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\McpUsageController;
@@ -67,6 +68,10 @@ Route::prefix(config('admin.alias'))
 
             Route::apiResource('authorization/users', UserController::class);
             Route::resource('authorization/roles', RoleController::class)->names('authorization.roles')->except(['show']);
+
+            Route::apiResource('categories', CategoryController::class)
+                ->except(['show'])
+                ->names('categories');
 
             Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');

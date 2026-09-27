@@ -56,6 +56,13 @@ class RoleAndPermissionSeeder extends Seeder
             'settings.finance.edit' => 'Update global currency and financial configuration',
         ],
 
+        'Category Management' => [
+            'categories.view' => 'Browse and inspect categories',
+            'categories.create' => 'Create new categories',
+            'categories.edit' => 'Update category details',
+            'categories.delete' => 'Remove custom categories',
+        ],
+
         'Finance Tracker' => [
             'finance.view' => 'Browse financial dashboard, metrics, and transaction ledger',
             'finance.create' => 'Log new income and expense transactions',
@@ -95,6 +102,10 @@ class RoleAndPermissionSeeder extends Seeder
                 'finance.export',
                 'settings.finance.view',
                 'settings.finance.edit',
+                'categories.view',
+                'categories.create',
+                'categories.edit',
+                'categories.delete',
             ],
         ],
         'Support' => [
