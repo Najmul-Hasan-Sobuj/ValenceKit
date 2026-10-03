@@ -9,6 +9,7 @@ use App\Models\Admin;
 use App\Notifications\AdminInviteNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -52,21 +53,21 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request)
     {
-        $defaultPassword = 'Password123!';
+        $temporaryPassword = Str::password(24);
 
         $admin = Admin::create([
             'name' => $request->validated('name'),
             'email' => $request->validated('email'),
-            'password' => Hash::make($defaultPassword),
+            'password' => Hash::make($temporaryPassword),
             'is_active' => $request->validated('is_active', true),
             'must_change_password' => true,
         ]);
 
         $admin->assignRole($request->validated('role'));
 
-        $admin->notify(new AdminInviteNotification($defaultPassword));
+        $admin->notify(new AdminInviteNotification($temporaryPassword));
 
-        return back()->with('success', 'User invited successfully. Default password is: '.$defaultPassword);
+        return back()->with('success', 'User invited successfully. The temporary password was sent by email.');
     }
 
     /**

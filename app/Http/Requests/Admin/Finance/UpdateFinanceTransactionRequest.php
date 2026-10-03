@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests\Admin\Finance;
 
+use App\Models\FinanceTransaction;
+use App\Services\FinanceService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateFinanceTransactionRequest extends FormRequest
 {
@@ -33,6 +36,34 @@ class UpdateFinanceTransactionRequest extends FormRequest
             'is_recurring' => ['boolean'],
             'recurring_frequency' => ['nullable', 'string', Rule::in(['weekly', 'monthly', 'yearly'])],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /**
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->hasAny(['type', 'category_key'])) {
+                    return;
+                }
+
+                $transaction = $this->route('transaction');
+                if (! $transaction instanceof FinanceTransaction || ! $this->filled('category_key')) {
+                    return;
+                }
+
+                $category = app(FinanceService::class)->findActiveCategory(
+                    (string) $this->input('category_key'),
+                    (string) $this->input('type', $transaction->type),
+                );
+
+                if (! $category) {
+                    $validator->errors()->add('category_key', 'Select an active category that matches the transaction type.');
+                }
+            },
         ];
     }
 }

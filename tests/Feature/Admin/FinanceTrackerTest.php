@@ -3,11 +3,13 @@
 use App\Mcp\Tools\GetFinancialSummaryTool;
 use App\Mcp\Tools\RecordTransactionTool;
 use App\Models\Admin;
+use App\Models\Category;
 use App\Models\FinanceTransaction;
 use App\Services\FinanceService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Mcp\Request as McpRequest;
+use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     $this->seed(RoleAndPermissionSeeder::class);
@@ -87,6 +89,32 @@ it('validates transaction fields properly', function () {
             'payment_method' => 'invalid_method',
         ])
         ->assertSessionHasErrors(['type', 'amount', 'category_key', 'description', 'transaction_date', 'payment_method']);
+});
+
+it('rejects inactive finance categories instead of falling back to config categories', function () {
+    Category::create([
+        'module' => 'finance',
+        'type' => 'expense',
+        'name' => 'Cloud Infrastructure',
+        'slug' => 'cloud_infra',
+        'is_active' => false,
+        'is_system' => false,
+    ]);
+
+    $this->actingAs($this->superAdmin, 'admin')
+        ->post(route('admin.finance.transactions.store'), [
+            'type' => 'expense',
+            'amount' => 120.50,
+            'category_key' => 'cloud_infra',
+            'description' => 'Inactive category attempt',
+            'transaction_date' => now()->toDateString(),
+            'payment_method' => 'card',
+        ])
+        ->assertSessionHasErrors('category_key');
+
+    $this->assertDatabaseMissing('finance_transactions', [
+        'description' => 'Inactive category attempt',
+    ]);
 });
 
 it('can update an existing transaction', function () {
@@ -215,6 +243,8 @@ it('can update global currency to Bangladeshi Taka (BDT) and adjust monthly budg
 });
 
 it('can execute MCP tools to record transaction and get financial summary', function () {
+    Sanctum::actingAs($this->superAdmin, ['mcp:access']);
+
     $recordTool = new RecordTransactionTool;
     $request = new McpRequest([
         'type' => 'income',

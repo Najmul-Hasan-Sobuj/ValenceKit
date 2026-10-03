@@ -3,12 +3,11 @@
 namespace App\Mcp\Tools;
 
 use App\Models\Category;
-use Illuminate\Json\Schema\JsonSchema;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-use Laravel\Mcp\Server\Tool;
 
-class GetCategoriesForModuleTool extends Tool
+class GetCategoriesForModuleTool extends BaseDbTool
 {
     protected string $description = 'List all categories for a given module (e.g. finance, product)';
 
@@ -16,7 +15,7 @@ class GetCategoriesForModuleTool extends Tool
     {
         return [
             'module' => $schema->string()->description('Module slug')->required(),
-            'type' => $schema->string()->description('Filter by type: income, expense')->optional(),
+            'type' => $schema->string()->description('Filter by type: income, expense'),
         ];
     }
 
@@ -28,6 +27,7 @@ class GetCategoriesForModuleTool extends Tool
         ]);
 
         $categories = Category::forModule($request->get('module'))
+            ->active()
             ->when($request->filled('type'), fn ($q) => $q->ofType($request->get('type')))
             ->latest()
             ->get();

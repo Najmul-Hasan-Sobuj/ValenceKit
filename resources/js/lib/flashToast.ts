@@ -25,7 +25,9 @@ export function initializeFlashToast(): void {
             props.success = null;
         }
 
-        const data = (props.flash?.toast || page.flash?.toast) as FlashToast | undefined;
+        const data = (props.flash?.toast || page.flash?.toast) as
+            | FlashToast
+            | undefined;
         if (data && data.type && data.message) {
             toast[data.type](data.message);
             if (props.flash) props.flash.toast = null;

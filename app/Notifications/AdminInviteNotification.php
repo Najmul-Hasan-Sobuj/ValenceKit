@@ -15,7 +15,7 @@ class AdminInviteNotification extends Notification implements ShouldQueue
      * Create a new notification instance.
      */
     public function __construct(
-        public string $defaultPassword
+        public string $temporaryPassword
     ) {}
 
     /**
@@ -37,7 +37,7 @@ class AdminInviteNotification extends Notification implements ShouldQueue
             ->subject('You have been invited to '.config('app.name'))
             ->greeting('Hello '.$notifiable->name.'!')
             ->line('You have been invited to join the '.config('app.name').' administration panel.')
-            ->line('Your temporary password is: **'.$this->defaultPassword.'**')
+            ->line('Your temporary password is: **'.$this->temporaryPassword.'**')
             ->line('You will be required to change this password upon your first login.')
             ->action('Log in', route('admin.login'))
             ->line('If you did not expect this invitation, you can ignore this email.');

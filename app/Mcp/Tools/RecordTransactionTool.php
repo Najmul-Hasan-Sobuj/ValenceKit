@@ -34,8 +34,12 @@ class RecordTransactionTool extends BaseDbTool
 
         $financeService = app(FinanceService::class);
         $currency = $financeService->getActiveCurrency();
+        $admin = auth('sanctum')->user();
 
-        // Default or match category
+        if (! $admin instanceof Admin) {
+            return Response::text('Error: Recording transactions requires an admin MCP token.');
+        }
+
         if (empty($categoryKey)) {
             $categories = $financeService->getCategories();
             $categoryKey = $type === 'income'
@@ -43,10 +47,9 @@ class RecordTransactionTool extends BaseDbTool
                 : ($categories['expense'][0]['id'] ?? 'other_expense');
         }
 
-        // Get first admin as system recorder if no specific admin context
-        $admin = Admin::first();
-        if (! $admin) {
-            return Response::text('Error: No admin account found to record transaction.');
+        $category = $financeService->findActiveCategory($categoryKey, $type);
+        if (! $category) {
+            return Response::text("Error: Active {$type} category not found for '{$categoryKey}'.");
         }
 
         $transaction = $financeService->createTransaction([
@@ -73,11 +76,11 @@ class RecordTransactionTool extends BaseDbTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'type' => $schema->string("Transaction type: 'income' or 'expense'")->required(),
-            'amount' => $schema->number('The monetary amount of the transaction')->required(),
-            'description' => $schema->string('Brief description or reason for the transaction')->required(),
-            'category' => $schema->string("Category identifier (e.g. 'software_saas', 'cloud_infra', 'client_retainer', 'marketing')"),
-            'payment_method' => $schema->string("Payment method ('card', 'bank_transfer', 'cash', 'bkash_nagad', 'other')"),
+            'type' => $schema->string()->description("Transaction type: 'income' or 'expense'")->required(),
+            'amount' => $schema->number()->description('The monetary amount of the transaction')->required(),
+            'description' => $schema->string()->description('Brief description or reason for the transaction')->required(),
+            'category' => $schema->string()->description("Category identifier (e.g. 'software_saas', 'cloud_infra', 'client_retainer', 'marketing')"),
+            'payment_method' => $schema->string()->description("Payment method ('card', 'bank_transfer', 'cash', 'bkash_nagad', 'other')"),
         ];
     }
 }

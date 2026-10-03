@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Admin;
 use App\Models\McpUsageLog;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,14 +20,17 @@ class McpTokenMiddleware
     {
         $defaultToken = config('services.mcp.default_token');
         $bearerToken = $request->bearerToken();
-        $user = auth('sanctum')->user();
+        $actor = auth('sanctum')->user();
+        $token = $actor?->currentAccessToken();
 
         if ($defaultToken && $bearerToken === $defaultToken) {
             $tokenUsed = 'default_env_token';
             $userId = null;
-        } elseif ($user) {
+            $adminId = null;
+        } elseif ($actor && $token && $token->can('mcp:access')) {
             $tokenUsed = 'sanctum_token';
-            $userId = $user->id;
+            $userId = $actor instanceof User ? $actor->id : null;
+            $adminId = $actor instanceof Admin ? $actor->id : null;
         } else {
             abort(401, 'Unauthorized MCP Access');
         }
@@ -33,6 +38,7 @@ class McpTokenMiddleware
         McpUsageLog::create([
             'token_used' => $tokenUsed,
             'user_id' => $userId,
+            'admin_id' => $adminId,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'endpoint' => '/'.ltrim($request->path(), '/'),

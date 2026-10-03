@@ -34,7 +34,11 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                 <Collapsible
                     v-if="item.children?.length"
                     as-child
-                    :default-open="item.children?.some((child) => isCurrentOrParentUrl(child.href))"
+                    :default-open="
+                        item.children?.some((child) =>
+                            isCurrentOrParentUrl(child.href),
+                        )
+                    "
                     class="group/collapsible"
                 >
                     <SidebarMenuItem>
@@ -42,13 +46,23 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                             <SidebarMenuButton :tooltip="item.title">
                                 <component :is="item.icon" />
                                 <span>{{ item.title }}</span>
-                                <ChevronRight class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                <ChevronRight
+                                    class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                                />
                             </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <SidebarMenuSub>
-                                <SidebarMenuSubItem v-for="child in item.children" :key="child.title">
-                                    <SidebarMenuSubButton as-child :is-active="isCurrentOrParentUrl(child.href)">
+                                <SidebarMenuSubItem
+                                    v-for="child in item.children"
+                                    :key="child.title"
+                                >
+                                    <SidebarMenuSubButton
+                                        as-child
+                                        :is-active="
+                                            isCurrentOrParentUrl(child.href)
+                                        "
+                                    >
                                         <Link :href="child.href">
                                             <component :is="child.icon" />
                                             <span>{{ child.title }}</span>

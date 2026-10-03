@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { DateRange, DateValue } from '@internationalized/date';
 import {
     CalendarDate,
     endOfMonth,
@@ -27,6 +26,8 @@ import {
     DateRangePickerRoot,
     DateRangePickerTrigger,
 } from 'reka-ui';
+import type { DateValue } from '@internationalized/date';
+import type { DateRange } from '@/types';
 
 const props = withDefaults(defineProps<{
     placeholder?: string;
@@ -35,11 +36,17 @@ const props = withDefaults(defineProps<{
     placeholder: 'Filter by date range',
 });
 
-const model = defineModel<DateRange | undefined>();
+const externalModel = defineModel<unknown>();
+const model = computed<DateRange | undefined>({
+    get: () => externalModel.value as DateRange | undefined,
+    set: (value) => {
+        externalModel.value = value;
+    },
+});
 const open = defineModel<boolean>('open', { default: false });
 const currentDate = today(getLocalTimeZone());
 
-const rootModel = computed({
+const rootModel = computed<DateRange | undefined>({
     get: () => model.value ?? { start: undefined, end: undefined },
     set: (val: any) => {
         if (!val || !val.start) {
@@ -47,6 +54,12 @@ const rootModel = computed({
         } else {
             model.value = val;
         }
+    },
+});
+const pickerModel = computed<any>({
+    get: () => rootModel.value,
+    set: (value: DateRange | undefined) => {
+        rootModel.value = value;
     },
 });
 
@@ -61,6 +74,12 @@ function resolveInitialPlaceholder(): DateValue {
 }
 
 const placeholder = ref<DateValue>(resolveInitialPlaceholder());
+const pickerPlaceholder = computed<any>({
+    get: () => placeholder.value,
+    set: (value: DateValue) => {
+        placeholder.value = value;
+    },
+});
 
 // Month & Year dropdown states
 const isMonthOpen = ref(false);
@@ -282,9 +301,9 @@ function clearRange(): void {
 
 <template>
     <DateRangePickerRoot
-        v-model="rootModel"
+        v-model="pickerModel"
         v-model:open="open"
-        v-model:placeholder="placeholder"
+        v-model:placeholder="pickerPlaceholder"
         :number-of-months="2"
         :max-value="currentDate"
         :close-on-select="false"

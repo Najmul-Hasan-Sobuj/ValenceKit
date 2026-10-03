@@ -65,7 +65,7 @@ class FinanceService
      */
     public function getCategories(): array
     {
-        $rows = Category::forModule('finance')->latest()->get();
+        $rows = Category::forModule('finance')->active()->latest()->get();
 
         // Fallback to config during transition
         if ($rows->isEmpty()) {
@@ -108,6 +108,37 @@ class FinanceService
         $categories = config('finance.categories', ['income' => [], 'expense' => []]);
         foreach (['income', 'expense'] as $type) {
             foreach ($categories[$type] ?? [] as $cat) {
+                if ($cat['id'] === $key) {
+                    return $cat;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public function findActiveCategory(string $key, ?string $type = null): ?array
+    {
+        $category = Category::forModule('finance')
+            ->where('slug', $key)
+            ->first();
+
+        if ($category) {
+            if (! $category->is_active || ($type && $category->type !== $type)) {
+                return null;
+            }
+
+            return [
+                'id' => $category->slug,
+                'name' => $category->name,
+                'icon' => $category->icon,
+                'color' => $category->color,
+            ];
+        }
+
+        $categories = config('finance.categories', ['income' => [], 'expense' => []]);
+        foreach ($type ? [$type] : ['income', 'expense'] as $categoryType) {
+            foreach ($categories[$categoryType] ?? [] as $cat) {
                 if ($cat['id'] === $key) {
                     return $cat;
                 }
@@ -320,14 +351,18 @@ class FinanceService
     public function createTransaction(array $data, int $adminId): FinanceTransaction
     {
         $activeCurrency = $this->getActiveCurrency();
-        $category = $this->findCategory($data['category_key'] ?? '');
+        $category = $this->findActiveCategory((string) ($data['category_key'] ?? ''), (string) ($data['type'] ?? ''));
+
+        if (! $category) {
+            throw new \InvalidArgumentException('The selected finance category is invalid or inactive.');
+        }
 
         return FinanceTransaction::create([
             'type' => $data['type'],
             'amount' => $data['amount'],
             'currency' => $data['currency'] ?? $activeCurrency['code'],
             'category_key' => $data['category_key'],
-            'category_name' => $category['name'] ?? ($data['category_name'] ?? ucfirst($data['category_key'])),
+            'category_name' => $category['name'],
             'description' => $data['description'],
             'reference' => ! empty($data['reference']) ? $data['reference'] : FinanceTransaction::generateReference(),
             'transaction_date' => $data['transaction_date'] ?? now()->toDateString(),
@@ -347,10 +382,13 @@ class FinanceService
     public function updateTransaction(FinanceTransaction $transaction, array $data): FinanceTransaction
     {
         if (isset($data['category_key']) && $data['category_key'] !== $transaction->category_key) {
-            $category = $this->findCategory($data['category_key']);
-            if ($category) {
-                $data['category_name'] = $category['name'];
+            $type = (string) ($data['type'] ?? $transaction->type);
+            $category = $this->findActiveCategory((string) $data['category_key'], $type);
+            if (! $category) {
+                throw new \InvalidArgumentException('The selected finance category is invalid or inactive.');
             }
+
+            $data['category_name'] = $category['name'];
         }
 
         $transaction->update($data);

@@ -57,7 +57,7 @@ import {
 } from '@/components/ui/table';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { parseDate } from '@internationalized/date';
-import type { DateRange } from 'reka-ui';
+import type { DateRange } from '@/types';
 import {
     index as financeIndex,
     bulkDestroy as financeBulkDestroy,
@@ -80,7 +80,15 @@ import {
     Tooltip as ChartTooltip,
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, ChartTitle, ChartTooltip, Legend);
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    ArcElement,
+    ChartTitle,
+    ChartTooltip,
+    Legend,
+);
 
 const props = defineProps<{
     transactions: {
@@ -138,8 +146,18 @@ const props = defineProps<{
         icons: string[];
     };
     categories: {
-        income: Array<{ id: string; name: string; icon: string; color: string }>;
-        expense: Array<{ id: string; name: string; icon: string; color: string }>;
+        income: Array<{
+            id: string;
+            name: string;
+            icon: string;
+            color: string;
+        }>;
+        expense: Array<{
+            id: string;
+            name: string;
+            icon: string;
+            color: string;
+        }>;
     };
     paymentMethods: Record<string, string>;
     currency: {
@@ -174,13 +192,14 @@ const selectedType = ref(
         ? 'Income Only'
         : props.filters?.type === 'expense'
           ? 'Expense Only'
-          : 'All Types'
+          : 'All Types',
 );
 
 const selectedCategory = ref(
     props.filters?.category
-        ? (allCategoriesList.value.find((c) => c.id === props.filters.category)?.name ?? 'All Categories')
-        : 'All Categories'
+        ? (allCategoriesList.value.find((c) => c.id === props.filters.category)
+              ?.name ?? 'All Categories')
+        : 'All Categories',
 );
 
 const selectedPaymentMethod = ref(props.filters?.payment_method ?? '');
@@ -206,8 +225,12 @@ watchDebounced(
             return;
         }
 
-        const fromStr = dateRange.value?.start ? dateRange.value.start.toString() : '';
-        const toStr = dateRange.value?.end ? dateRange.value.end.toString() : '';
+        const fromStr = dateRange.value?.start
+            ? dateRange.value.start.toString()
+            : '';
+        const toStr = dateRange.value?.end
+            ? dateRange.value.end.toString()
+            : '';
 
         const typeParam =
             selectedType.value === 'Income Only'
@@ -219,7 +242,9 @@ watchDebounced(
         const catParam =
             selectedCategory.value === 'All Categories'
                 ? ''
-                : (allCategoriesList.value.find((c) => c.name === selectedCategory.value)?.id ?? '');
+                : (allCategoriesList.value.find(
+                      (c) => c.name === selectedCategory.value,
+                  )?.id ?? '');
 
         router.get(
             financeIndex.url(),
@@ -235,10 +260,10 @@ watchDebounced(
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
-            }
+            },
         );
     },
-    { debounce: 300 }
+    { debounce: 300 },
 );
 
 // Drawer state
@@ -284,7 +309,10 @@ function confirmDelete() {
 // Bulk Selection
 const selectedIds = ref<number[]>([]);
 const isAllSelected = computed(() => {
-    return props.transactions.data.length > 0 && props.transactions.data.every((tx) => selectedIds.value.includes(tx.id));
+    return (
+        props.transactions.data.length > 0 &&
+        props.transactions.data.every((tx) => selectedIds.value.includes(tx.id))
+    );
 });
 
 function toggleSelectAll() {
@@ -323,7 +351,7 @@ function confirmBulkDelete() {
             onFinish: () => {
                 isBulkDeleting.value = false;
             },
-        }
+        },
     );
 }
 
@@ -342,13 +370,18 @@ function handleExport(idsOnly = false) {
         const catParam =
             selectedCategory.value === 'All Categories'
                 ? ''
-                : (allCategoriesList.value.find((c) => c.name === selectedCategory.value)?.id ?? '');
+                : (allCategoriesList.value.find(
+                      (c) => c.name === selectedCategory.value,
+                  )?.id ?? '');
         if (search.value) params.set('search', search.value);
         if (typeParam) params.set('type', typeParam);
         if (catParam) params.set('category', catParam);
-        if (selectedPaymentMethod.value) params.set('payment_method', selectedPaymentMethod.value);
-        if (dateRange.value?.start) params.set('from', dateRange.value.start.toString());
-        if (dateRange.value?.end) params.set('to', dateRange.value.end.toString());
+        if (selectedPaymentMethod.value)
+            params.set('payment_method', selectedPaymentMethod.value);
+        if (dateRange.value?.start)
+            params.set('from', dateRange.value.start.toString());
+        if (dateRange.value?.end)
+            params.set('to', dateRange.value.end.toString());
     }
 
     window.location.href = `${financeExport.url()}?${params.toString()}`;
@@ -439,7 +472,9 @@ const categoryChartOptions = {
 };
 
 defineOptions({
-    layout: { breadcrumbs: [{ title: 'Finance Tracker', href: financeIndex.url() }] },
+    layout: {
+        breadcrumbs: [{ title: 'Finance Tracker', href: financeIndex.url() }],
+    },
 });
 </script>
 
@@ -448,7 +483,9 @@ defineOptions({
 
     <div class="flex flex-1 flex-col gap-6 p-4 md:p-6">
         <!-- Page Header -->
-        <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div
+            class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"
+        >
             <Heading
                 variant="small"
                 title="Finance Tracker"
@@ -461,7 +498,7 @@ defineOptions({
                     class="rounded-xl border-border/80"
                     @click="handleExport(false)"
                 >
-                    <FileSpreadsheet class="size-4 text-emerald-600 mr-1.5" />
+                    <FileSpreadsheet class="mr-1.5 size-4 text-emerald-600" />
                     Export Excel
                 </Button>
                 <Button
@@ -469,7 +506,7 @@ defineOptions({
                     class="rounded-xl shadow-xs"
                     @click="openCreateDrawer"
                 >
-                    <Plus class="size-4 mr-1.5" />
+                    <Plus class="mr-1.5 size-4" />
                     Add Transaction
                 </Button>
             </div>
@@ -480,68 +517,114 @@ defineOptions({
             <!-- Period Income -->
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Period Income</span>
-                    <div class="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                    <span
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                        >Period Income</span
+                    >
+                    <div
+                        class="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500"
+                    >
                         <ArrowUpRight class="size-4" />
                     </div>
                 </div>
-                <div class="mt-2 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-                    +{{ currency.symbol }}{{ formatCurrency(periodMetrics.income) }}
+                <div
+                    class="mt-2 text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400"
+                >
+                    +{{ currency.symbol
+                    }}{{ formatCurrency(periodMetrics.income) }}
                 </div>
-                <p class="mt-1 text-xs text-muted-foreground">In selected date range</p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                    In selected date range
+                </p>
             </div>
 
             <!-- Period Expense -->
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Period Expenses</span>
-                    <div class="flex size-7 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
+                    <span
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                        >Period Expenses</span
+                    >
+                    <div
+                        class="flex size-7 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500"
+                    >
                         <ArrowDownLeft class="size-4" />
                     </div>
                 </div>
-                <div class="mt-2 text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400">
-                    -{{ currency.symbol }}{{ formatCurrency(periodMetrics.expense) }}
+                <div
+                    class="mt-2 text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400"
+                >
+                    -{{ currency.symbol
+                    }}{{ formatCurrency(periodMetrics.expense) }}
                 </div>
-                <p class="mt-1 text-xs text-muted-foreground">In selected date range</p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                    In selected date range
+                </p>
             </div>
 
             <!-- Period Net Cash Flow -->
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Period Net Cashflow</span>
+                    <span
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                        >Period Net Cashflow</span
+                    >
                     <div
                         class="flex size-7 items-center justify-center rounded-lg"
-                        :class="periodMetrics.net >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'"
+                        :class="
+                            periodMetrics.net >= 0
+                                ? 'bg-emerald-500/10 text-emerald-500'
+                                : 'bg-rose-500/10 text-rose-500'
+                        "
                     >
                         <Wallet class="size-4" />
                     </div>
                 </div>
                 <div
                     class="mt-2 text-2xl font-bold tracking-tight"
-                    :class="periodMetrics.net >= 0 ? 'text-foreground' : 'text-rose-500'"
+                    :class="
+                        periodMetrics.net >= 0
+                            ? 'text-foreground'
+                            : 'text-rose-500'
+                    "
                 >
-                    {{ periodMetrics.net >= 0 ? '+' : '' }}{{ currency.symbol }}{{ formatCurrency(periodMetrics.net) }}
+                    {{ periodMetrics.net >= 0 ? '+' : '' }}{{ currency.symbol
+                    }}{{ formatCurrency(periodMetrics.net) }}
                 </div>
-                <p class="mt-1 text-xs text-muted-foreground">Net operating margin</p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                    Net operating margin
+                </p>
             </div>
 
             <!-- Monthly Budget Health -->
             <div class="rounded-xl border bg-card p-4 shadow-xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monthly Global Budget Target</span>
-                    <div class="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <span
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                        >Monthly Global Budget Target</span
+                    >
+                    <div
+                        class="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                    >
                         <Activity class="size-4" />
                     </div>
                 </div>
                 <div class="mt-2 flex items-baseline justify-between">
-                    <span class="text-2xl font-bold tracking-tight text-foreground">
+                    <span
+                        class="text-2xl font-bold tracking-tight text-foreground"
+                    >
                         {{ monthlySummary.budget_spent_percentage }}%
                     </span>
                     <span class="text-xs font-medium text-muted-foreground">
-                        {{ currency.symbol }}{{ formatCurrency(monthlySummary.total_expense) }} / {{ currency.symbol }}{{ formatCurrency(monthlySummary.budget_total) }}
+                        {{ currency.symbol
+                        }}{{ formatCurrency(monthlySummary.total_expense) }} /
+                        {{ currency.symbol
+                        }}{{ formatCurrency(monthlySummary.budget_total) }}
                     </span>
                 </div>
-                <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                    class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                >
                     <div
                         class="h-full rounded-full transition-all duration-500"
                         :class="[
@@ -551,7 +634,9 @@ defineOptions({
                                   ? 'bg-amber-500'
                                   : 'bg-emerald-500',
                         ]"
-                        :style="{ width: `${Math.min(monthlySummary.budget_spent_percentage, 100)}%` }"
+                        :style="{
+                            width: `${Math.min(monthlySummary.budget_spent_percentage, 100)}%`,
+                        }"
                     ></div>
                 </div>
             </div>
@@ -561,10 +646,16 @@ defineOptions({
         <div class="grid gap-4 lg:grid-cols-3">
             <!-- Cash Flow Timeline Bar Chart (2 cols) -->
             <div class="rounded-xl border bg-card p-5 shadow-xs lg:col-span-2">
-                <div class="flex items-center justify-between pb-3 border-b border-border/50">
+                <div
+                    class="flex items-center justify-between border-b border-border/50 pb-3"
+                >
                     <div>
-                        <h3 class="text-sm font-semibold text-foreground">Cash Flow Timeline</h3>
-                        <p class="text-xs text-muted-foreground">Income vs Expenses over the selected period</p>
+                        <h3 class="text-sm font-semibold text-foreground">
+                            Cash Flow Timeline
+                        </h3>
+                        <p class="text-xs text-muted-foreground">
+                            Income vs Expenses over the selected period
+                        </p>
                     </div>
                     <Badge variant="outline" class="text-xs capitalize">
                         By {{ timelineChart.interval }}
@@ -576,7 +667,10 @@ defineOptions({
                         :data="timelineChartData"
                         :options="timelineChartOptions"
                     />
-                    <div v-else class="flex h-full items-center justify-center text-xs text-muted-foreground">
+                    <div
+                        v-else
+                        class="flex h-full items-center justify-center text-xs text-muted-foreground"
+                    >
                         No transactions recorded for this period.
                     </div>
                 </div>
@@ -584,10 +678,16 @@ defineOptions({
 
             <!-- Expense Category Breakdown Donut Chart (1 col) -->
             <div class="rounded-xl border bg-card p-5 shadow-xs">
-                <div class="flex items-center justify-between pb-3 border-b border-border/50">
+                <div
+                    class="flex items-center justify-between border-b border-border/50 pb-3"
+                >
                     <div>
-                        <h3 class="text-sm font-semibold text-foreground">Expense Distribution</h3>
-                        <p class="text-xs text-muted-foreground">Spending share by category</p>
+                        <h3 class="text-sm font-semibold text-foreground">
+                            Expense Distribution
+                        </h3>
+                        <p class="text-xs text-muted-foreground">
+                            Spending share by category
+                        </p>
                     </div>
                     <PieChart class="size-4 text-muted-foreground" />
                 </div>
@@ -597,7 +697,10 @@ defineOptions({
                         :data="categoryChartData"
                         :options="categoryChartOptions"
                     />
-                    <div v-else class="flex h-full items-center justify-center text-xs text-muted-foreground">
+                    <div
+                        v-else
+                        class="flex h-full items-center justify-center text-xs text-muted-foreground"
+                    >
                         No expense records in this timeframe.
                     </div>
                 </div>
@@ -605,15 +708,21 @@ defineOptions({
         </div>
 
         <!-- Filter Toolbar -->
-        <div class="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs">
-            <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12">
+        <div
+            class="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs"
+        >
+            <div
+                class="grid gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12"
+            >
                 <!-- Search Input -->
                 <div class="relative flex items-center lg:col-span-4">
-                    <Search class="absolute left-3 size-4 text-muted-foreground" />
+                    <Search
+                        class="absolute left-3 size-4 text-muted-foreground"
+                    />
                     <Input
                         v-model="search"
                         placeholder="Search description, reference, category..."
-                        class="pl-9 rounded-xl border-border/70"
+                        class="rounded-xl border-border/70 pl-9"
                     />
                 </div>
 
@@ -623,20 +732,34 @@ defineOptions({
                         <ComboboxAnchor class="w-full">
                             <ComboboxInput
                                 aria-label="Filter by type"
-                                :display-value="(value) => String(value || 'All Types')"
+                                :display-value="
+                                    (value) => String(value || 'All Types')
+                                "
                                 placeholder="All Types"
-                                class="h-9 w-full rounded-xl text-sm border-border/70"
+                                class="h-9 w-full rounded-xl border-border/70 text-sm"
                             />
                         </ComboboxAnchor>
                         <ComboboxList class="z-[100]">
-                            <ComboboxEmpty class="p-2 text-xs text-muted-foreground">No types found.</ComboboxEmpty>
-                            <ComboboxItem value="All Types" class="text-xs py-1.5 px-2">
+                            <ComboboxEmpty
+                                class="p-2 text-xs text-muted-foreground"
+                                >No types found.</ComboboxEmpty
+                            >
+                            <ComboboxItem
+                                value="All Types"
+                                class="px-2 py-1.5 text-xs"
+                            >
                                 All Types
                             </ComboboxItem>
-                            <ComboboxItem value="Income Only" class="text-xs py-1.5 px-2">
+                            <ComboboxItem
+                                value="Income Only"
+                                class="px-2 py-1.5 text-xs"
+                            >
                                 Income Only
                             </ComboboxItem>
-                            <ComboboxItem value="Expense Only" class="text-xs py-1.5 px-2">
+                            <ComboboxItem
+                                value="Expense Only"
+                                class="px-2 py-1.5 text-xs"
+                            >
                                 Expense Only
                             </ComboboxItem>
                         </ComboboxList>
@@ -649,38 +772,56 @@ defineOptions({
                         <ComboboxAnchor class="w-full">
                             <ComboboxInput
                                 aria-label="Filter by category"
-                                :display-value="(value) => String(value || 'All Categories')"
+                                :display-value="
+                                    (value) => String(value || 'All Categories')
+                                "
                                 placeholder="All Categories"
-                                class="h-9 w-full rounded-xl text-sm border-border/70"
+                                class="h-9 w-full rounded-xl border-border/70 text-sm"
                             />
                         </ComboboxAnchor>
                         <ComboboxList class="z-[100] max-h-60 overflow-y-auto">
-                            <ComboboxEmpty class="p-2 text-xs text-muted-foreground">No categories found.</ComboboxEmpty>
-                            <ComboboxItem value="All Categories" class="text-xs py-1.5 px-2">
+                            <ComboboxEmpty
+                                class="p-2 text-xs text-muted-foreground"
+                                >No categories found.</ComboboxEmpty
+                            >
+                            <ComboboxItem
+                                value="All Categories"
+                                class="px-2 py-1.5 text-xs"
+                            >
                                 All Categories
                             </ComboboxItem>
-                            <div class="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            <div
+                                class="px-2 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase"
+                            >
                                 Income Categories
                             </div>
                             <ComboboxItem
                                 v-for="cat in categories.income"
                                 :key="cat.id"
                                 :value="cat.name"
-                                class="flex items-center gap-2 text-xs py-1.5 px-2 cursor-pointer"
+                                class="flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs"
                             >
-                                <span class="size-2 rounded-full" :style="{ backgroundColor: cat.color }" />
+                                <span
+                                    class="size-2 rounded-full"
+                                    :style="{ backgroundColor: cat.color }"
+                                />
                                 {{ cat.name }}
                             </ComboboxItem>
-                            <div class="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-1 border-t border-border/40">
+                            <div
+                                class="mt-1 border-t border-border/40 px-2 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase"
+                            >
                                 Expense Categories
                             </div>
                             <ComboboxItem
                                 v-for="cat in categories.expense"
                                 :key="cat.id"
                                 :value="cat.name"
-                                class="flex items-center gap-2 text-xs py-1.5 px-2 cursor-pointer"
+                                class="flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs"
                             >
-                                <span class="size-2 rounded-full" :style="{ backgroundColor: cat.color }" />
+                                <span
+                                    class="size-2 rounded-full"
+                                    :style="{ backgroundColor: cat.color }"
+                                />
                                 {{ cat.name }}
                             </ComboboxItem>
                         </ComboboxList>
@@ -700,10 +841,15 @@ defineOptions({
             class="flex items-center justify-between rounded-xl border border-primary/40 bg-primary/5 px-4 py-2.5 shadow-sm transition-all"
         >
             <div class="flex items-center gap-2">
-                <Badge variant="default" class="rounded-md px-2 py-0.5 text-xs font-semibold">
+                <Badge
+                    variant="default"
+                    class="rounded-md px-2 py-0.5 text-xs font-semibold"
+                >
                     {{ selectedIds.length }} selected
                 </Badge>
-                <span class="text-xs text-muted-foreground font-medium">Bulk activity on ledger items</span>
+                <span class="text-xs font-medium text-muted-foreground"
+                    >Bulk activity on ledger items</span
+                >
             </div>
             <div class="flex items-center gap-2">
                 <Button
@@ -712,7 +858,7 @@ defineOptions({
                     class="h-8 rounded-lg text-xs"
                     @click="handleExport(true)"
                 >
-                    <Download class="size-3.5 mr-1" />
+                    <Download class="mr-1 size-3.5" />
                     Export Selected
                 </Button>
                 <Button
@@ -722,7 +868,7 @@ defineOptions({
                     class="h-8 rounded-lg text-xs"
                     @click="bulkDeleteDialogOpen = true"
                 >
-                    <Trash2 class="size-3.5 mr-1" />
+                    <Trash2 class="mr-1 size-3.5" />
                     Delete Selected
                 </Button>
                 <Button
@@ -737,13 +883,19 @@ defineOptions({
         </div>
 
         <!-- Transactions Ledger Table -->
-        <div class="rounded-xl border bg-card shadow-xs overflow-hidden">
+        <div class="overflow-hidden rounded-xl border bg-card shadow-xs">
             <Table>
                 <TableHeader>
                     <TableRow class="bg-muted/40">
                         <TableHead class="w-10">
                             <Checkbox
-                                :model-value="isAllSelected ? true : (selectedIds.length > 0 ? 'indeterminate' : false)"
+                                :model-value="
+                                    isAllSelected
+                                        ? true
+                                        : selectedIds.length > 0
+                                          ? 'indeterminate'
+                                          : false
+                                "
                                 @update:model-value="toggleSelectAll"
                                 aria-label="Select all transactions"
                             />
@@ -764,7 +916,9 @@ defineOptions({
                             :key="tx.id"
                             :class="[
                                 'transition-colors',
-                                selectedIds.includes(tx.id) ? 'bg-primary/5' : '',
+                                selectedIds.includes(tx.id)
+                                    ? 'bg-primary/5'
+                                    : '',
                             ]"
                         >
                             <!-- Row Checkbox -->
@@ -777,22 +931,31 @@ defineOptions({
                             </TableCell>
 
                             <!-- Date -->
-                            <TableCell class="font-mono text-xs text-muted-foreground">
+                            <TableCell
+                                class="font-mono text-xs text-muted-foreground"
+                            >
                                 {{ tx.transaction_date.split('T')[0] }}
                             </TableCell>
 
                             <!-- Type Badge -->
                             <TableCell>
                                 <Badge
-                                    :variant="tx.type === 'income' ? 'default' : 'secondary'"
-                                    :class="[
-                                        'capitalize text-[11px] font-semibold gap-1 px-2 py-0.5 rounded-md',
+                                    :variant="
                                         tx.type === 'income'
-                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+                                            ? 'default'
+                                            : 'secondary'
+                                    "
+                                    :class="[
+                                        'gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold capitalize',
+                                        tx.type === 'income'
+                                            ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                            : 'border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400',
                                     ]"
                                 >
-                                    <ArrowUpRight v-if="tx.type === 'income'" class="size-3" />
+                                    <ArrowUpRight
+                                        v-if="tx.type === 'income'"
+                                        class="size-3"
+                                    />
                                     <ArrowDownLeft v-else class="size-3" />
                                     {{ tx.type }}
                                 </Badge>
@@ -801,15 +964,24 @@ defineOptions({
                             <!-- Category -->
                             <TableCell>
                                 <div class="flex items-center gap-2">
-                                    <span class="font-medium text-xs text-foreground">{{ tx.category_name }}</span>
+                                    <span
+                                        class="text-xs font-medium text-foreground"
+                                        >{{ tx.category_name }}</span
+                                    >
                                 </div>
                             </TableCell>
 
                             <!-- Description -->
                             <TableCell>
                                 <div class="flex flex-col">
-                                    <span class="text-xs font-medium text-foreground">{{ tx.description }}</span>
-                                    <span v-if="tx.reference" class="text-[11px] font-mono text-muted-foreground">
+                                    <span
+                                        class="text-xs font-medium text-foreground"
+                                        >{{ tx.description }}</span
+                                    >
+                                    <span
+                                        v-if="tx.reference"
+                                        class="font-mono text-[11px] text-muted-foreground"
+                                    >
                                         Ref: {{ tx.reference }}
                                     </span>
                                 </div>
@@ -817,15 +989,30 @@ defineOptions({
 
                             <!-- Payment Method -->
                             <TableCell>
-                                <span class="text-xs text-muted-foreground capitalize">
-                                    {{ paymentMethods[tx.payment_method] ?? tx.payment_method.replace(/_/g, ' ') }}
+                                <span
+                                    class="text-xs text-muted-foreground capitalize"
+                                >
+                                    {{
+                                        paymentMethods[tx.payment_method] ??
+                                        tx.payment_method.replace(/_/g, ' ')
+                                    }}
                                 </span>
                             </TableCell>
 
                             <!-- Amount with Symbol -->
-                            <TableCell class="text-right font-mono font-bold text-sm">
-                                <span :class="tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
-                                    {{ tx.type === 'income' ? '+' : '-' }}{{ currency.symbol }}{{ formatCurrency(tx.amount) }}
+                            <TableCell
+                                class="text-right font-mono text-sm font-bold"
+                            >
+                                <span
+                                    :class="
+                                        tx.type === 'income'
+                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                            : 'text-rose-600 dark:text-rose-400'
+                                    "
+                                >
+                                    {{ tx.type === 'income' ? '+' : '-'
+                                    }}{{ currency.symbol
+                                    }}{{ formatCurrency(tx.amount) }}
                                 </span>
                             </TableCell>
 
@@ -833,27 +1020,41 @@ defineOptions({
                             <TableCell class="text-center">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger as-child>
-                                        <Button variant="ghost" size="icon" class="size-8 rounded-lg">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            class="size-8 rounded-lg"
+                                        >
                                             <MoreHorizontal class="size-4" />
                                             <span class="sr-only">Actions</span>
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" class="w-36 rounded-xl">
+                                    <DropdownMenuContent
+                                        align="end"
+                                        class="w-36 rounded-xl"
+                                    >
                                         <DropdownMenuItem
                                             v-if="can('finance.edit')"
                                             class="cursor-pointer text-xs"
                                             @click="openEditDrawer(tx)"
                                         >
-                                            <Pencil class="size-3.5 mr-2 text-muted-foreground" />
+                                            <Pencil
+                                                class="mr-2 size-3.5 text-muted-foreground"
+                                            />
                                             Edit
                                         </DropdownMenuItem>
-                                        <DropdownMenuSeparator v-if="can('finance.edit') && can('finance.delete')" />
+                                        <DropdownMenuSeparator
+                                            v-if="
+                                                can('finance.edit') &&
+                                                can('finance.delete')
+                                            "
+                                        />
                                         <DropdownMenuItem
                                             v-if="can('finance.delete')"
                                             class="cursor-pointer text-xs text-destructive focus:text-destructive"
                                             @click="promptDelete(tx)"
                                         >
-                                            <Trash2 class="size-3.5 mr-2" />
+                                            <Trash2 class="mr-2 size-3.5" />
                                             Delete
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
@@ -862,7 +1063,10 @@ defineOptions({
                         </TableRow>
                     </template>
                     <TableRow v-else>
-                        <TableCell colspan="8" class="h-32 text-center text-xs text-muted-foreground">
+                        <TableCell
+                            colspan="8"
+                            class="h-32 text-center text-xs text-muted-foreground"
+                        >
                             No transactions found matching your criteria.
                         </TableCell>
                     </TableRow>
@@ -871,11 +1075,18 @@ defineOptions({
         </div>
 
         <!-- Pagination -->
-        <div class="flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center">
+        <div
+            class="flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center"
+        >
             <p class="text-xs text-muted-foreground">
-                Showing {{ transactions.from || 0 }} to {{ transactions.to || 0 }} of {{ transactions.total || 0 }} transactions
+                Showing {{ transactions.from || 0 }} to
+                {{ transactions.to || 0 }} of
+                {{ transactions.total || 0 }} transactions
             </p>
-            <div v-if="transactions.links?.length >= 3" class="flex items-center gap-1">
+            <div
+                v-if="transactions.links?.length >= 3"
+                class="flex items-center gap-1"
+            >
                 <Button
                     v-for="link in transactions.links"
                     :key="link.label"
@@ -883,10 +1094,19 @@ defineOptions({
                     size="sm"
                     :disabled="!link.url"
                     :class="[
-                        'rounded-lg text-xs h-8 px-3',
-                        link.active ? 'bg-primary/10 text-primary border-primary/20' : '',
+                        'h-8 rounded-lg px-3 text-xs',
+                        link.active
+                            ? 'border-primary/20 bg-primary/10 text-primary'
+                            : '',
                     ]"
-                    @click="link.url ? router.visit(link.url, { preserveScroll: true, preserveState: true }) : null"
+                    @click="
+                        link.url
+                            ? router.visit(link.url, {
+                                  preserveScroll: true,
+                                  preserveState: true,
+                              })
+                            : null
+                    "
                 >
                     <span v-html="link.label" />
                 </Button>
@@ -899,7 +1119,18 @@ defineOptions({
             :transaction="editingTransaction"
             :categories="categories"
             :payment-methods="paymentMethods"
-            @saved="() => router.reload({ only: ['transactions', 'monthlySummary', 'periodMetrics', 'timelineChart', 'categoryChart'] })"
+            @saved="
+                () =>
+                    router.reload({
+                        only: [
+                            'transactions',
+                            'monthlySummary',
+                            'periodMetrics',
+                            'timelineChart',
+                            'categoryChart',
+                        ],
+                    })
+            "
         />
 
         <!-- Single Delete Confirmation Dialog -->
@@ -907,23 +1138,44 @@ defineOptions({
             <AlertDialogContent class="sm:max-w-md">
                 <AlertDialogHeader>
                     <div class="flex items-center gap-3">
-                        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <div
+                            class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive"
+                        >
                             <Trash2 class="size-5" />
                         </div>
                         <div>
-                            <AlertDialogTitle>Delete Transaction?</AlertDialogTitle>
+                            <AlertDialogTitle
+                                >Delete Transaction?</AlertDialogTitle
+                            >
                             <AlertDialogDescription class="mt-1">
-                                Are you sure you want to delete <span class="font-medium text-foreground">{{ transactionToDelete?.description }}</span>
-                                <span v-if="transactionToDelete" class="text-foreground font-semibold"> ({{ currency.symbol }}{{ formatCurrency(transactionToDelete.amount) }})</span>?
+                                Are you sure you want to delete
+                                <span class="font-medium text-foreground">{{
+                                    transactionToDelete?.description
+                                }}</span>
+                                <span
+                                    v-if="transactionToDelete"
+                                    class="font-semibold text-foreground"
+                                >
+                                    ({{ currency.symbol
+                                    }}{{
+                                        formatCurrency(
+                                            transactionToDelete.amount,
+                                        )
+                                    }})</span
+                                >?
                             </AlertDialogDescription>
                         </div>
                     </div>
                 </AlertDialogHeader>
                 <div class="text-sm text-muted-foreground">
-                    This will permanently remove this transaction from the financial ledger and recalculate monthly totals. This action cannot be undone.
+                    This will permanently remove this transaction from the
+                    financial ledger and recalculate monthly totals. This action
+                    cannot be undone.
                 </div>
                 <AlertDialogFooter class="gap-2 sm:gap-0">
-                    <AlertDialogCancel :disabled="isDeleting">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel :disabled="isDeleting"
+                        >Cancel</AlertDialogCancel
+                    >
                     <AlertDialogAction
                         :class="buttonVariants({ variant: 'destructive' })"
                         :disabled="isDeleting"
@@ -941,22 +1193,34 @@ defineOptions({
             <AlertDialogContent class="sm:max-w-md">
                 <AlertDialogHeader>
                     <div class="flex items-center gap-3">
-                        <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <div
+                            class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive"
+                        >
                             <Trash2 class="size-5" />
                         </div>
                         <div>
-                            <AlertDialogTitle>Delete Selected Transactions?</AlertDialogTitle>
+                            <AlertDialogTitle
+                                >Delete Selected Transactions?</AlertDialogTitle
+                            >
                             <AlertDialogDescription class="mt-1">
-                                Are you sure you want to delete <span class="font-semibold text-foreground">{{ selectedIds.length }} selected transactions</span>?
+                                Are you sure you want to delete
+                                <span class="font-semibold text-foreground"
+                                    >{{ selectedIds.length }} selected
+                                    transactions</span
+                                >?
                             </AlertDialogDescription>
                         </div>
                     </div>
                 </AlertDialogHeader>
                 <div class="text-sm text-muted-foreground">
-                    This will permanently remove all selected transactions from the ledger and recalculate all reports and analytics. This action cannot be undone.
+                    This will permanently remove all selected transactions from
+                    the ledger and recalculate all reports and analytics. This
+                    action cannot be undone.
                 </div>
                 <AlertDialogFooter class="gap-2 sm:gap-0">
-                    <AlertDialogCancel :disabled="isBulkDeleting">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel :disabled="isBulkDeleting"
+                        >Cancel</AlertDialogCancel
+                    >
                     <AlertDialogAction
                         :class="buttonVariants({ variant: 'destructive' })"
                         :disabled="isBulkDeleting"

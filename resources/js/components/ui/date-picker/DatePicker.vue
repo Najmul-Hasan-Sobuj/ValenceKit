@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { DateValue } from '@internationalized/date';
-import { CalendarDate, getLocalTimeZone, parseDate, today } from '@internationalized/date';
+import {
+    CalendarDate,
+    getLocalTimeZone,
+    parseDate,
+    today,
+} from '@internationalized/date';
 import {
     DatePickerCalendar,
     DatePickerCell,
@@ -19,6 +23,7 @@ import {
     DatePickerRoot,
     DatePickerTrigger,
 } from 'reka-ui';
+import type { DateValue } from '@internationalized/date';
 import { Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from '@lucide/vue';
 
 interface Props {
@@ -74,6 +79,13 @@ watch(internalDate, (newVal) => {
     }
 });
 
+const pickerDate = computed<any>({
+    get: () => internalDate.value,
+    set: (value: DateValue | undefined) => {
+        internalDate.value = value;
+    },
+});
+
 const formattedLabel = computed(() => {
     if (!internalDate.value) return props.placeholder;
     try {
@@ -95,7 +107,7 @@ const formattedLabel = computed(() => {
 
 <template>
     <DatePickerRoot
-        v-model="internalDate"
+        v-model="pickerDate"
         v-model:open="open"
         :disabled="disabled"
         :close-on-select="true"

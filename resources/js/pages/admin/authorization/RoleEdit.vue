@@ -8,7 +8,7 @@ import {
     Search,
     X,
     ArrowLeft,
-    Lock
+    Lock,
 } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from '@inertiajs/vue3';
-import { FileText, KeyRound, Settings as SettingsIcon, ShieldCheck, Users, FolderOpen, Wallet } from '@lucide/vue';
+import {
+    FileText,
+    KeyRound,
+    Settings as SettingsIcon,
+    ShieldCheck,
+    Users,
+    FolderOpen,
+    Wallet,
+} from '@lucide/vue';
 import authorization from '@/routes/admin/authorization';
 const rolesRoute = authorization.roles;
 
@@ -31,26 +39,50 @@ interface Role {
 
 const props = defineProps<{
     role: { data: Role };
-    permissions: Record<string, { id: number; name: string; guard_name: string; group_name: string }[]>;
+    permissions: Record<
+        string,
+        { id: number; name: string; guard_name: string; group_name: string }[]
+    >;
 }>();
 
-const PERMISSION_GROUPS_META: Record<string, { description: string; icon: any }> = {
-    'User Management': { description: 'Manage administrator accounts, invitations, and profiles', icon: Users },
-    'Role Management': { description: 'Manage access control roles, privileges, and boundaries', icon: KeyRound },
-    'System Settings': { description: 'Configure profile, security, and appearance settings', icon: SettingsIcon },
-    'Category Management': { description: 'Manage dynamic categories for all modules', icon: FolderOpen },
-    'Finance Tracker': { description: 'Manage financial transactions and budgets', icon: Wallet },
+const PERMISSION_GROUPS_META: Record<
+    string,
+    { description: string; icon: any }
+> = {
+    'User Management': {
+        description: 'Manage administrator accounts, invitations, and profiles',
+        icon: Users,
+    },
+    'Role Management': {
+        description: 'Manage access control roles, privileges, and boundaries',
+        icon: KeyRound,
+    },
+    'System Settings': {
+        description: 'Configure profile, security, and appearance settings',
+        icon: SettingsIcon,
+    },
+    'Category Management': {
+        description: 'Manage dynamic categories for all modules',
+        icon: FolderOpen,
+    },
+    'Finance Tracker': {
+        description: 'Manage financial transactions and budgets',
+        icon: Wallet,
+    },
 };
 
 const PERMISSION_GROUPS = computed(() => {
     return Object.entries(props.permissions).map(([groupName, perms]) => {
-        const meta = PERMISSION_GROUPS_META[groupName] || { description: '', icon: SettingsIcon };
+        const meta = PERMISSION_GROUPS_META[groupName] || {
+            description: '',
+            icon: SettingsIcon,
+        };
         return {
             id: groupName,
             name: groupName,
             description: meta.description,
             icon: meta.icon,
-            permissions: perms.map(p => ({
+            permissions: perms.map((p) => ({
                 id: p.name,
                 name: p.name,
                 description: '',
@@ -60,7 +92,9 @@ const PERMISSION_GROUPS = computed(() => {
 });
 
 const allPermissionKeys = computed(() => {
-    return Object.values(props.permissions).flatMap(p => p).map(p => p.name);
+    return Object.values(props.permissions)
+        .flatMap((p) => p)
+        .map((p) => p.name);
 });
 
 const form = useForm({
@@ -71,13 +105,20 @@ const form = useForm({
 
 const permissionSearchQuery = ref('');
 
-
-
 function permissionBadgeClass(permissionId: string): string {
-    if (permissionId.includes('.delete') || permissionId.includes('mfa') || permissionId.includes('tokens') || permissionId.includes('export')) {
+    if (
+        permissionId.includes('.delete') ||
+        permissionId.includes('mfa') ||
+        permissionId.includes('tokens') ||
+        permissionId.includes('export')
+    ) {
         return 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400';
     }
-    if (permissionId.includes('.edit') || permissionId.includes('.update') || permissionId.includes('.audit')) {
+    if (
+        permissionId.includes('.edit') ||
+        permissionId.includes('.update') ||
+        permissionId.includes('.audit')
+    ) {
         return 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400';
     }
     if (permissionId.includes('.create') || permissionId.includes('.invite')) {
@@ -91,24 +132,30 @@ const filteredPermissionGroups = computed(() => {
     if (!q) {
         return PERMISSION_GROUPS.value;
     }
-    return PERMISSION_GROUPS.value.map((group) => {
-        const matching = group.permissions.filter((p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.description.toLowerCase().includes(q) ||
-            group.name.toLowerCase().includes(q),
-        );
-        return {
-            ...group,
-            permissions: matching,
-        };
-    }).filter((group) => group.permissions.length > 0);
+    return PERMISSION_GROUPS.value
+        .map((group) => {
+            const matching = group.permissions.filter(
+                (p) =>
+                    p.name.toLowerCase().includes(q) ||
+                    p.description.toLowerCase().includes(q) ||
+                    group.name.toLowerCase().includes(q),
+            );
+            return {
+                ...group,
+                permissions: matching,
+            };
+        })
+        .filter((group) => group.permissions.length > 0);
 });
 
 function isPermissionSelected(id: string): boolean {
     return form.permissions.includes(id);
 }
 
-function togglePermission(id: string, checked: boolean | 'indeterminate'): void {
+function togglePermission(
+    id: string,
+    checked: boolean | 'indeterminate',
+): void {
     if (props.role.data.system) return;
 
     if (checked === true) {
@@ -134,12 +181,18 @@ function toggleGroupPermissions(group: any): void {
     if (props.role.data.system) return;
 
     const groupIds = group.permissions.map((p: any) => p.id);
-    const allSelected = groupIds.every((id: string) => form.permissions.includes(id));
+    const allSelected = groupIds.every((id: string) =>
+        form.permissions.includes(id),
+    );
 
     if (allSelected) {
-        form.permissions = form.permissions.filter((id: string) => !groupIds.includes(id));
+        form.permissions = form.permissions.filter(
+            (id: string) => !groupIds.includes(id),
+        );
     } else {
-        const toAdd = groupIds.filter((id: string) => !form.permissions.includes(id));
+        const toAdd = groupIds.filter(
+            (id: string) => !form.permissions.includes(id),
+        );
         form.permissions.push(...toAdd);
     }
 }
@@ -149,7 +202,8 @@ function isGroupAllSelected(group: any): boolean {
 }
 
 function groupSelectedCount(group: any): number {
-    return group.permissions.filter((p: any) => form.permissions.includes(p.id)).length;
+    return group.permissions.filter((p: any) => form.permissions.includes(p.id))
+        .length;
 }
 
 function saveRole(): void {
@@ -158,19 +212,30 @@ function saveRole(): void {
         return;
     }
 
-    form.put(rolesRoute.update.url(props.role.data.id));
+    form.put(rolesRoute.update.url(String(props.role.data.id)));
 }
 
 defineOptions({
-    layout: { breadcrumbs: [{ title: 'Roles', href: authorization.roles.index.url() }, { title: 'Edit Role', href: '' }] },
+    layout: {
+        breadcrumbs: [
+            { title: 'Roles', href: authorization.roles.index.url() },
+            { title: 'Edit Role', href: '' },
+        ],
+    },
 });
 </script>
 
 <template>
-    <Head :title="props.role.data.name ? `Edit ${props.role.data.name}` : 'Edit Role'" />
+    <Head
+        :title="
+            props.role.data.name ? `Edit ${props.role.data.name}` : 'Edit Role'
+        "
+    />
 
     <div class="flex flex-1 flex-col gap-6 p-4 md:p-6">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div class="flex items-center gap-4">
                 <Button variant="outline" size="icon" as-child class="shrink-0">
                     <Link :href="rolesRoute.index.url()">
@@ -181,26 +246,40 @@ defineOptions({
                 <div>
                     <div class="flex items-center gap-3">
                         <h1 class="text-xl font-bold tracking-tight">
-                            {{ props.role.data.system ? 'System Role Details' : 'Edit Role' }}
+                            {{
+                                props.role.data.system
+                                    ? 'System Role Details'
+                                    : 'Edit Role'
+                            }}
                         </h1>
                         <Badge
                             v-if="props.role.data.system"
                             variant="outline"
-                            class="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 gap-1"
+                            class="gap-1 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                         >
                             <Lock class="size-3" />
                             Protected
                         </Badge>
                     </div>
-                    <p class="text-sm text-muted-foreground mt-1">Configure permissions and attributes for this role profile.</p>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Configure permissions and attributes for this role
+                        profile.
+                    </p>
                 </div>
             </div>
             <div class="flex items-center gap-3 self-end sm:self-auto">
                 <Button variant="outline" as-child>
                     <Link :href="rolesRoute.index.url()">Cancel</Link>
                 </Button>
-                <Button :disabled="props.role.data.system || !form.name.trim() || form.processing" @click="saveRole">
-                    <Check class="size-4 mr-1.5" />
+                <Button
+                    :disabled="
+                        props.role.data.system ||
+                        !form.name.trim() ||
+                        form.processing
+                    "
+                    @click="saveRole"
+                >
+                    <Check class="mr-1.5 size-4" />
                     Save changes
                 </Button>
             </div>
@@ -209,81 +288,122 @@ defineOptions({
         <div class="space-y-6">
             <!-- Left Column: Role Details -->
             <div class="space-y-4">
-            <!-- System Role Notice -->
-            <div
-                v-if="props.role.data.system"
-                class="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 text-sm text-muted-foreground"
-            >
-                <Lock class="size-5 shrink-0 text-amber-500 mt-0.5" />
-                <div class="space-y-1">
-                    <p class="font-medium text-foreground">Core System Role</p>
-                    <p>This role is foundational to platform administration. Its permissions and identity are protected to prevent accidental lockouts.</p>
-                </div>
-            </div>
-
-            <!-- Role Details Form -->
-            <div class="rounded-xl border bg-card p-5 shadow-xs">
-                <div class="grid gap-6 sm:grid-cols-2">
-                    <div class="space-y-2">
-                        <Label for="role-name" class="font-medium">
-                            Role name
-                            <span v-if="!props.role.data.system" class="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="role-name"
-                            v-model="form.name"
-                            :disabled="props.role.data.system"
-                            placeholder="e.g. Support Specialist"
-                            :class="form.errors.name ? 'border-destructive focus-visible:ring-destructive' : ''"
-                        />
-                        <p v-if="form.errors.name" class="text-destructive text-sm">{{ form.errors.name }}</p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <Label for="role-description" class="font-medium">Description</Label>
-                        <Input
-                            id="role-description"
-                            v-model="form.description"
-                            :disabled="props.role.data.system"
-                            placeholder="e.g. Manage user accounts and view system settings"
-                        />
-                        <p v-if="form.errors.description" class="text-destructive text-sm">{{ form.errors.description }}</p>
+                <!-- System Role Notice -->
+                <div
+                    v-if="props.role.data.system"
+                    class="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 text-sm text-muted-foreground"
+                >
+                    <Lock class="mt-0.5 size-5 shrink-0 text-amber-500" />
+                    <div class="space-y-1">
+                        <p class="font-medium text-foreground">
+                            Core System Role
+                        </p>
+                        <p>
+                            This role is foundational to platform
+                            administration. Its permissions and identity are
+                            protected to prevent accidental lockouts.
+                        </p>
                     </div>
                 </div>
-            </div>
+
+                <!-- Role Details Form -->
+                <div class="rounded-xl border bg-card p-5 shadow-xs">
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        <div class="space-y-2">
+                            <Label for="role-name" class="font-medium">
+                                Role name
+                                <span
+                                    v-if="!props.role.data.system"
+                                    class="text-destructive"
+                                    >*</span
+                                >
+                            </Label>
+                            <Input
+                                id="role-name"
+                                v-model="form.name"
+                                :disabled="props.role.data.system"
+                                placeholder="e.g. Support Specialist"
+                                :class="
+                                    form.errors.name
+                                        ? 'border-destructive focus-visible:ring-destructive'
+                                        : ''
+                                "
+                            />
+                            <p
+                                v-if="form.errors.name"
+                                class="text-sm text-destructive"
+                            >
+                                {{ form.errors.name }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="role-description" class="font-medium"
+                                >Description</Label
+                            >
+                            <Input
+                                id="role-description"
+                                v-model="form.description"
+                                :disabled="props.role.data.system"
+                                placeholder="e.g. Manage user accounts and view system settings"
+                            />
+                            <p
+                                v-if="form.errors.description"
+                                class="text-sm text-destructive"
+                            >
+                                {{ form.errors.description }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Permissions Section -->
-            <div class="rounded-xl border bg-card p-5 shadow-xs space-y-4">
+            <div class="space-y-4 rounded-xl border bg-card p-5 shadow-xs">
                 <!-- Controls Bar -->
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b pb-4">
+                <div
+                    class="flex flex-col gap-4 border-b pb-4 lg:flex-row lg:items-center lg:justify-between"
+                >
                     <div class="flex items-center gap-3">
-                        <h3 class="text-base font-semibold text-foreground">Permissions</h3>
+                        <h3 class="text-base font-semibold text-foreground">
+                            Permissions
+                        </h3>
                         <Badge variant="outline" class="font-normal">
-                            {{ form.permissions.length }} of {{ allPermissionKeys.length }} granted
+                            {{ form.permissions.length }} of
+                            {{ allPermissionKeys.length }} granted
                         </Badge>
-                        <p v-if="form.errors.permissions" class="text-destructive text-sm ml-4">{{ form.errors.permissions }}</p>
+                        <p
+                            v-if="form.errors.permissions"
+                            class="ml-4 text-sm text-destructive"
+                        >
+                            {{ form.errors.permissions }}
+                        </p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="relative w-full sm:w-64">
-                            <Search class="text-muted-foreground absolute top-2.5 left-3 size-4" />
+                            <Search
+                                class="absolute top-2.5 left-3 size-4 text-muted-foreground"
+                            />
                             <Input
                                 v-model="permissionSearchQuery"
                                 placeholder="Search permissions..."
-                                class="pl-9 pr-8"
+                                class="pr-8 pl-9"
                                 aria-label="Search permissions"
                             />
                             <button
                                 v-if="permissionSearchQuery"
                                 type="button"
-                                class="text-muted-foreground hover:text-foreground absolute top-2.5 right-2"
+                                class="absolute top-2.5 right-2 text-muted-foreground hover:text-foreground"
                                 @click="permissionSearchQuery = ''"
                             >
                                 <X class="size-4" />
                                 <span class="sr-only">Clear search</span>
                             </button>
                         </div>
-                        <div v-if="!props.role.data.system" class="flex items-center gap-2">
+                        <div
+                            v-if="!props.role.data.system"
+                            class="flex items-center gap-2"
+                        >
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -309,70 +429,112 @@ defineOptions({
                 </div>
 
                 <!-- Groups List -->
-                <div v-if="filteredPermissionGroups.length > 0" class="grid gap-4 lg:grid-cols-2">
+                <div
+                    v-if="filteredPermissionGroups.length > 0"
+                    class="grid gap-4 lg:grid-cols-2"
+                >
                     <div
                         v-for="group in filteredPermissionGroups"
                         :key="group.id"
-                        class="flex flex-col rounded-xl border bg-card/60 p-4 shadow-xs gap-3"
+                        class="flex flex-col gap-3 rounded-xl border bg-card/60 p-4 shadow-xs"
                     >
                         <!-- Group Header -->
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div
+                            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
                             <div class="flex items-center gap-3">
-                                <div class="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0">
-                                    <component :is="group.icon" class="size-5" />
+                                <div
+                                    class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                                >
+                                    <component
+                                        :is="group.icon"
+                                        class="size-5"
+                                    />
                                 </div>
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2.5">
-                                        <span class="text-sm font-semibold text-foreground">{{ group.name }}</span>
-                                        <Badge variant="secondary" class="font-normal px-2 py-0.5">
-                                            {{ groupSelectedCount(group) }}/{{ group.permissions.length }}
+                                        <span
+                                            class="text-sm font-semibold text-foreground"
+                                            >{{ group.name }}</span
+                                        >
+                                        <Badge
+                                            variant="secondary"
+                                            class="px-2 py-0.5 font-normal"
+                                        >
+                                            {{ groupSelectedCount(group) }}/{{
+                                                group.permissions.length
+                                            }}
                                         </Badge>
                                     </div>
-                                    <p class="text-sm text-muted-foreground">{{ group.description }}</p>
+                                    <p class="text-sm text-muted-foreground">
+                                        {{ group.description }}
+                                    </p>
                                 </div>
                             </div>
                             <Button
                                 v-if="!props.role.data.system"
                                 variant="ghost"
                                 type="button"
-                                class="text-sm text-muted-foreground hover:text-foreground self-start sm:self-auto"
+                                class="self-start text-sm text-muted-foreground hover:text-foreground sm:self-auto"
                                 @click="toggleGroupPermissions(group)"
                             >
-                                {{ isGroupAllSelected(group) ? 'Deselect group' : 'Select group' }}
+                                {{
+                                    isGroupAllSelected(group)
+                                        ? 'Deselect group'
+                                        : 'Select group'
+                                }}
                             </Button>
                         </div>
 
                         <!-- Group Permissions Grid -->
-                        <div class="grid gap-2 grid-cols-1">
+                        <div class="grid grid-cols-1 gap-2">
                             <label
                                 v-for="permission in group.permissions"
                                 :key="permission.id"
                                 :class="[
-                                    'flex items-start gap-2.5 rounded-lg border p-3 cursor-pointer transition-all select-none',
+                                    'flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-all select-none',
                                     isPermissionSelected(permission.id)
                                         ? 'border-primary/40 bg-primary/5 text-foreground shadow-xs'
-                                        : 'border-border/60 bg-background/50 hover:bg-muted/40 hover:border-border text-muted-foreground hover:text-foreground',
-                                    selectedRole?.system ? 'cursor-not-allowed opacity-80' : ''
+                                        : 'border-border/60 bg-background/50 text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground',
+                                    props.role.data.system
+                                        ? 'cursor-not-allowed opacity-80'
+                                        : '',
                                 ]"
                             >
                                 <Checkbox
-                                    :model-value="isPermissionSelected(permission.id)"
+                                    :model-value="
+                                        isPermissionSelected(permission.id)
+                                    "
                                     :disabled="props.role.data.system"
                                     class="mt-1"
-                                    @update:model-value="togglePermission(permission.id, $event)"
+                                    @update:model-value="
+                                        togglePermission(permission.id, $event)
+                                    "
                                 />
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2.5">
-                                        <span class="text-sm font-medium leading-none text-foreground">{{ permission.name }}</span>
+                                        <span
+                                            class="text-sm leading-none font-medium text-foreground"
+                                            >{{ permission.name }}</span
+                                        >
                                         <Badge
-                                            class="text-xs px-2 py-0.5 font-normal border"
-                                            :class="permissionBadgeClass(permission.id)"
+                                            class="border px-2 py-0.5 text-xs font-normal"
+                                            :class="
+                                                permissionBadgeClass(
+                                                    permission.id,
+                                                )
+                                            "
                                             variant="outline"
                                         >
-                                            {{ permission.id.split('.')[1] ?? permission.id.split('.')[0] }}
+                                            {{
+                                                permission.id.split('.')[1] ??
+                                                permission.id.split('.')[0]
+                                            }}
                                         </Badge>
                                     </div>
-                                    <div class="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                                    <div
+                                        class="mt-1.5 text-sm leading-relaxed text-muted-foreground"
+                                    >
                                         {{ permission.description }}
                                     </div>
                                 </div>
@@ -384,14 +546,20 @@ defineOptions({
                 <!-- Empty state if search returns nothing -->
                 <div
                     v-else
-                    class="flex flex-col items-center justify-center py-12 text-center rounded-xl border border-dashed bg-muted/10 px-4"
+                    class="flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/10 px-4 py-12 text-center"
                 >
-                    <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
+                    <div
+                        class="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
+                    >
                         <Search class="size-5" />
                     </div>
-                    <p class="text-base font-medium text-foreground">No matching permissions found</p>
-                    <p class="text-sm text-muted-foreground mt-1 max-w-sm">
-                        No permissions match "{{ permissionSearchQuery }}". Try searching for another keyword like "users", "content", or "settings".
+                    <p class="text-base font-medium text-foreground">
+                        No matching permissions found
+                    </p>
+                    <p class="mt-1 max-w-sm text-sm text-muted-foreground">
+                        No permissions match "{{ permissionSearchQuery }}". Try
+                        searching for another keyword like "users", "content",
+                        or "settings".
                     </p>
                     <Button
                         variant="outline"

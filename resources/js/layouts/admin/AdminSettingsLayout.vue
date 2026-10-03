@@ -77,7 +77,9 @@ const isMcpPage = computed(() => isCurrentOrParentUrl(editMcp()));
             <Separator class="my-6 lg:hidden" />
 
             <div :class="['flex-1', { 'md:max-w-2xl': !isMcpPage }]">
-                <section :class="['space-y-12', { 'max-w-xl': !isMcpPage }]"><slot /></section>
+                <section :class="['space-y-12', { 'max-w-xl': !isMcpPage }]">
+                    <slot />
+                </section>
             </div>
         </div>
     </div>

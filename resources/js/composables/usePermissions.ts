@@ -7,12 +7,18 @@ import type { Admin } from '@/types';
  */
 export function usePermissions() {
     const page = usePage();
-    const admin = computed<Admin | null>(() => (page.props.auth?.admin as Admin) || null);
+    const admin = computed<Admin | null>(
+        () => (page.props.auth?.admin as Admin) || null,
+    );
 
     const roles = computed<string[]>(() => admin.value?.roles || []);
-    const permissions = computed<string[]>(() => admin.value?.permissions || []);
+    const permissions = computed<string[]>(
+        () => admin.value?.permissions || [],
+    );
 
-    const isSuperAdmin = computed<boolean>(() => roles.value.includes('Super Admin'));
+    const isSuperAdmin = computed<boolean>(() =>
+        roles.value.includes('Super Admin'),
+    );
 
     /**
      * Check if the current admin has a given permission.
@@ -103,7 +109,9 @@ export function usePermissions() {
     /**
      * Filter a list of roles to only those the current admin is allowed to assign.
      */
-    function filterAssignableRoles<T extends { name: string }>(roleList: T[]): T[] {
+    function filterAssignableRoles<T extends { name: string }>(
+        roleList: T[],
+    ): T[] {
         if (isSuperAdmin.value) {
             return roleList;
         }
@@ -173,4 +181,3 @@ export function usePermissions() {
         canDuplicateRole,
     };
 }
-

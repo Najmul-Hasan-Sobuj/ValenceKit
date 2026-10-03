@@ -18,13 +18,16 @@ const props = defineProps<{
         precision: number;
     };
     monthlyBudget: number;
-    currencies: Record<string, {
-        code: string;
-        symbol: string;
-        name: string;
-        locale: string;
-        precision: number;
-    }>;
+    currencies: Record<
+        string,
+        {
+            code: string;
+            symbol: string;
+            name: string;
+            locale: string;
+            precision: number;
+        }
+    >;
 }>();
 
 const { can } = usePermissions();
@@ -58,14 +61,17 @@ defineOptions({
         <form @submit.prevent="submit" class="space-y-6">
             <!-- Currency Selection -->
             <div class="space-y-3">
-                <Label class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label
+                    class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                >
                     Active Global Currency
                 </Label>
                 <p class="text-xs text-muted-foreground">
-                    Select the currency used across the sidebar widget, transactions ledger, KPI metrics, and exports.
+                    Select the currency used across the sidebar widget,
+                    transactions ledger, KPI metrics, and exports.
                 </p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <button
                         v-for="(curr, code) in currencies"
                         :key="code"
@@ -79,13 +85,17 @@ defineOptions({
                         ]"
                     >
                         <div
-                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted font-bold text-lg text-primary ring-1 ring-border/50"
+                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-lg font-bold text-primary ring-1 ring-border/50"
                         >
                             {{ curr.symbol }}
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center justify-between">
-                                <p class="text-sm font-semibold text-foreground">{{ curr.name }}</p>
+                                <p
+                                    class="text-sm font-semibold text-foreground"
+                                >
+                                    {{ curr.name }}
+                                </p>
                                 <div
                                     v-if="form.currency === code"
                                     class="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground"
@@ -93,8 +103,12 @@ defineOptions({
                                     <Check class="size-3" />
                                 </div>
                             </div>
-                            <p class="text-xs text-muted-foreground mt-0.5">{{ curr.code }} ({{ curr.symbol }})</p>
-                            <p class="text-[11px] font-mono text-muted-foreground/80 mt-1">
+                            <p class="mt-0.5 text-xs text-muted-foreground">
+                                {{ curr.code }} ({{ curr.symbol }})
+                            </p>
+                            <p
+                                class="mt-1 font-mono text-[11px] text-muted-foreground/80"
+                            >
                                 Sample: {{ curr.symbol }}1,250.00
                             </p>
                         </div>
@@ -104,13 +118,18 @@ defineOptions({
             </div>
 
             <!-- Monthly Budget Target -->
-            <div class="space-y-2 pt-2 border-t border-border/60">
-                <Label for="monthly_budget" class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div class="space-y-2 border-t border-border/60 pt-2">
+                <Label
+                    for="monthly_budget"
+                    class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                >
                     Monthly Global Budget Target
                 </Label>
 
                 <div class="relative flex max-w-sm items-center">
-                    <span class="absolute left-3.5 text-base font-bold text-muted-foreground select-none">
+                    <span
+                        class="absolute left-3.5 text-base font-bold text-muted-foreground select-none"
+                    >
                         {{ currencies[form.currency]?.symbol || '$' }}
                     </span>
                     <Input
@@ -121,7 +140,7 @@ defineOptions({
                         min="0"
                         placeholder="3500.00"
                         required
-                        class="pl-9 h-11 text-base font-semibold rounded-xl border-border/70"
+                        class="h-11 rounded-xl border-border/70 pl-9 text-base font-semibold"
                     />
                 </div>
                 <InputError :message="form.errors.monthly_budget" />

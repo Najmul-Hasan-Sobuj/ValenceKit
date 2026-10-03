@@ -66,7 +66,7 @@ Route::prefix(config('admin.alias'))
             Route::get('dashboard', DashboardController::class)
                 ->name('dashboard');
 
-            Route::apiResource('authorization/users', UserController::class);
+            Route::apiResource('authorization/users', UserController::class)->except(['show']);
             Route::resource('authorization/roles', RoleController::class)->names('authorization.roles')->except(['show']);
 
             Route::apiResource('categories', CategoryController::class)

@@ -146,7 +146,9 @@ const handleLogout = () => {
         <SidebarContent>
             <NavMain :items="mainNavItems">
                 <template #action="{ item }">
-                    <SidebarFinanceTracker v-if="item.title === 'Finance Tracker'" />
+                    <SidebarFinanceTracker
+                        v-if="item.title === 'Finance Tracker'"
+                    />
                 </template>
             </NavMain>
         </SidebarContent>
@@ -154,7 +156,7 @@ const handleLogout = () => {
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <DropdownMenu>
+                    <DropdownMenu v-if="admin">
                         <DropdownMenuTrigger as-child>
                             <SidebarMenuButton
                                 size="lg"
@@ -188,7 +190,10 @@ const handleLogout = () => {
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem v-if="firstAvailableSettingsUrl" :as-child="true">
+                            <DropdownMenuItem
+                                v-if="firstAvailableSettingsUrl"
+                                :as-child="true"
+                            >
                                 <Link
                                     class="block w-full cursor-pointer"
                                     :href="firstAvailableSettingsUrl"
@@ -198,7 +203,9 @@ const handleLogout = () => {
                                     Settings
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator v-if="firstAvailableSettingsUrl" />
+                            <DropdownMenuSeparator
+                                v-if="firstAvailableSettingsUrl"
+                            />
                             <DropdownMenuItem :as-child="true">
                                 <Link
                                     class="block w-full cursor-pointer"

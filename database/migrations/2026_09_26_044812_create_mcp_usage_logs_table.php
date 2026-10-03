@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('token_used')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('admin_id')
+                ->nullable()
+                ->constrained('admins')
+                ->nullOnDelete();
             $table->string('ip_address')->nullable();
             $table->string('user_agent')->nullable();
             $table->string('endpoint')->nullable();

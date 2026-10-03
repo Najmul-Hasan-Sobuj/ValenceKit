@@ -38,7 +38,7 @@ it('can create a category with null type (general category)', function () {
     $this->assertDatabaseHas('categories', [
         'module' => 'product',
         'type' => null,
-        'slug' => 'physical_goods',
+        'slug' => 'physical-goods',
         'name' => 'Physical Goods',
     ]);
 });
@@ -103,7 +103,7 @@ it('can create a finance expense category with a parent category', function () {
         'module' => 'finance',
         'type' => 'expense',
         'parent_id' => $parent->id,
-        'slug' => 'db_servers',
+        'slug' => 'database-servers',
     ]);
 });
 

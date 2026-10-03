@@ -24,8 +24,12 @@ defineOptions({
         <div v-if="can('settings.appearance.edit')">
             <AppearanceTabs />
         </div>
-        <div v-else class="rounded-xl border border-muted bg-card/60 p-4 text-sm text-muted-foreground">
-            You have view-only access to appearance settings. Modifying the theme requires edit permissions.
+        <div
+            v-else
+            class="rounded-xl border border-muted bg-card/60 p-4 text-sm text-muted-foreground"
+        >
+            You have view-only access to appearance settings. Modifying the
+            theme requires edit permissions.
         </div>
     </div>
 </template>

@@ -82,7 +82,9 @@ defineOptions({
                 />
                 <InputError :message="errors.email" />
             </div>
-            <Button :disabled="processing || !can('settings.profile.edit')">Save</Button>
+            <Button :disabled="processing || !can('settings.profile.edit')"
+                >Save</Button
+            >
         </Form>
     </div>
 </template>
