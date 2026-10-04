@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Authenticate the admin and start a session.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AuditLogService $auditLogService): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -57,15 +58,30 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $auditLogService->record(
+            'admin.login',
+            $admin,
+            description: 'An administrator signed in.',
+            actor: $admin,
+        );
+
         return redirect()->intended(route('admin.dashboard'));
     }
 
     /**
      * Destroy the admin session and log out.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, AuditLogService $auditLogService): RedirectResponse
     {
+        $admin = $request->user('admin');
         Auth::guard('admin')->logout();
+
+        $auditLogService->record(
+            'admin.logout',
+            $admin,
+            description: 'An administrator signed out.',
+            actor: $admin,
+        );
 
         $request->session()->regenerateToken();
 

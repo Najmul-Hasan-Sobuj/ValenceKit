@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\Authorization\StoreUserRequest;
 use App\Http\Requests\Admin\Authorization\UpdateUserRequest;
 use App\Models\Admin;
 use App\Notifications\AdminInviteNotification;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -51,7 +52,7 @@ class UserController extends Controller
     /**
      * Store a newly created admin in storage.
      */
-    public function store(StoreUserRequest $request)
+    public function store(StoreUserRequest $request, AuditLogService $auditLogService)
     {
         $temporaryPassword = Str::password(24);
 
@@ -67,17 +68,26 @@ class UserController extends Controller
 
         $admin->notify(new AdminInviteNotification($temporaryPassword));
 
+        $auditLogService->created(
+            'user.invited',
+            $admin,
+            description: 'User '.$admin->name.' was invited.',
+            actor: $request->user('admin'),
+        );
+
         return back()->with('success', 'User invited successfully. The temporary password was sent by email.');
     }
 
     /**
      * Update the specified admin in storage.
      */
-    public function update(UpdateUserRequest $request, Admin $user)
+    public function update(UpdateUserRequest $request, Admin $user, AuditLogService $auditLogService)
     {
         if ($user->hasRole('Super Admin') && ! $request->user('admin')->hasRole('Super Admin')) {
             return back()->with('error', 'Only Super Admins can modify a Super Admin account.');
         }
+
+        $before = $user->auditLogValues();
 
         $user->update([
             'name' => $request->validated('name'),
@@ -87,13 +97,21 @@ class UserController extends Controller
 
         $user->syncRoles([$request->validated('role')]);
 
+        $auditLogService->updated(
+            'user.updated',
+            $user,
+            beforeValues: $before,
+            description: 'User '.$user->name.' was updated.',
+            actor: $request->user('admin'),
+        );
+
         return back()->with('success', 'User updated successfully.');
     }
 
     /**
      * Remove the specified admin from storage.
      */
-    public function destroy(Request $request, Admin $user)
+    public function destroy(Request $request, Admin $user, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('users.delete'), 403);
 
@@ -111,7 +129,17 @@ class UserController extends Controller
             }
         }
 
+        $before = $user->auditLogValues();
+        $userName = $user->name;
         $user->delete();
+
+        $auditLogService->deleted(
+            'user.deleted',
+            $user,
+            beforeValues: $before,
+            description: 'User '.$userName.' was deleted.',
+            actor: $request->user('admin'),
+        );
 
         return back()->with('success', 'User deleted successfully.');
     }

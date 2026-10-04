@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasskeyController;
@@ -84,6 +85,8 @@ Route::prefix(config('admin.alias'))
             })->name('appearance.edit');
 
             Route::get('mcp/usage', [McpUsageController::class, 'index'])->name('mcp.usage.index');
+            Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+            Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
             Route::get('settings/mcp', [McpSettingsController::class, 'edit'])->name('mcp.edit');
             Route::patch('settings/mcp/tools/{mcpTool}', [McpController::class, 'update'])->name('mcp.tools.update');
             Route::post('settings/mcp/tools/sync', [McpController::class, 'sync'])->name('mcp.tools.sync');

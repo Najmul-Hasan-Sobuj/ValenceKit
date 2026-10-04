@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Settings\UpdateMcpToolRequest;
 use App\Models\McpTool;
+use App\Services\AuditLogService;
 use App\Services\McpToolSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,11 +24,21 @@ class McpController extends Controller
         ]);
     }
 
-    public function update(UpdateMcpToolRequest $request, McpTool $mcpTool): RedirectResponse
+    public function update(UpdateMcpToolRequest $request, McpTool $mcpTool, AuditLogService $auditLogService): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 
+        $before = $mcpTool->only(['is_active', 'settings']);
         $mcpTool->update($request->validated());
+
+        $auditLogService->record(
+            'mcp.tool.updated',
+            $mcpTool,
+            beforeValues: $before,
+            afterValues: $mcpTool->only(['is_active', 'settings']),
+            description: "MCP tool {$mcpTool->name} was updated.",
+            actor: $request->user('admin'),
+        );
 
         Cache::forget('active_mcp_tools');
 
@@ -36,11 +47,17 @@ class McpController extends Controller
         return back();
     }
 
-    public function sync(Request $request, McpToolSyncService $syncService): RedirectResponse
+    public function sync(Request $request, McpToolSyncService $syncService, AuditLogService $auditLogService): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 
         $syncService->sync();
+
+        $auditLogService->record(
+            'mcp.registry.synced',
+            description: 'The MCP registry was synchronized.',
+            actor: $request->user('admin'),
+        );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('MCP registry synchronized.')]);
 

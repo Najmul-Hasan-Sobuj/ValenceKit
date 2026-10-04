@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditLogService;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -32,7 +33,7 @@ class FinanceSettingsController extends Controller
     /**
      * Update the global finance configuration.
      */
-    public function update(Request $request)
+    public function update(Request $request, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('settings.finance.edit'), 403);
 
@@ -41,8 +42,24 @@ class FinanceSettingsController extends Controller
             'monthly_budget' => ['required', 'numeric', 'min:0'],
         ]);
 
+        $before = [
+            'currency' => $this->financeService->getActiveCurrency()['code'],
+            'monthly_budget' => $this->financeService->getMonthlyBudget(),
+        ];
+
         $this->financeService->setActiveCurrency($validated['currency']);
         $this->financeService->setMonthlyBudget((float) $validated['monthly_budget']);
+
+        $auditLogService->record(
+            'settings.finance.updated',
+            afterValues: [
+                'currency' => $validated['currency'],
+                'monthly_budget' => (float) $validated['monthly_budget'],
+            ],
+            beforeValues: $before,
+            description: 'Finance configuration was updated.',
+            actor: $request->user('admin'),
+        );
 
         Inertia::flash('toast', [
             'type' => 'success',

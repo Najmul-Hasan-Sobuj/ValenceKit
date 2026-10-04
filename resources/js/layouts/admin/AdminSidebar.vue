@@ -2,6 +2,7 @@
 import { Link, router } from '@inertiajs/vue3';
 import {
     Activity,
+    ClipboardCheck,
     ChevronsUpDown,
     KeyRound,
     LayoutGrid,
@@ -44,6 +45,7 @@ import { edit as editSecurity } from '@/routes/admin/security';
 import { edit as editAppearance } from '@/routes/admin/appearance';
 import { edit as editFinanceSettings } from '@/routes/admin/finance/settings';
 import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
+import { index as indexAuditLogs } from '@/routes/admin/audit-logs';
 import { index as indexFinance } from '@/routes/admin/finance';
 import { index as indexCategories } from '@/routes/admin/categories';
 import type { Admin, NavItem } from '@/types';
@@ -102,6 +104,14 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'MCP Usage',
             href: indexMcpUsage(),
             icon: Activity,
+        });
+    }
+
+    if (can('audit.view')) {
+        items.push({
+            title: 'Audit Logs',
+            href: indexAuditLogs(),
+            icon: ClipboardCheck,
         });
     }
 

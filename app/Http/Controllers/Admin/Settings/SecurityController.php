@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
@@ -34,7 +35,7 @@ class SecurityController extends Controller
         ]);
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request, AuditLogService $auditLogService): RedirectResponse
     {
         /** @var Admin $admin */
         $admin = $request->user('admin');
@@ -50,6 +51,14 @@ class SecurityController extends Controller
             'password' => $validated['password'],
             'must_change_password' => false,
         ]);
+
+        $auditLogService->record(
+            'settings.security.password_updated',
+            $admin,
+            afterValues: ['password_updated' => true],
+            description: 'The administrator password was updated.',
+            actor: $admin,
+        );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 

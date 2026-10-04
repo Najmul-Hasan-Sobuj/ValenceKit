@@ -40,6 +40,15 @@ class Admin extends Authenticatable implements PasskeyUser
     use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable;
 
     /**
+     * @return array<string, mixed>
+     */
+    public function auditLogValues(): array
+    {
+        return $this->only(['name', 'email', 'is_active'])
+            + ['role' => $this->getRoleNames()->first()];
+    }
+
+    /**
      * Get the passkeys associated with the admin.
      *
      * @return HasMany<AdminPasskey, $this>

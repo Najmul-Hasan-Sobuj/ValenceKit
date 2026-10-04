@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools;
 
 use App\Models\Admin;
+use App\Services\AuditLogService;
 use App\Services\FinanceService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
@@ -64,6 +65,14 @@ class RecordTransactionTool extends BaseDbTool
             'payment_method' => $paymentMethod,
             'transaction_date' => now()->toDateString(),
         ], $admin->id);
+
+        app(AuditLogService::class)->record(
+            'finance.transaction.created',
+            $transaction,
+            afterValues: $transaction->only(['type', 'amount', 'currency', 'category_key', 'description', 'reference', 'transaction_date', 'payment_method']),
+            description: 'A finance transaction was recorded through MCP.',
+            actor: $admin,
+        );
 
         $formattedAmount = number_format($amount, 2);
 

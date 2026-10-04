@@ -6,6 +6,7 @@ use App\Enums\SystemRoleStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\Authorization\RoleResource;
 use App\Models\Admin;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -82,7 +83,7 @@ class RoleController extends Controller
         return $copyName;
     }
 
-    public function store(Request $request)
+    public function store(Request $request, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('roles.create'), 403);
 
@@ -101,6 +102,14 @@ class RoleController extends Controller
         ]);
 
         $role->syncPermissions($validated['permissions']);
+
+        $auditLogService->record(
+            'role.created',
+            metadata: ['subject_type' => $role->getMorphClass(), 'subject_id' => $role->id],
+            afterValues: $role->only(['name', 'description', 'is_system', 'guard_name']) + ['permissions' => $validated['permissions']],
+            description: "Role {$role->name} was created.",
+            actor: $request->user('admin'),
+        );
 
         return redirect()->route('admin.authorization.roles.index')->with('success', 'Role created successfully.');
     }
@@ -122,13 +131,15 @@ class RoleController extends Controller
         ]);
     }
 
-    public function update(Request $request, Role $role)
+    public function update(Request $request, Role $role, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('roles.edit'), 403);
 
         if ($role->is_system == SystemRoleStatus::System->value && ! $request->user('admin')->hasRole('Super Admin')) {
             abort(403, 'Only Super Admins can manage system roles.');
         }
+
+        $before = $role->only(['name', 'description', 'is_system', 'guard_name']) + ['permissions' => $role->permissions->pluck('name')->all()];
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:roles,name,'.$role->id],
@@ -146,10 +157,19 @@ class RoleController extends Controller
             $role->syncPermissions($validated['permissions']);
         }
 
+        $auditLogService->record(
+            'role.updated',
+            $role,
+            beforeValues: $before,
+            afterValues: $role->fresh()->only(['name', 'description', 'is_system', 'guard_name']) + ['permissions' => $validated['permissions']],
+            description: "Role {$role->name} was updated.",
+            actor: $request->user('admin'),
+        );
+
         return redirect()->route('admin.authorization.roles.index')->with('success', 'Role updated successfully.');
     }
 
-    public function destroy(Request $request, Role $role)
+    public function destroy(Request $request, Role $role, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('roles.delete'), 403);
 
@@ -166,7 +186,18 @@ class RoleController extends Controller
             return back()->with('error', 'Cannot delete role with assigned members.');
         }
 
+        $before = $role->only(['name', 'description', 'is_system', 'guard_name']) + ['permissions' => $role->permissions->pluck('name')->all()];
+        $roleName = $role->name;
         $role->delete();
+
+        $auditLogService->record(
+            'role.deleted',
+            null,
+            beforeValues: $before,
+            description: "Role {$roleName} was deleted.",
+            metadata: ['subject_type' => $role->getMorphClass(), 'subject_id' => $role->id],
+            actor: $request->user('admin'),
+        );
 
         return back()->with('success', 'Role deleted successfully.');
     }

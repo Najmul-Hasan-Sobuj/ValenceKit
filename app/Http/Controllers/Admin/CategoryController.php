@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\Category\StoreCategoryRequest;
 use App\Http\Requests\Admin\Category\UpdateCategoryRequest;
 use App\Http\Resources\Admin\CategoryResource;
 use App\Models\Category;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -55,7 +56,7 @@ class CategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCategoryRequest $request)
+    public function store(StoreCategoryRequest $request, AuditLogService $auditLogService)
     {
         $data = $request->validated();
         if (! empty($data['parent_id'])) {
@@ -65,10 +66,17 @@ class CategoryController extends Controller
             }
         }
 
-        Category::create([
+        $category = Category::create([
             ...$data,
             'is_system' => false,
         ]);
+
+        $auditLogService->created(
+            'category.created',
+            $category,
+            description: 'Category '.$category->name.' was created.',
+            actor: $request->user('admin'),
+        );
 
         return back()->with('success', 'Category created successfully.');
     }
@@ -76,8 +84,9 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCategoryRequest $request, Category $category)
+    public function update(UpdateCategoryRequest $request, Category $category, AuditLogService $auditLogService)
     {
+        $before = $category->auditLogValues();
         $data = $request->validated();
         if (! empty($data['parent_id'])) {
             $parent = Category::find($data['parent_id']);
@@ -88,13 +97,21 @@ class CategoryController extends Controller
 
         $category->update($data);
 
+        $auditLogService->updated(
+            'category.updated',
+            $category,
+            beforeValues: $before,
+            description: 'Category '.$category->name.' was updated.',
+            actor: $request->user('admin'),
+        );
+
         return back()->with('success', 'Category updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, Category $category)
+    public function destroy(Request $request, Category $category, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('categories.delete'), 403);
 
@@ -102,7 +119,17 @@ class CategoryController extends Controller
             return back()->with('error', 'System categories cannot be deleted.');
         }
 
+        $before = $category->auditLogValues();
+        $categoryName = $category->name;
         $category->delete();
+
+        $auditLogService->deleted(
+            'category.deleted',
+            $category,
+            beforeValues: $before,
+            description: 'Category '.$categoryName.' was deleted.',
+            actor: $request->user('admin'),
+        );
 
         return back()->with('success', 'Category deleted successfully.');
     }

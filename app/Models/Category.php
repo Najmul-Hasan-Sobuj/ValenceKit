@@ -26,6 +26,14 @@ class Category extends Model
     use HasFactory, HasSlug;
 
     /**
+     * @return array<string, mixed>
+     */
+    public function auditLogValues(): array
+    {
+        return $this->only(['module', 'type', 'parent_id', 'slug', 'name', 'icon', 'color', 'is_active', 'is_system']);
+    }
+
+    /**
      * Scope the slug uniqueness check to the current module.
      */
     protected function scopeSlugUniqueness($query): void

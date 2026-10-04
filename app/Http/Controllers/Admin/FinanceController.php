@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Finance\StoreFinanceTransactionRequest;
 use App\Http\Requests\Admin\Finance\UpdateFinanceTransactionRequest;
 use App\Models\FinanceTransaction;
+use App\Services\AuditLogService;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -113,11 +114,18 @@ class FinanceController extends Controller
     /**
      * Store a newly created transaction in storage.
      */
-    public function store(StoreFinanceTransactionRequest $request)
+    public function store(StoreFinanceTransactionRequest $request, AuditLogService $auditLogService)
     {
-        $this->financeService->createTransaction(
+        $transaction = $this->financeService->createTransaction(
             $request->validated(),
             $request->user('admin')->id
+        );
+
+        $auditLogService->created(
+            'finance.transaction.created',
+            $transaction,
+            description: 'A finance transaction was recorded.',
+            actor: $request->user('admin'),
         );
 
         return back()->with('success', 'Transaction recorded successfully.');
@@ -126,9 +134,18 @@ class FinanceController extends Controller
     /**
      * Update the specified transaction in storage.
      */
-    public function update(UpdateFinanceTransactionRequest $request, FinanceTransaction $transaction)
+    public function update(UpdateFinanceTransactionRequest $request, FinanceTransaction $transaction, AuditLogService $auditLogService)
     {
+        $before = $transaction->auditLogValues();
         $this->financeService->updateTransaction($transaction, $request->validated());
+
+        $auditLogService->updated(
+            'finance.transaction.updated',
+            $transaction,
+            beforeValues: $before,
+            description: 'A finance transaction was updated.',
+            actor: $request->user('admin'),
+        );
 
         return back()->with('success', 'Transaction updated successfully.');
     }
@@ -136,11 +153,20 @@ class FinanceController extends Controller
     /**
      * Remove the specified transaction from storage.
      */
-    public function destroy(Request $request, FinanceTransaction $transaction)
+    public function destroy(Request $request, FinanceTransaction $transaction, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('finance.delete'), 403);
 
+        $before = $transaction->auditLogValues();
         $transaction->delete();
+
+        $auditLogService->deleted(
+            'finance.transaction.deleted',
+            $transaction,
+            beforeValues: $before,
+            description: 'A finance transaction was deleted.',
+            actor: $request->user('admin'),
+        );
 
         return back()->with('success', 'Transaction removed successfully.');
     }
@@ -148,7 +174,7 @@ class FinanceController extends Controller
     /**
      * Perform bulk deletion of transactions.
      */
-    public function bulkDestroy(Request $request)
+    public function bulkDestroy(Request $request, AuditLogService $auditLogService)
     {
         abort_unless($request->user('admin')->can('finance.delete'), 403);
 
@@ -158,6 +184,14 @@ class FinanceController extends Controller
         ]);
 
         $count = $this->financeService->deleteTransactions($validated['ids']);
+
+        $auditLogService->record(
+            'finance.transaction.bulk_deleted',
+            afterValues: ['count' => $count],
+            description: "{$count} finance transactions were deleted.",
+            metadata: ['transaction_ids' => $validated['ids']],
+            actor: $request->user('admin'),
+        );
 
         return back()->with('success', "{$count} transactions removed successfully.");
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\McpTool;
 use App\Models\McpUsageLog;
+use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -57,7 +58,7 @@ class McpSettingsController extends Controller
     /**
      * Create a new MCP API token.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AuditLogService $auditLogService): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 
@@ -69,6 +70,13 @@ class McpSettingsController extends Controller
 
         $token = $admin->createToken($request->name, ['mcp:access']);
 
+        $auditLogService->record(
+            'mcp.token.created',
+            afterValues: ['name' => $token->accessToken->name, 'abilities' => ['mcp:access']],
+            description: 'A legacy MCP token was created.',
+            actor: $admin,
+        );
+
         return back()->with('flash', [
             'token' => $token->plainTextToken,
             'message' => 'Token created successfully. Please copy it now, you won\'t be able to see it again.',
@@ -78,13 +86,22 @@ class McpSettingsController extends Controller
     /**
      * Revoke an existing API token.
      */
-    public function destroy(Request $request, string $tokenId): RedirectResponse
+    public function destroy(Request $request, string $tokenId, AuditLogService $auditLogService): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 
         $admin = $request->user('admin');
 
-        $admin->tokens()->where('id', $tokenId)->delete();
+        $token = $admin->tokens()->where('id', $tokenId)->firstOrFail();
+        $tokenName = $token->name;
+        $token->delete();
+
+        $auditLogService->record(
+            'mcp.token.revoked',
+            beforeValues: ['name' => $tokenName, 'token_id' => $tokenId],
+            description: 'An MCP token was revoked.',
+            actor: $admin,
+        );
 
         return back()->with('success', 'Token revoked successfully.');
     }

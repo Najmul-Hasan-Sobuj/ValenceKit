@@ -49,6 +49,14 @@ class FinanceTransaction extends Model
     use HasFactory;
 
     /**
+     * @return array<string, mixed>
+     */
+    public function auditLogValues(): array
+    {
+        return $this->only(['type', 'amount', 'currency', 'category_key', 'description', 'reference', 'transaction_date', 'payment_method']);
+    }
+
+    /**
      * Generate a unique transaction reference identifier.
      */
     public static function generateReference(): string

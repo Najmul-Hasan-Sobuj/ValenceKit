@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,12 +20,13 @@ class ProfileController extends Controller
         return Inertia::render('admin/settings/Profile');
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request, AuditLogService $auditLogService): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.profile.edit'), 403);
 
         /** @var Admin $admin */
         $admin = $request->user('admin');
+        $before = $admin->auditLogValues();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -38,6 +40,14 @@ class ProfileController extends Controller
         }
 
         $admin->save();
+
+        $auditLogService->updated(
+            'settings.profile.updated',
+            $admin,
+            beforeValues: $before,
+            description: 'The administrator profile was updated.',
+            actor: $admin,
+        );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 

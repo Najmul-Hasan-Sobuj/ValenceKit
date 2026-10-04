@@ -3,13 +3,33 @@ import { toast } from 'vue-sonner';
 import type { FlashToast } from '@/types/ui';
 
 export function initializeFlashToast(): void {
+    let lastToastKey = '';
+    let lastToastAt = 0;
+
+    const showToast = (data: FlashToast): void => {
+        if (!data.type || !data.message) {
+            return;
+        }
+
+        const key = data.type + ':' + data.message;
+        const now = Date.now();
+
+        if (key === lastToastKey && now - lastToastAt < 1000) {
+            return;
+        }
+
+        lastToastKey = key;
+        lastToastAt = now;
+        toast[data.type](data.message);
+    };
+
     // 1. Inertia v3 built-in flash event (Inertia::flash)
     router.on('flash', (event: any) => {
         const flash = event.detail?.flash ?? event.flash;
         const data = flash?.toast as FlashToast | undefined;
 
         if (data && data.type && data.message) {
-            toast[data.type](data.message);
+            showToast(data);
         }
     });
 
@@ -21,7 +41,7 @@ export function initializeFlashToast(): void {
         if (!props) return;
 
         if (props.success) {
-            toast.success(props.success);
+            showToast({ type: 'success', message: props.success });
             props.success = null;
         }
 
@@ -29,7 +49,7 @@ export function initializeFlashToast(): void {
             | FlashToast
             | undefined;
         if (data && data.type && data.message) {
-            toast[data.type](data.message);
+            showToast(data);
             if (props.flash) props.flash.toast = null;
         }
     });

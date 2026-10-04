@@ -56,6 +56,11 @@ class RoleAndPermissionSeeder extends Seeder
             'settings.finance.edit' => 'Update global currency and financial configuration',
         ],
 
+        'Audit & Compliance' => [
+            'audit.view' => 'Inspect security and business activity history',
+            'audit.export' => 'Export audit history for compliance review',
+        ],
+
         'Category Management' => [
             'categories.view' => 'Browse and inspect categories',
             'categories.create' => 'Create new categories',
