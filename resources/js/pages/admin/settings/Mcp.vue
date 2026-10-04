@@ -25,6 +25,7 @@ import {
     store as storeToken,
     destroy as destroyToken,
 } from '@/routes/admin/mcp/tokens';
+import { sync as syncTools } from '@/routes/admin/mcp/tools';
 import { useClipboard } from '@vueuse/core';
 import { toast } from 'vue-sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -66,9 +67,18 @@ const props = defineProps<{
     mcpTools: Array<{
         id: number;
         name: string;
+        slug: string | null;
+        version: string;
+        provider: string | null;
+        transport: string;
+        required_scope: string;
+        health_status: string;
+        last_synced_at: string | null;
         description: string;
         is_active: boolean;
     }>;
+    oauthDiscoveryUrl: string;
+    oauthScopes: Record<string, string>;
 }>();
 
 import { Switch } from '@/components/ui/switch';
@@ -130,6 +140,10 @@ const updateToolStatus = (toolId: number, isActive: boolean): void => {
         },
     );
 };
+
+const synchronizeTools = () => {
+    router.post(syncTools.url(), {}, { preserveScroll: true });
+};
 </script>
 
 <template>
@@ -178,6 +192,49 @@ const updateToolStatus = (toolId: number, isActive: boolean): void => {
                             also need to provide a Bearer API token generated
                             below.
                         </p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>OAuth 2.1 Connection</CardTitle>
+                <CardDescription>
+                    Connect MCP clients through OAuth and PKCE. Clients request
+                    the mcp:use scope, then these permissions are enforced by
+                    admin roles.
+                </CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-4">
+                <div class="space-y-2">
+                    <Label>Protected Resource Metadata</Label>
+                    <div class="flex items-center gap-2">
+                        <Input :model-value="oauthDiscoveryUrl" readonly />
+                        <Button
+                            variant="secondary"
+                            @click="
+                                copyToClipboard(
+                                    oauthDiscoveryUrl,
+                                    'OAuth URL copied!',
+                                )
+                            "
+                        >
+                            Copy
+                        </Button>
+                    </div>
+                </div>
+                <Label>Application permissions</Label>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <div
+                        v-for="(description, scope) in oauthScopes"
+                        :key="scope"
+                        class="rounded-md border p-3"
+                    >
+                        <div class="font-mono text-xs">{{ scope }}</div>
+                        <div class="mt-1 text-sm text-muted-foreground">
+                            {{ description }}
+                        </div>
                     </div>
                 </div>
             </CardContent>
@@ -240,10 +297,18 @@ const updateToolStatus = (toolId: number, isActive: boolean): void => {
 
         <Card>
             <CardHeader>
-                <CardTitle>Manage MCP Tools</CardTitle>
-                <CardDescription>
-                    Enable or disable AI tools for the workspace dynamically.
-                </CardDescription>
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <CardTitle>Manage MCP Registry</CardTitle>
+                        <CardDescription>
+                            Control enabled tools, scopes, versions, and sync
+                            status.
+                        </CardDescription>
+                    </div>
+                    <Button variant="secondary" @click="synchronizeTools">
+                        Sync Registry
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 <div class="flex flex-col gap-4">
@@ -261,6 +326,19 @@ const updateToolStatus = (toolId: number, isActive: boolean): void => {
                             <p class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ tool.description }}
                             </p>
+                            <div
+                                class="flex flex-wrap gap-2 text-xs text-muted-foreground"
+                            >
+                                <Badge variant="outline"
+                                    >v{{ tool.version }}</Badge
+                                >
+                                <Badge variant="outline">{{
+                                    tool.required_scope
+                                }}</Badge>
+                                <Badge variant="outline">{{
+                                    tool.health_status
+                                }}</Badge>
+                            </div>
                         </div>
 
                         <form

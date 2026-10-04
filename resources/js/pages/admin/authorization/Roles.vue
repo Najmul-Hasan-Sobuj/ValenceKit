@@ -464,7 +464,7 @@ defineOptions({
                 authorization setup. Admin users with this role will keep their
                 accounts but lose this role's specific permissions.
             </div>
-            <AlertDialogFooter class="gap-2 sm:gap-0">
+            <AlertDialogFooter class="gap-2">
                 <AlertDialogCancel as-child>
                     <Button variant="outline" :disabled="isDeleting"
                         >Cancel</Button

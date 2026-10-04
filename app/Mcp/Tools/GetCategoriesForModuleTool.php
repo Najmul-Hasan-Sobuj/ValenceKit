@@ -21,6 +21,10 @@ class GetCategoriesForModuleTool extends BaseDbTool
 
     public function handle(Request $request): Response
     {
+        if ($denied = $this->denyUnlessAllowed($request, 'mcp:tools.read')) {
+            return $denied;
+        }
+
         $request->validate([
             'module' => 'required|string',
             'type' => 'nullable|string',

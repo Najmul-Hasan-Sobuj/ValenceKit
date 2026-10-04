@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('ip_address')->nullable();
             $table->string('user_agent')->nullable();
             $table->string('endpoint')->nullable();
+            $table->string('auth_method')->default('sanctum');
+            $table->string('oauth_client_id')->nullable();
+            $table->json('scopes')->nullable();
             $table->timestamps();
         });
     }

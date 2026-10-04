@@ -14,15 +14,31 @@ class McpUsageLog extends Model
         'ip_address',
         'user_agent',
         'endpoint',
+        'auth_method',
+        'oauth_client_id',
+        'scopes',
     ];
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Admin, $this>
+     */
     public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'scopes' => 'array',
+        ];
     }
 }

@@ -53,7 +53,6 @@ import {
     store,
     update,
 } from '@/actions/App/Http/Controllers/Admin/FinanceController';
-import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     open: boolean;
@@ -208,7 +207,6 @@ function submit() {
         form.put(update.url(props.transaction.id), {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Transaction updated successfully.');
                 emit('update:open', false);
                 emit('saved');
             },
@@ -217,7 +215,6 @@ function submit() {
         form.post(store.url(), {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Transaction recorded successfully.');
                 emit('update:open', false);
                 emit('saved');
             },

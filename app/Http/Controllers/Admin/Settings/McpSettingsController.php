@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\McpTool;
 use App\Models\McpUsageLog;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -41,6 +42,8 @@ class McpSettingsController extends Controller
                 'created_at' => $token->created_at,
             ]),
             'serverUrl' => url('/mcp/valencekit'),
+            'oauthDiscoveryUrl' => url('/.well-known/oauth-protected-resource/mcp/valencekit'),
+            'oauthScopes' => config('mcp.scopes', []),
             'activityChart' => $dates,
             'stats' => [
                 'totalRequests' => McpUsageLog::count(),
@@ -54,7 +57,7 @@ class McpSettingsController extends Controller
     /**
      * Create a new MCP API token.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 
@@ -75,7 +78,7 @@ class McpSettingsController extends Controller
     /**
      * Revoke an existing API token.
      */
-    public function destroy(Request $request, string $tokenId)
+    public function destroy(Request $request, string $tokenId): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 

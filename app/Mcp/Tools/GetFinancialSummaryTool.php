@@ -18,6 +18,10 @@ class GetFinancialSummaryTool extends BaseDbTool
      */
     public function handle(Request $request): Response
     {
+        if ($denied = $this->denyUnlessAllowed($request, 'mcp:finance.read')) {
+            return $denied;
+        }
+
         $year = (int) ($request->get('year') ?: now()->year);
         $month = (int) ($request->get('month') ?: now()->month);
 

@@ -17,6 +17,10 @@ class GetUserRoles extends BaseDbTool
      */
     public function handle(Request $request): Response
     {
+        if ($denied = $this->denyUnlessAllowed($request, 'mcp:users.read')) {
+            return $denied;
+        }
+
         $email = $request->get('email');
         $admin = Admin::with('roles')->where('email', $email)->first();
 

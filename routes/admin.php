@@ -86,6 +86,7 @@ Route::prefix(config('admin.alias'))
             Route::get('mcp/usage', [McpUsageController::class, 'index'])->name('mcp.usage.index');
             Route::get('settings/mcp', [McpSettingsController::class, 'edit'])->name('mcp.edit');
             Route::patch('settings/mcp/tools/{mcpTool}', [McpController::class, 'update'])->name('mcp.tools.update');
+            Route::post('settings/mcp/tools/sync', [McpController::class, 'sync'])->name('mcp.tools.sync');
             Route::post('settings/mcp/tokens', [McpSettingsController::class, 'store'])->name('mcp.tokens.store');
             Route::delete('settings/mcp/tokens/{tokenId}', [McpSettingsController::class, 'destroy'])->name('mcp.tokens.destroy');
 

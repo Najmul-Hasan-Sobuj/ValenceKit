@@ -67,4 +67,11 @@ return [
         'max_output_bytes' => 65_536,
     ],
 
+    'scopes' => [
+        'mcp:tools.read' => 'View enabled MCP tools',
+        'mcp:finance.read' => 'Read finance summaries and categories',
+        'mcp:finance.write' => 'Create finance transactions',
+        'mcp:users.read' => 'Read admin roles and permissions',
+    ],
+
 ];

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Settings\UpdateMcpToolRequest;
 use App\Models\McpTool;
+use App\Services\McpToolSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -31,6 +32,17 @@ class McpController extends Controller
         Cache::forget('active_mcp_tools');
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Tool status updated.')]);
+
+        return back();
+    }
+
+    public function sync(Request $request, McpToolSyncService $syncService): RedirectResponse
+    {
+        abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
+
+        $syncService->sync();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('MCP registry synchronized.')]);
 
         return back();
     }

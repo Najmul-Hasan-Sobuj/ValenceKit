@@ -12,11 +12,24 @@ use Illuminate\Support\Carbon;
  * @property string $class_name
  * @property string|null $description
  * @property bool $is_active
- * @property array|null $settings
+ * @property array<string, mixed>|null $settings
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'class_name', 'description', 'is_active', 'settings'])]
+#[Fillable([
+    'name',
+    'slug',
+    'class_name',
+    'description',
+    'version',
+    'provider',
+    'transport',
+    'required_scope',
+    'health_status',
+    'last_synced_at',
+    'is_active',
+    'settings',
+])]
 class McpTool extends Model
 {
     /**
@@ -29,6 +42,7 @@ class McpTool extends Model
         return [
             'is_active' => 'boolean',
             'settings' => 'array',
+            'last_synced_at' => 'datetime',
         ];
     }
 }

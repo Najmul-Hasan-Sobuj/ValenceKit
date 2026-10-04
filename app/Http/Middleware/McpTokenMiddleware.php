@@ -7,6 +7,7 @@ use App\Models\McpUsageLog;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Laravel\Passport\AccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
 class McpTokenMiddleware
@@ -20,15 +21,24 @@ class McpTokenMiddleware
     {
         $defaultToken = config('services.mcp.default_token');
         $bearerToken = $request->bearerToken();
-        $actor = auth('sanctum')->user();
+        $oauthActor = auth('mcp')->user();
+        $sanctumActor = auth('sanctum')->user();
+        $actor = $oauthActor ?: $sanctumActor;
         $token = $actor?->currentAccessToken();
 
         if ($defaultToken && $bearerToken === $defaultToken) {
             $tokenUsed = 'default_env_token';
+            $authMethod = 'environment';
             $userId = null;
             $adminId = null;
-        } elseif ($actor && $token && $token->can('mcp:access')) {
+        } elseif ($oauthActor && $token && $token->can('mcp:use')) {
+            $tokenUsed = 'oauth_token';
+            $authMethod = 'oauth';
+            $userId = $actor instanceof User ? $actor->id : null;
+            $adminId = $actor instanceof Admin ? $actor->id : null;
+        } elseif ($sanctumActor && $token && $token->can('mcp:access')) {
             $tokenUsed = 'sanctum_token';
+            $authMethod = 'sanctum';
             $userId = $actor instanceof User ? $actor->id : null;
             $adminId = $actor instanceof Admin ? $actor->id : null;
         } else {
@@ -42,8 +52,40 @@ class McpTokenMiddleware
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'endpoint' => '/'.ltrim($request->path(), '/'),
+            'auth_method' => $authMethod,
+            'oauth_client_id' => $this->oauthClientId($oauthActor),
+            'scopes' => $this->scopes($token),
         ]);
 
         return $next($request);
+    }
+
+    private function oauthClientId(mixed $actor): ?string
+    {
+        if (! $actor) {
+            return null;
+        }
+
+        $guard = auth()->guard('mcp');
+
+        return method_exists($guard, 'client')
+            ? (string) ($guard->client()?->getKey())
+            : null;
+    }
+
+    /**
+     * @return array<string>|null
+     */
+    private function scopes(mixed $token): ?array
+    {
+        if ($token instanceof AccessToken) {
+            return $token->oauth_scopes;
+        }
+
+        $abilities = data_get($token, 'abilities');
+
+        return is_array($abilities)
+            ? array_map(static fn (mixed $ability): string => (string) $ability, array_values($abilities))
+            : null;
     }
 }

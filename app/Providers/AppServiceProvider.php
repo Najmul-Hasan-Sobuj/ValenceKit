@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Passport::tokensCan([
+            'mcp:use' => 'Connect to the ValenceKit MCP server',
+            ...config('mcp.scopes', []),
+        ]);
 
         Gate::before(function ($user, string $ability) {
             if ($user instanceof Admin && $user->hasRole('Super Admin')) {

@@ -18,6 +18,10 @@ class RecordTransactionTool extends BaseDbTool
      */
     public function handle(Request $request): Response
     {
+        if ($denied = $this->denyUnlessAllowed($request, 'mcp:finance.write')) {
+            return $denied;
+        }
+
         $type = strtolower((string) $request->get('type'));
         $amount = (float) $request->get('amount');
         $description = (string) $request->get('description');
@@ -34,7 +38,7 @@ class RecordTransactionTool extends BaseDbTool
 
         $financeService = app(FinanceService::class);
         $currency = $financeService->getActiveCurrency();
-        $admin = auth('sanctum')->user();
+        $admin = $request->user('mcp') ?? $request->user('sanctum');
 
         if (! $admin instanceof Admin) {
             return Response::text('Error: Recording transactions requires an admin MCP token.');
