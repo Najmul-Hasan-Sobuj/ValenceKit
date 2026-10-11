@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->enforceProductionSecurity();
         $this->configureDefaults();
 
         Passport::tokensCan([
@@ -40,6 +41,30 @@ class AppServiceProvider extends ServiceProvider
 
             return null;
         });
+    }
+
+    /**
+     * Prevent production from booting with unsafe application settings.
+     */
+    protected function enforceProductionSecurity(): void
+    {
+        if (! app()->isProduction()) {
+            return;
+        }
+
+        $requirements = [
+            'APP_DEBUG=false' => config('app.debug') === false,
+            'APP_URL uses HTTPS' => parse_url((string) config('app.url'), PHP_URL_SCHEME) === 'https',
+            'SESSION_SECURE_COOKIE=true' => config('session.secure') === true,
+            'SESSION_HTTP_ONLY=true' => config('session.http_only') === true,
+            'SESSION_SAME_SITE is lax or strict' => in_array(config('session.same_site'), ['lax', 'strict'], true),
+        ];
+
+        foreach ($requirements as $setting => $isSafe) {
+            if (! $isSafe) {
+                throw new \LogicException("Unsafe production configuration: {$setting}.");
+            }
+        }
     }
 
     /**
