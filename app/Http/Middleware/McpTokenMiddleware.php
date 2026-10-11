@@ -19,19 +19,12 @@ class McpTokenMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $defaultToken = config('services.mcp.default_token');
-        $bearerToken = $request->bearerToken();
         $oauthActor = auth('mcp')->user();
         $sanctumActor = auth('sanctum')->user();
         $actor = $oauthActor ?: $sanctumActor;
         $token = $actor?->currentAccessToken();
 
-        if ($defaultToken && $bearerToken === $defaultToken) {
-            $tokenUsed = 'default_env_token';
-            $authMethod = 'environment';
-            $userId = null;
-            $adminId = null;
-        } elseif ($oauthActor && $token && $token->can('mcp:use')) {
+        if ($oauthActor && $token && $token->can('mcp:use')) {
             $tokenUsed = 'oauth_token';
             $authMethod = 'oauth';
             $userId = $actor instanceof User ? $actor->id : null;

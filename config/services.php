@@ -35,8 +35,4 @@ return [
         ],
     ],
 
-    'mcp' => [
-        'default_token' => env('MCP_DEFAULT_TOKEN'),
-    ],
-
 ];

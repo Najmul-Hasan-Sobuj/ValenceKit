@@ -3,10 +3,8 @@
 use App\Mcp\Tools\GetFinancialSummaryTool;
 use App\Mcp\Tools\RecordTransactionTool;
 use App\Models\Admin;
-use App\Services\McpAuthorizationService;
 use App\Services\McpToolSyncService;
 use Database\Seeders\RoleAndPermissionSeeder;
-use Illuminate\Http\Request as HttpRequest;
 use Laravel\Mcp\Request as McpRequest;
 use Laravel\Sanctum\Sanctum;
 
@@ -44,15 +42,12 @@ it('denies finance tools when the admin lacks the mapped permission', function (
         ->toContain('required scope');
 });
 
-it('keeps the configured local MCP token authorized', function () {
+it('rejects the legacy default MCP token', function () {
     config(['services.mcp.default_token' => 'test-local-token']);
 
-    $httpRequest = HttpRequest::create('/', 'POST', [], [], [], [
-        'HTTP_AUTHORIZATION' => 'Bearer test-local-token',
-    ]);
-    app()->instance('request', $httpRequest);
-
-    expect(app(McpAuthorizationService::class)->allows(new McpRequest, 'mcp:tools.read'))->toBeTrue();
+    $this->withToken('test-local-token')
+        ->postJson('/mcp/valencekit', [])
+        ->assertUnauthorized();
 });
 
 it('allows an admin with finance permission to use finance tools', function () {

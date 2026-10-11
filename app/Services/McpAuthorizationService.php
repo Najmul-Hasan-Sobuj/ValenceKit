@@ -12,10 +12,6 @@ class McpAuthorizationService
      */
     public function allows(Request $request, string $scope): bool
     {
-        if (config('services.mcp.default_token') && request()->bearerToken() === config('services.mcp.default_token')) {
-            return true;
-        }
-
         $admin = $request->user('mcp') ?? $request->user('sanctum');
 
         if (! $admin instanceof Admin) {
@@ -23,6 +19,10 @@ class McpAuthorizationService
         }
 
         $token = $admin->currentAccessToken();
+
+        if (! $token) {
+            return false;
+        }
 
         if ($token->can($scope)) {
             return true;
