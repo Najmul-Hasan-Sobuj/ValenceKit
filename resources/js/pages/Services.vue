@@ -5,6 +5,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
+import PublicFooter from '@/components/PublicFooter.vue';
 import StructuredData from '@/components/StructuredData.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -1661,37 +1662,7 @@ const structuredDataEntities = [
             </section>
         </main>
 
-        <!-- Minimal Footer -->
-        <footer
-            class="border-t border-border py-8 text-center text-xs text-muted-foreground"
-        >
-            <div
-                class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8"
-            >
-                <p>
-                    © {{ new Date().getFullYear() }} {{ appName }}. Full-stack
-                    Laravel & Server Engineering.
-                </p>
-                <div class="flex items-center gap-6">
-                    <Link
-                        :href="services()"
-                        class="font-medium transition-colors hover:text-foreground"
-                        >Services</Link
-                    >
-                    <Link
-                        :href="home()"
-                        class="transition-colors hover:text-foreground"
-                        >Contact</Link
-                    >
-                    <a
-                        href="mailto:hello@valencekit.test"
-                        class="transition-colors hover:text-foreground"
-                        >Support</a
-                    >
-                </div>
-                <p>Clean code, verified queries, and hardened servers.</p>
-            </div>
-        </footer>
+        <PublicFooter />
     </div>
 </template>
 

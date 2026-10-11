@@ -5,6 +5,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
+import PublicFooter from '@/components/PublicFooter.vue';
 import StructuredData from '@/components/StructuredData.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -574,19 +575,6 @@ const resetForm = () => {
             </div>
         </main>
 
-        <!-- Minimal Footer -->
-        <footer
-            class="mt-auto border-t border-border py-8 text-center text-xs text-muted-foreground"
-        >
-            <div
-                class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row"
-            >
-                <p>
-                    © {{ new Date().getFullYear() }} {{ appName }}. All rights
-                    reserved.
-                </p>
-                <p>Simple, minimal & modern engineering.</p>
-            </div>
-        </footer>
+        <PublicFooter />
     </div>
 </template>

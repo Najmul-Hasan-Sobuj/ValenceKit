@@ -38,6 +38,23 @@ withDefaults(
             property="og:description"
             :content="ogDescription ?? description"
         />
+        <meta head-key="og:url" property="og:url" :content="canonicalUrl" />
+        <meta
+            head-key="og:site_name"
+            property="og:site_name"
+            content="ValenceKit"
+        />
+        <meta
+            head-key="twitter:card"
+            name="twitter:card"
+            content="summary"
+        />
+        <meta head-key="twitter:title" name="twitter:title" :content="title" />
+        <meta
+            head-key="twitter:description"
+            name="twitter:description"
+            :content="ogDescription ?? description"
+        />
         <meta head-key="og:type" property="og:type" content="website" />
         <link head-key="canonical" rel="canonical" :href="canonicalUrl" />
         <slot />

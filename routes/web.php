@@ -9,6 +9,8 @@ Route::get('llms.txt', [SeoController::class, 'llms'])->name('llms');
 
 Route::inertia('/', 'Welcome')->name('home');
 Route::inertia('services', 'Services')->name('services');
+Route::inertia('privacy-policy', 'PrivacyPolicy')->name('privacy-policy');
+Route::inertia('terms', 'Terms')->name('terms');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
