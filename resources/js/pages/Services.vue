@@ -606,10 +606,7 @@ const structuredDataEntities = [
             :title="pageTitle"
             :description="pageDescription"
             og-description="Custom web applications, point of sale software, inventory platforms, e-commerce, bug fixing, server management, and payment gateway integrations."
-        >
-            <link rel="preconnect" href="https://rsms.me/" />
-            <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-        </AppHead>
+        />
         <StructuredData :entities="structuredDataEntities" />
 
         <!-- Top Header Navigation -->
@@ -623,6 +620,7 @@ const structuredDataEntities = [
                 <Link
                     :href="home()"
                     class="flex items-center gap-2 outline-none"
+                    :aria-label="`${appName} home`"
                 >
                     <div
                         class="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"

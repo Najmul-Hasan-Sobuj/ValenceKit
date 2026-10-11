@@ -151,10 +151,7 @@ const resetForm = () => {
         <AppHead
             :title="pageTitle"
             :description="pageDescription"
-        >
-            <link rel="preconnect" href="https://rsms.me/" />
-            <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-        </AppHead>
+        />
         <StructuredData :entities="structuredData" />
 
         <!-- Top Header Navigation -->
@@ -168,6 +165,7 @@ const resetForm = () => {
                 <Link
                     :href="home()"
                     class="flex items-center gap-2 outline-none"
+                    :aria-label="`${appName} home`"
                 >
                     <div
                         class="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"
@@ -375,6 +373,7 @@ const resetForm = () => {
                         <template v-else>
                             <CardHeader class="pb-4">
                                 <CardTitle
+                                    as="h2"
                                     class="text-2xl font-semibold tracking-tight"
                                 >
                                     Send us a message
