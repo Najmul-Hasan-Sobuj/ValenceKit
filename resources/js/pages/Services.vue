@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { ref, reactive, onMounted } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import AppHead from '@/components/AppHead.vue';
 import { Button } from '@/components/ui/button';
 import {
     Sun,
@@ -575,35 +576,17 @@ const structuredData = JSON.stringify({
     <div
         class="min-h-screen bg-[#FDFDFC] text-[#1b1b18] antialiased selection:bg-primary selection:text-primary-foreground dark:bg-[#0a0a0a] dark:text-[#EDEDEC]"
     >
-        <!-- SEO Head with Meta Tags and Structured Data -->
-        <Head>
-            <title>
-                Laravel Developer Services | Web Apps, POS, CRM & Server Setup
-            </title>
-            <meta
-                name="description"
-                content="Professional full-stack Laravel development: custom web applications, POS and inventory software, CRM systems, bug fixes, server administration (AWS/VPS), and payment gateways."
-            />
-            <meta
-                name="keywords"
-                content="Laravel developer, web application, web design, bug fix, Cloudflare, cPanel, AWS, VPS, POS application, inventory application, e-commerce, CRM management software, CMS, payment gateway, SSLCommerz, bkash"
-            />
-            <meta
-                property="og:title"
-                content="Laravel Developer Services | Web Apps, POS, CRM & Server Setup"
-            />
-            <meta
-                property="og:description"
-                content="Custom web applications, point of sale software, inventory platforms, e-commerce, bug fixing, server management, and payment gateway integrations."
-            />
-            <meta property="og:type" content="website" />
+        <AppHead
+            title="Laravel Services: Web Apps, POS & CRM"
+            description="Full-stack Laravel development services: custom web apps, POS & inventory software, CRM systems, AWS/VPS server administration, and payment gateways."
+            og-description="Custom web applications, point of sale software, inventory platforms, e-commerce, bug fixing, server management, and payment gateway integrations."
+        >
             <link rel="preconnect" href="https://rsms.me/" />
             <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-            <!-- Schema.org JSON-LD Structured Data for Claude SEO -->
             <component is="script" type="application/ld+json">{{
                 structuredData
             }}</component>
-        </Head>
+        </AppHead>
 
         <!-- Top Header Navigation -->
         <header

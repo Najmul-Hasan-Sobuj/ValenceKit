@@ -1,0 +1,45 @@
+<script setup lang="ts">
+import { Head, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const page = usePage<{ appUrl: string }>();
+
+const canonicalUrl = computed(() => {
+    const url = new URL(page.url, page.props.appUrl);
+
+    url.search = '';
+    url.hash = '';
+
+    return url.toString();
+});
+
+withDefaults(
+    defineProps<{
+        title: string;
+        description: string;
+        ogDescription?: string;
+    }>(),
+    {
+        ogDescription: undefined,
+    },
+);
+</script>
+
+<template>
+    <Head :title="title">
+        <meta
+            head-key="description"
+            name="description"
+            :content="description"
+        />
+        <meta head-key="og:title" property="og:title" :content="title" />
+        <meta
+            head-key="og:description"
+            property="og:description"
+            :content="ogDescription ?? description"
+        />
+        <meta head-key="og:type" property="og:type" content="website" />
+        <link head-key="canonical" rel="canonical" :href="canonicalUrl" />
+        <slot />
+    </Head>
+</template>

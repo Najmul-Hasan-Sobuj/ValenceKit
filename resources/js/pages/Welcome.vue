@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { ref, reactive } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import AppHead from '@/components/AppHead.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -109,10 +110,13 @@ const resetForm = () => {
     <div
         class="min-h-screen bg-[#FDFDFC] text-[#1b1b18] antialiased selection:bg-primary selection:text-primary-foreground dark:bg-[#0a0a0a] dark:text-[#EDEDEC]"
     >
-        <Head title="Contact Us">
+        <AppHead
+            title="Laravel & Vue.js Boilerplate"
+            description="ValenceKit is a modern Laravel and Vue.js boilerplate for building fast, secure web applications with Inertia.js, SSR, APIs, and production-ready tools."
+        >
             <link rel="preconnect" href="https://rsms.me/" />
             <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-        </Head>
+        </AppHead>
 
         <!-- Top Header Navigation -->
         <header
