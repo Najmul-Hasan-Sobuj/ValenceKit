@@ -11,14 +11,16 @@ return [
     | for redirect URIs. Each domain should be specified with its scheme
     | and host. Domains not in this list will raise validation errors.
     |
-    | An "*" may be used to allow all domains.
+    | Add trusted origins as comma-separated values in MCP_REDIRECT_DOMAINS.
+    | The application URL is always included for the first-party client.
     |
     */
 
     'redirect_domains' => [
-        '*',
-        // 'https://example.com',
-        // 'http://localhost',
+        ...array_values(array_filter(array_map(
+            trim(...),
+            [(string) env('APP_URL', ''), ...explode(',', (string) env('MCP_REDIRECT_DOMAINS', ''))],
+        ), static fn (string $domain): bool => $domain !== '')),
     ],
 
     /*

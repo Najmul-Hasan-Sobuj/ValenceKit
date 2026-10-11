@@ -19,6 +19,28 @@ it('publishes MCP OAuth discovery metadata', function () {
         ->assertJsonPath('scopes_supported.0', 'mcp:use');
 });
 
+it('accepts OAuth redirects from configured domains', function () {
+    config(['mcp.redirect_domains' => ['https://client.example']]);
+
+    $this->postJson('/oauth/register', [
+        'client_name' => 'Trusted MCP Client',
+        'redirect_uris' => ['https://client.example/callback'],
+    ])
+        ->assertCreated()
+        ->assertJsonPath('redirect_uris.0', 'https://client.example/callback');
+});
+
+it('rejects OAuth redirects from unknown domains', function () {
+    config(['mcp.redirect_domains' => ['https://client.example']]);
+
+    $this->postJson('/oauth/register', [
+        'client_name' => 'Untrusted MCP Client',
+        'redirect_uris' => ['https://evil.example/callback'],
+    ])
+        ->assertStatus(400)
+        ->assertJsonPath('error', 'invalid_redirect_uri');
+});
+
 it('syncs local tools into the registry with scopes', function () {
     app(McpToolSyncService::class)->sync();
 
