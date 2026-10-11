@@ -5,6 +5,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
+import StructuredData from '@/components/StructuredData.vue';
 import { Button } from '@/components/ui/button';
 import {
     Sun,
@@ -27,8 +28,12 @@ import {
     ExternalLink,
 } from '@lucide/vue';
 
-const page = usePage();
+const page = usePage<{ name?: string; appUrl: string }>();
 const appName = page.props.name || 'ValenceKit';
+const appUrl = page.props.appUrl.replace(/\/$/, '');
+const pageTitle = 'Laravel Services: Web Apps, POS & CRM';
+const pageDescription =
+    'Full-stack Laravel development services: custom web apps, POS & inventory software, CRM systems, AWS/VPS server administration, and payment gateways.';
 
 const { resolvedAppearance, updateAppearance } = useAppearance();
 
@@ -493,13 +498,15 @@ const toggleFaq = (index: number) => {
 };
 
 // SEO Structured Data (JSON-LD)
-const structuredData = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'ProfessionalService',
-    name: 'Laravel Development & Server Engineering',
-    description:
-        'Custom Laravel web applications, POS software, inventory management, e-commerce, CRM systems, bug fixes, server administration (AWS, VPS, cPanel, Cloudflare), and payment gateway integration.',
-    url: 'http://valencekit.test/services',
+const structuredData = {
+    '@type': 'Service',
+    '@id': `${appUrl}/services#service`,
+    name: pageTitle,
+    description: pageDescription,
+    url: `${appUrl}/services`,
+    provider: {
+        '@id': `${appUrl}/#organization`,
+    },
     serviceType: [
         'Web Application Development',
         'Point of Sale (POS) Applications',
@@ -510,22 +517,6 @@ const structuredData = JSON.stringify({
         'Bug Fixing & Code Audits',
         'Server Administration & DevOps',
         'Payment Gateway Integration',
-    ],
-    knowsAbout: [
-        'Laravel',
-        'PHP',
-        'Vue.js',
-        'Inertia.js',
-        'Tailwind CSS',
-        'MySQL',
-        'PostgreSQL',
-        'Redis',
-        'Cloudflare',
-        'cPanel',
-        'AWS',
-        'Linux VPS',
-        'SSLCommerz',
-        'bKash',
     ],
     hasOfferCatalog: {
         '@type': 'OfferCatalog',
@@ -569,7 +560,42 @@ const structuredData = JSON.stringify({
             },
         ],
     },
-});
+};
+
+const structuredDataEntities = [
+    structuredData,
+    {
+        '@type': 'WebPage',
+        '@id': `${appUrl}/services#webpage`,
+        name: pageTitle,
+        url: `${appUrl}/services`,
+        description: pageDescription,
+        isPartOf: {
+            '@id': `${appUrl}/#website`,
+        },
+        about: {
+            '@id': `${appUrl}/services#service`,
+        },
+    },
+    {
+        '@type': 'BreadcrumbList',
+        '@id': `${appUrl}/services#breadcrumb`,
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: `${appUrl}/`,
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Services',
+                item: `${appUrl}/services`,
+            },
+        ],
+    },
+];
 </script>
 
 <template>
@@ -577,16 +603,14 @@ const structuredData = JSON.stringify({
         class="min-h-screen bg-[#FDFDFC] text-[#1b1b18] antialiased selection:bg-primary selection:text-primary-foreground dark:bg-[#0a0a0a] dark:text-[#EDEDEC]"
     >
         <AppHead
-            title="Laravel Services: Web Apps, POS & CRM"
-            description="Full-stack Laravel development services: custom web apps, POS & inventory software, CRM systems, AWS/VPS server administration, and payment gateways."
+            :title="pageTitle"
+            :description="pageDescription"
             og-description="Custom web applications, point of sale software, inventory platforms, e-commerce, bug fixing, server management, and payment gateway integrations."
         >
             <link rel="preconnect" href="https://rsms.me/" />
             <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-            <component is="script" type="application/ld+json">{{
-                structuredData
-            }}</component>
         </AppHead>
+        <StructuredData :entities="structuredDataEntities" />
 
         <!-- Top Header Navigation -->
         <header

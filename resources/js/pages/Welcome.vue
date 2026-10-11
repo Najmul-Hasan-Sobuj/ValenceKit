@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref, reactive } from 'vue';
+import { computed, ref, reactive } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
+import StructuredData from '@/components/StructuredData.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,8 +29,45 @@ import {
     RotateCcw,
 } from '@lucide/vue';
 
-const page = usePage();
+const page = usePage<{ name?: string; appUrl: string }>();
 const appName = page.props.name || 'ValenceKit';
+const appUrl = page.props.appUrl.replace(/\/$/, '');
+const pageTitle = 'Laravel & Vue.js Boilerplate';
+const pageDescription =
+    'ValenceKit is a modern Laravel and Vue.js boilerplate for building fast, secure web applications with Inertia.js, SSR, APIs, and production-ready tools.';
+
+const structuredData = computed(() => [
+    {
+        '@type': 'Organization',
+        '@id': `${appUrl}/#organization`,
+        name: appName,
+        url: appUrl,
+        logo: `${appUrl}/favicon.svg`,
+    },
+    {
+        '@type': 'WebSite',
+        '@id': `${appUrl}/#website`,
+        name: appName,
+        url: appUrl,
+        description: pageDescription,
+        publisher: {
+            '@id': `${appUrl}/#organization`,
+        },
+    },
+    {
+        '@type': 'WebPage',
+        '@id': `${appUrl}/#webpage`,
+        name: pageTitle,
+        url: appUrl,
+        description: pageDescription,
+        isPartOf: {
+            '@id': `${appUrl}/#website`,
+        },
+        about: {
+            '@id': `${appUrl}/#organization`,
+        },
+    },
+]);
 
 const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
@@ -111,12 +149,13 @@ const resetForm = () => {
         class="min-h-screen bg-[#FDFDFC] text-[#1b1b18] antialiased selection:bg-primary selection:text-primary-foreground dark:bg-[#0a0a0a] dark:text-[#EDEDEC]"
     >
         <AppHead
-            title="Laravel & Vue.js Boilerplate"
-            description="ValenceKit is a modern Laravel and Vue.js boilerplate for building fast, secure web applications with Inertia.js, SSR, APIs, and production-ready tools."
+            :title="pageTitle"
+            :description="pageDescription"
         >
             <link rel="preconnect" href="https://rsms.me/" />
             <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
         </AppHead>
+        <StructuredData :entities="structuredData" />
 
         <!-- Top Header Navigation -->
         <header
