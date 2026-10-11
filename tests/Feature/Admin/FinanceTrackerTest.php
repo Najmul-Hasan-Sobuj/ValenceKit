@@ -195,13 +195,13 @@ it('can bulk delete multiple transactions', function () {
     $this->assertDatabaseMissing('finance_transactions', ['id' => $t2->id]);
 });
 
-it('can export transactions as an Excel spreadsheet', function () {
+it('exports transactions as formula-safe CSV', function () {
     FinanceTransaction::create([
         'type' => 'income',
         'amount' => 1200.00,
         'category_key' => 'consulting',
         'category_name' => 'Consulting & Services',
-        'description' => 'Architecture review',
+        'description' => '=HYPERLINK("https://example.com")',
         'transaction_date' => now()->toDateString(),
         'payment_method' => 'bank_transfer',
         'admin_id' => $this->superAdmin->id,
@@ -211,8 +211,13 @@ it('can export transactions as an Excel spreadsheet', function () {
         ->get(route('admin.finance.export'));
 
     $response->assertOk();
-    expect($response->headers->get('content-type'))->toContain('application/vnd.ms-excel');
-    expect($response->headers->get('content-disposition'))->toContain('attachment; filename=');
+    expect($response->headers->get('content-type'))->toContain('text/csv');
+    expect($response->headers->get('content-disposition'))
+        ->toContain('attachment; filename="finance_transactions_')
+        ->toContain('.csv"');
+    expect($response->streamedContent())
+        ->toContain("'=HYPERLINK")
+        ->not->toContain('ss:Workbook');
 });
 
 it('can update global currency to Bangladeshi Taka (BDT) and adjust monthly budget', function () {

@@ -499,7 +499,7 @@ defineOptions({
                     @click="handleExport(false)"
                 >
                     <FileSpreadsheet class="mr-1.5 size-4 text-emerald-600" />
-                    Export Excel
+                    Export CSV
                 </Button>
                 <Button
                     v-if="can('finance.create')"

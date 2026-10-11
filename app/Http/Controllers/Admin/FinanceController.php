@@ -197,7 +197,7 @@ class FinanceController extends Controller
     }
 
     /**
-     * Export the filtered transaction ledger to Excel (.xlsx / SpreadsheetML).
+     * Export the filtered transaction ledger as CSV.
      */
     public function export(Request $request): StreamedResponse
     {
@@ -216,6 +216,6 @@ class FinanceController extends Controller
             ->orderByDesc('transaction_date')
             ->orderByDesc('id');
 
-        return $this->financeService->exportExcel($query);
+        return $this->financeService->exportCsv($query);
     }
 }

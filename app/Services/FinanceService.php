@@ -454,20 +454,20 @@ class FinanceService
     }
 
     /**
-     * Stream an Excel XML (.xlsx / SpreadsheetML) spreadsheet for download.
+     * Stream the filtered transactions as a CSV download.
      *
      * @param  Builder<FinanceTransaction>  $query
      */
-    public function exportExcel(Builder $query): StreamedResponse
+    public function exportCsv(Builder $query): StreamedResponse
     {
-        $filename = 'finance_transactions_'.now()->format('Y-m-d_His').'.xls';
+        $filename = 'finance_transactions_'.now()->format('Y-m-d_His').'.csv';
         $exportService = app(ExportService::class);
 
         $columns = [
             'ID' => fn ($tx) => $tx->id,
             'Date' => fn ($tx) => $tx->transaction_date->toDateString(),
             'Type' => fn ($tx) => strtoupper($tx->type),
-            'Amount' => fn ($tx) => ($tx->type === 'income' ? '+' : '-').number_format((float) $tx->amount, 2),
+            'Amount' => fn ($tx) => (float) $tx->amount * ($tx->type === 'income' ? 1 : -1),
             'Currency' => fn ($tx) => $tx->currency,
             'Category' => fn ($tx) => $tx->category_name,
             'Description' => fn ($tx) => $tx->description,
@@ -476,6 +476,6 @@ class FinanceService
             'Recorded By' => fn ($tx) => $tx->admin->name ?? 'System',
         ];
 
-        return $exportService->exportExcel($query->with('admin'), $filename, $columns);
+        return $exportService->exportCsv($query->with('admin'), $filename, $columns);
     }
 }
