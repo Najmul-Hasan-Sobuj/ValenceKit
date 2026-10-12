@@ -6,4 +6,7 @@ use Laravel\Mcp\Facades\Mcp;
 
 Mcp::oauthRoutes();
 
-Mcp::web('/mcp/valencekit', ValenceKitServer::class)->middleware(McpTokenMiddleware::class);
+Mcp::web('/mcp/valencekit', ValenceKitServer::class)->middleware([
+    'rate-limit:mcp',
+    McpTokenMiddleware::class,
+]);
