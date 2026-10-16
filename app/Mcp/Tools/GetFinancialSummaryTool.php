@@ -22,8 +22,13 @@ class GetFinancialSummaryTool extends BaseDbTool
             return $denied;
         }
 
-        $year = (int) ($request->get('year') ?: now()->year);
-        $month = (int) ($request->get('month') ?: now()->month);
+        $validated = $request->validate([
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+        ]);
+
+        $year = (int) ($validated['year'] ?? now()->year);
+        $month = (int) ($validated['month'] ?? now()->month);
 
         $date = Carbon::createFromDate($year, $month, 1);
         $financeService = app(FinanceService::class);
@@ -58,8 +63,8 @@ class GetFinancialSummaryTool extends BaseDbTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'year' => $schema->number('Calendar year (defaults to current year)'),
-            'month' => $schema->number('Calendar month number (1-12, defaults to current month)'),
+            'year' => $schema->integer('Calendar year (defaults to current year)')->minimum(2000)->maximum(2100),
+            'month' => $schema->integer('Calendar month number (1-12, defaults to current month)')->minimum(1)->maximum(12),
         ];
     }
 }

@@ -14,8 +14,8 @@ class GetCategoriesForModuleTool extends BaseDbTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'module' => $schema->string()->description('Module slug')->required(),
-            'type' => $schema->string()->description('Filter by type: income, expense'),
+            'module' => $schema->string()->description('Module slug')->maxLength(50)->required(),
+            'type' => $schema->string()->description('Filter by type: income, expense')->enum(['income', 'expense']),
         ];
     }
 
@@ -25,14 +25,14 @@ class GetCategoriesForModuleTool extends BaseDbTool
             return $denied;
         }
 
-        $request->validate([
-            'module' => 'required|string',
-            'type' => 'nullable|string',
+        $validated = $request->validate([
+            'module' => ['required', 'string', 'max:50', 'alpha_dash'],
+            'type' => ['nullable', 'string', 'in:income,expense'],
         ]);
 
-        $categories = Category::forModule($request->get('module'))
+        $categories = Category::forModule($validated['module'])
             ->active()
-            ->when($request->filled('type'), fn ($q) => $q->ofType($request->get('type')))
+            ->when(! empty($validated['type']), fn ($q) => $q->ofType($validated['type']))
             ->latest()
             ->get();
 

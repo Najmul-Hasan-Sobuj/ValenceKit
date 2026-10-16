@@ -21,7 +21,11 @@ class GetUserRoles extends BaseDbTool
             return $denied;
         }
 
-        $email = $request->get('email');
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+        ]);
+
+        $email = $validated['email'];
         $admin = Admin::with('roles')->where('email', $email)->first();
 
         if (! $admin) {
@@ -45,7 +49,7 @@ class GetUserRoles extends BaseDbTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'email' => $schema->string()->description('The admin email address to look up')->required(),
+            'email' => $schema->string()->description('The admin email address to look up')->format('email')->maxLength(255)->required(),
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Authorization;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Authorization\IndexUserRequest;
 use App\Http\Requests\Admin\Authorization\StoreUserRequest;
 use App\Http\Requests\Admin\Authorization\UpdateUserRequest;
 use App\Models\Admin;
@@ -19,15 +20,15 @@ class UserController extends Controller
     /**
      * Display a listing of the admins.
      */
-    public function index(Request $request)
+    public function index(IndexUserRequest $request)
     {
-        abort_unless($request->user('admin')->can('users.view'), 403);
+        $validated = $request->validated();
 
         $admins = Admin::with(['roles', 'passkeys'])
-            ->when($request->input('search'), fn ($q, $search) => $q->where(fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
-            ->when($request->input('role'), fn ($q, $roleName) => $q->whereHas('roles', fn ($q) => $q->where('name', $roleName)))
-            ->when($request->input('from'), fn ($q, $from) => $q->whereDate('last_login_at', '>=', $from))
-            ->when($request->input('to'), fn ($q, $to) => $q->whereDate('last_login_at', '<=', $to))
+            ->when($validated['search'] ?? null, fn ($q, $search) => $q->where(fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")))
+            ->when($validated['role'] ?? null, fn ($q, $roleName) => $q->whereHas('roles', fn ($q) => $q->where('name', $roleName)))
+            ->when($validated['from'] ?? null, fn ($q, $from) => $q->whereDate('last_login_at', '>=', $from))
+            ->when($validated['to'] ?? null, fn ($q, $to) => $q->whereDate('last_login_at', '<=', $to))
             ->paginate(10)->withQueryString();
 
         // Passkeys typically determine if MFA is enabled
@@ -45,7 +46,12 @@ class UserController extends Controller
                 'mfaEnabled' => $mfaEnabled,
                 'mfaMissing' => $mfaMissing,
             ],
-            'filters' => $request->only(['search', 'role', 'from', 'to']),
+            'filters' => [
+                'search' => $validated['search'] ?? null,
+                'role' => $validated['role'] ?? null,
+                'from' => $validated['from'] ?? null,
+                'to' => $validated['to'] ?? null,
+            ],
         ]);
     }
 

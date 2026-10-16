@@ -23,19 +23,19 @@ class RecordTransactionTool extends BaseDbTool
             return $denied;
         }
 
-        $type = strtolower((string) $request->get('type'));
-        $amount = (float) $request->get('amount');
-        $description = (string) $request->get('description');
-        $categoryKey = (string) $request->get('category', '');
-        $paymentMethod = (string) $request->get('payment_method', 'card');
+        $validated = $request->validate([
+            'type' => ['required', 'string', 'in:income,expense'],
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:999999999.99'],
+            'description' => ['required', 'string', 'min:1', 'max:255'],
+            'category' => ['nullable', 'string', 'max:64', 'regex:/^[a-zA-Z0-9_\-]+$/'],
+            'payment_method' => ['nullable', 'string', 'in:card,bank_transfer,cash,bkash_nagad,other'],
+        ]);
 
-        if (! in_array($type, ['income', 'expense'], true)) {
-            return Response::text("Error: Type must be either 'income' or 'expense'. Received: {$type}");
-        }
-
-        if ($amount <= 0) {
-            return Response::text('Error: Amount must be greater than zero.');
-        }
+        $type = strtolower((string) $validated['type']);
+        $amount = (float) $validated['amount'];
+        $description = (string) $validated['description'];
+        $categoryKey = (string) ($validated['category'] ?? '');
+        $paymentMethod = (string) ($validated['payment_method'] ?? 'card');
 
         $financeService = app(FinanceService::class);
         $currency = $financeService->getActiveCurrency();
@@ -89,11 +89,11 @@ class RecordTransactionTool extends BaseDbTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'type' => $schema->string()->description("Transaction type: 'income' or 'expense'")->required(),
-            'amount' => $schema->number()->description('The monetary amount of the transaction')->required(),
-            'description' => $schema->string()->description('Brief description or reason for the transaction')->required(),
-            'category' => $schema->string()->description("Category identifier (e.g. 'software_saas', 'cloud_infra', 'client_retainer', 'marketing')"),
-            'payment_method' => $schema->string()->description("Payment method ('card', 'bank_transfer', 'cash', 'bkash_nagad', 'other')"),
+            'type' => $schema->string()->description("Transaction type: 'income' or 'expense'")->enum(['income', 'expense'])->required(),
+            'amount' => $schema->number()->description('The monetary amount of the transaction')->minimum(0.01)->maximum(999999999.99)->required(),
+            'description' => $schema->string()->description('Brief description or reason for the transaction')->minLength(1)->maxLength(255)->required(),
+            'category' => $schema->string()->description("Category identifier (e.g. 'software_saas', 'cloud_infra', 'client_retainer', 'marketing')")->maxLength(64),
+            'payment_method' => $schema->string()->description("Payment method ('card', 'bank_transfer', 'cash', 'bkash_nagad', 'other')")->enum(['card', 'bank_transfer', 'cash', 'bkash_nagad', 'other']),
         ];
     }
 }
