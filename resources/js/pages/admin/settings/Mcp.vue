@@ -28,7 +28,7 @@ import {
 import { sync as syncTools } from '@/routes/admin/mcp/tools';
 import { useClipboard } from '@vueuse/core';
 import { toast } from 'vue-sonner';
-import { formatDistanceToNow } from 'date-fns';
+import RelativeTime from '@/components/RelativeTime.vue';
 import {
     Activity,
     Bot,
@@ -457,22 +457,10 @@ const synchronizeTools = () => {
                                 token.name
                             }}</TableCell>
                             <TableCell class="text-muted-foreground">
-                                {{
-                                    token.last_used_at
-                                        ? formatDistanceToNow(
-                                              new Date(token.last_used_at),
-                                              { addSuffix: true },
-                                          )
-                                        : 'Never'
-                                }}
+                                <RelativeTime :date="token.last_used_at" fallback="Never" />
                             </TableCell>
                             <TableCell class="text-muted-foreground">
-                                {{
-                                    formatDistanceToNow(
-                                        new Date(token.created_at),
-                                        { addSuffix: true },
-                                    )
-                                }}
+                                <RelativeTime :date="token.created_at" />
                             </TableCell>
                             <TableCell class="text-right">
                                 <Button
