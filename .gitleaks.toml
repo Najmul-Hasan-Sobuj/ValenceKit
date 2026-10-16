@@ -1,0 +1,21 @@
+# Gitleaks configuration for ValenceKit
+title = "ValenceKit Gitleaks Configuration"
+
+[extend]
+# Extends default Gitleaks rule definitions
+
+[allowlist]
+description = "Global allowlists for harmless documentation, seeders, and lockfiles"
+paths = [
+    '''^\.env\.example$''',
+    '''^database/seeders/AdminSeeder\.php$''',
+    '''^tests/.*''',
+    '''^composer\.lock$''',
+    '''^package-lock\.json$''',
+    '''^public/build/.*''',
+    '''^bootstrap/ssr/.*''',
+]
+
+regexes = [
+    '''Password123!''',
+]
