@@ -16,8 +16,6 @@
         "@inertiajs/vue3": "^3.0.0",
         "@laravel/passkeys": "^0.2.0",
         "@lucide/vue": "^1.48.0",
-        "@unovis/ts": "^1.7.0",
-        "@unovis/vue": "^1.7.0",
         "@vueuse/core": "^12.8.2",
         "blobatar": "^2.7.0",
         "chart.js": "^4.5.1",
