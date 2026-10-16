@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Services\ExportService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,38 +31,28 @@ class AuditLogController extends Controller
         ]);
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request, ExportService $exportService): StreamedResponse
     {
         abort_unless($request->user('admin')->can('audit.export'), 403);
 
-        $logs = $this->query($this->filters($request))->orderBy('id')->cursor();
+        $query = $this->query($this->filters($request))->orderBy('id');
 
-        return response()->streamDownload(function () use ($logs): void {
-            $output = fopen('php://output', 'w');
+        $columns = [
+            'Date' => fn (AuditLog $log) => $log->created_at?->toIso8601String(),
+            'Action' => fn (AuditLog $log) => $log->action,
+            'Actor Type' => fn (AuditLog $log) => $log->actor_type,
+            'Actor ID' => fn (AuditLog $log) => $log->actor_id,
+            'Subject Type' => fn (AuditLog $log) => $log->subject_type,
+            'Subject ID' => fn (AuditLog $log) => $log->subject_id,
+            'Description' => fn (AuditLog $log) => $log->description,
+            'IP Address' => fn (AuditLog $log) => $log->ip_address,
+        ];
 
-            if ($output === false) {
-                return;
-            }
-
-            fputcsv($output, ['Date', 'Action', 'Actor Type', 'Actor ID', 'Subject Type', 'Subject ID', 'Description', 'IP Address']);
-
-            foreach ($logs as $log) {
-                fputcsv($output, [
-                    $log->created_at?->toIso8601String(),
-                    $log->action,
-                    $log->actor_type,
-                    $log->actor_id,
-                    $log->subject_type,
-                    $log->subject_id,
-                    $log->description,
-                    $log->ip_address,
-                ]);
-            }
-
-            fclose($output);
-        }, 'audit-logs-'.now()->format('Y-m-d').'.csv', [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        return $exportService->exportCsv(
+            $query,
+            'audit-logs-'.now()->format('Y-m-d').'.csv',
+            $columns
+        );
     }
 
     /**

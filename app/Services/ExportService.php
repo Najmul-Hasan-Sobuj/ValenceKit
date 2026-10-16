@@ -48,13 +48,16 @@ class ExportService
         }, 200, $headers);
     }
 
-    private function escapeFormula(mixed $value): mixed
+    /**
+     * Sanitize values to prevent CSV formula injection.
+     */
+    public function escapeFormula(mixed $value): mixed
     {
         if (! is_string($value) || is_numeric($value)) {
             return $value;
         }
 
-        return preg_match('/^[\x00-\x20]*[=+\-@]/', $value) === 1
+        return preg_match('/^([\x00-\x20]*[=+\-@|%]|\t|\r)/', $value) === 1
             ? "'{$value}"
             : $value;
     }
