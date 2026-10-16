@@ -872,6 +872,19 @@ const structuredDataEntities = [
                             server configurations to find the exact root cause
                             of your system issues.
                         </p>
+                        <div
+                            class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
+                        >
+                            <img
+                                src="/images/audit-service.webp"
+                                alt="Code audit, profiling, and server diagnostics workspace"
+                                width="960"
+                                height="540"
+                                loading="lazy"
+                                decoding="async"
+                                class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                            />
+                        </div>
                     </div>
 
                     <!-- Right Interactive Collapsible Accordion List -->
@@ -999,6 +1012,19 @@ const structuredDataEntities = [
                             relational database schemas built to handle real
                             business operations without slowdowns.
                         </p>
+                        <div
+                            class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
+                        >
+                            <img
+                                src="/images/architecture-service.webp"
+                                alt="System architecture and relational database schema design overview"
+                                width="960"
+                                height="540"
+                                loading="lazy"
+                                decoding="async"
+                                class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                            />
+                        </div>
                     </div>
 
                     <!-- Right Interactive Collapsible Accordion List -->
@@ -1129,6 +1155,19 @@ const structuredDataEntities = [
                             local payment gateways, every feature is built to
                             run reliably.
                         </p>
+                        <div
+                            class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
+                        >
+                            <img
+                                src="/images/apps-service.webp"
+                                alt="Custom Laravel web application, POS system, and business software interface"
+                                width="960"
+                                height="540"
+                                loading="lazy"
+                                decoding="async"
+                                class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                            />
+                        </div>
                     </div>
 
                     <!-- Right Interactive Collapsible Accordion List -->
@@ -1295,6 +1334,19 @@ const structuredDataEntities = [
                             maintenance so your systems run without
                             interruptions.
                         </p>
+                        <div
+                            class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
+                        >
+                            <img
+                                src="/images/cloud-service.webp"
+                                alt="Cloud infrastructure, VPS management, and high-availability server orchestration"
+                                width="960"
+                                height="540"
+                                loading="lazy"
+                                decoding="async"
+                                class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                            />
+                        </div>
                     </div>
 
                     <!-- Right Interactive Collapsible Accordion List -->

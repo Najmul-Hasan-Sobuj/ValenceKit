@@ -573,6 +573,42 @@ const resetForm = () => {
                     </Card>
                 </div>
             </div>
+
+            <!-- Platform Interface & Architecture Preview -->
+            <section class="mt-16 border-t border-border pt-12 sm:mt-24 sm:pt-16">
+                <div class="mb-8 max-w-2xl">
+                    <p
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                    >
+                        Interface & Operations
+                    </p>
+                    <h2
+                        class="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+                    >
+                        Built for developer velocity and operational clarity.
+                    </h2>
+                    <p class="mt-2 text-sm text-muted-foreground sm:text-base">
+                        ValenceKit provides structured administrative interfaces,
+                        real-time telemetry, finance tracking, and least-privilege MCP integrations out of the box.
+                    </p>
+                </div>
+
+                <div
+                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                >
+                    <div class="aspect-video w-full overflow-hidden bg-muted">
+                        <img
+                            src="/images/dashboard-preview.webp"
+                            alt="ValenceKit administrative dashboard showing financial analytics, user management, and MCP telemetry"
+                            width="1200"
+                            height="675"
+                            loading="lazy"
+                            decoding="async"
+                            class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.01]"
+                        />
+                    </div>
+                </div>
+            </section>
         </main>
 
         <PublicFooter />
