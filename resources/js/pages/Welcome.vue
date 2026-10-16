@@ -157,6 +157,8 @@ const resetForm = () => {
         <AppHead
             :title="pageTitle"
             :description="pageDescription"
+            og-description="ValenceKit is a modern Laravel & Vue.js boilerplate for building fast, secure web applications with Inertia.js, SSR, APIs, and production-ready tools."
+            image-alt="ValenceKit - Modern Laravel & Vue.js Boilerplate"
         />
         <StructuredData :entities="structuredData" />
 

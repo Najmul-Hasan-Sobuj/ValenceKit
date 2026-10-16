@@ -607,6 +607,7 @@ const structuredDataEntities = [
             :title="pageTitle"
             :description="pageDescription"
             og-description="Custom web applications, point of sale software, inventory platforms, e-commerce, bug fixing, server management, and payment gateway integrations."
+            image-alt="ValenceKit - Full-Stack Laravel Services, Web Apps, POS & CRM"
         />
         <StructuredData :entities="structuredDataEntities" />
 

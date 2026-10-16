@@ -13,16 +13,32 @@ const canonicalUrl = computed(() => {
     return url.toString();
 });
 
-withDefaults(
+const props = withDefaults(
     defineProps<{
         title: string;
         description: string;
         ogDescription?: string;
+        ogImage?: string;
+        ogType?: string;
+        twitterCard?: string;
+        imageAlt?: string;
     }>(),
     {
         ogDescription: undefined,
+        ogImage: '/images/og-image.png',
+        ogType: 'website',
+        twitterCard: 'summary_large_image',
+        imageAlt: 'ValenceKit - Modern Laravel & Vue 3 Architecture',
     },
 );
+
+const absoluteOgImage = computed(() => {
+    const img = props.ogImage || '/images/og-image.png';
+    if (img.startsWith('http://') || img.startsWith('https://')) {
+        return img;
+    }
+    return new URL(img, page.props.appUrl).toString();
+});
 </script>
 
 <template>
@@ -44,10 +60,30 @@ withDefaults(
             property="og:site_name"
             content="ValenceKit"
         />
+        <meta head-key="og:type" property="og:type" :content="ogType" />
+        <meta
+            head-key="og:image"
+            property="og:image"
+            :content="absoluteOgImage"
+        />
+        <meta
+            head-key="og:image:secure_url"
+            property="og:image:secure_url"
+            :content="absoluteOgImage"
+        />
+        <meta head-key="og:image:width" property="og:image:width" content="1200" />
+        <meta head-key="og:image:height" property="og:image:height" content="630" />
+        <meta
+            head-key="og:image:alt"
+            property="og:image:alt"
+            :content="imageAlt"
+        />
+        <meta head-key="og:image:type" property="og:image:type" content="image/png" />
+
         <meta
             head-key="twitter:card"
             name="twitter:card"
-            content="summary"
+            :content="twitterCard"
         />
         <meta head-key="twitter:title" name="twitter:title" :content="title" />
         <meta
@@ -55,7 +91,17 @@ withDefaults(
             name="twitter:description"
             :content="ogDescription ?? description"
         />
-        <meta head-key="og:type" property="og:type" content="website" />
+        <meta
+            head-key="twitter:image"
+            name="twitter:image"
+            :content="absoluteOgImage"
+        />
+        <meta
+            head-key="twitter:image:alt"
+            name="twitter:image:alt"
+            :content="imageAlt"
+        />
+
         <link head-key="canonical" rel="canonical" :href="canonicalUrl" />
         <slot />
     </Head>
