@@ -88,3 +88,24 @@ it('allows an admin with finance permission to use finance tools', function () {
     expect((string) $response->content())
         ->toContain('recorded successfully');
 });
+
+it('allows tool execution when token has direct scope without relying on role permissions', function () {
+    $admin = Admin::factory()->create();
+    // Admin has no roles or permissions
+    Sanctum::actingAs($admin, ['mcp:finance.read']);
+
+    $response = (new GetFinancialSummaryTool)->handle(new McpRequest([
+        'year' => now()->year,
+        'month' => now()->month,
+    ]));
+
+    expect((string) $response->content())
+        ->toContain('Financial Summary for');
+});
+
+it('denies tool execution when request has no authenticated token', function () {
+    $response = (new GetFinancialSummaryTool)->handle(new McpRequest);
+
+    expect((string) $response->content())
+        ->toContain('required scope');
+});
