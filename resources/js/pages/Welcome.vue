@@ -28,6 +28,11 @@ import {
     ShieldCheck,
     ArrowRight,
     RotateCcw,
+    Layers,
+    Boxes,
+    Activity,
+    Database,
+    Lock,
 } from '@lucide/vue';
 
 const page = usePage<{ name?: string; appUrl: string }>();
@@ -576,26 +581,76 @@ const resetForm = () => {
 
             <!-- Platform Interface & Architecture Preview -->
             <section class="mt-16 border-t border-border pt-12 sm:mt-24 sm:pt-16">
+                <!-- Section Header with eyebrow badge matching Services page & design tokens -->
                 <div class="mb-8 max-w-2xl">
-                    <p
-                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                    >
-                        Interface & Operations
-                    </p>
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="flex size-6 items-center justify-center rounded-md border border-border/60 bg-muted text-foreground"
+                        >
+                            <Layers class="size-3.5" aria-hidden="true" />
+                        </span>
+                        <p
+                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                        >
+                            Interface & Architecture
+                        </p>
+                    </div>
                     <h2
-                        class="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+                        class="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl lg:text-4xl"
                     >
                         Built for developer velocity and operational clarity.
                     </h2>
-                    <p class="mt-2 text-sm text-muted-foreground sm:text-base">
+                    <p class="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
                         ValenceKit provides structured administrative interfaces,
                         real-time telemetry, finance tracking, and least-privilege MCP integrations out of the box.
                     </p>
                 </div>
 
+                <!-- Showcase Frame: App Window with Chrome & Status Bar -->
                 <div
-                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm sm:rounded-2xl"
                 >
+                    <!-- macOS-style App Window Header -->
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 bg-muted/40 px-4 py-3 sm:px-6"
+                    >
+                        <div class="flex items-center gap-2">
+                            <span class="size-2.5 rounded-full bg-red-500/80 sm:size-3" />
+                            <span class="size-2.5 rounded-full bg-yellow-500/80 sm:size-3" />
+                            <span class="size-2.5 rounded-full bg-emerald-500/80 sm:size-3" />
+                            <span
+                                class="ml-2 hidden font-mono text-xs text-muted-foreground md:inline-block"
+                            >
+                                valencekit-admin
+                            </span>
+                        </div>
+
+                        <!-- Center URL Pill / Secure Location -->
+                        <div
+                            class="flex items-center gap-1.5 rounded-md border border-border/70 bg-background/90 px-3 py-1 font-mono text-xs text-muted-foreground shadow-2xs"
+                        >
+                            <Lock class="size-3 text-emerald-500" />
+                            <span class="text-foreground">valencekit.test</span>
+                            <span class="text-muted-foreground/60">/admin/dashboard</span>
+                        </div>
+
+                        <!-- Right Live System Status Indicator -->
+                        <div class="flex items-center gap-2">
+                            <span class="relative flex size-2">
+                                <span
+                                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                                />
+                                <span
+                                    class="relative inline-flex size-2 rounded-full bg-emerald-500"
+                                />
+                            </span>
+                            <span class="font-mono text-xs text-muted-foreground">
+                                Telemetry Active
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Image Viewport -->
                     <div class="aspect-video w-full overflow-hidden bg-muted">
                         <img
                             src="/static/welcome/dashboard-preview.webp"
@@ -604,8 +659,103 @@ const resetForm = () => {
                             height="768"
                             loading="lazy"
                             decoding="async"
-                            class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.01]"
+                            class="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.01]"
                         />
+                    </div>
+                </div>
+
+                <!-- Architecture Capabilities Bento Grid -->
+                <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div
+                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
+                    >
+                        <div class="space-y-3">
+                            <div
+                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                            >
+                                <Boxes class="size-4" aria-hidden="true" />
+                            </div>
+                            <h3 class="text-sm font-semibold text-foreground">
+                                MCP Protocol Native
+                            </h3>
+                            <p class="text-xs leading-relaxed text-muted-foreground">
+                                Direct integration with AI agents via Model Context Protocol tools, resources, and live prompts in routes/ai.php.
+                            </p>
+                        </div>
+                        <div class="mt-4 border-t border-border/50 pt-3">
+                            <span class="font-mono text-[11px] text-muted-foreground">
+                                SSE Transport · Read/Write
+                            </span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
+                    >
+                        <div class="space-y-3">
+                            <div
+                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                            >
+                                <Activity class="size-4" aria-hidden="true" />
+                            </div>
+                            <h3 class="text-sm font-semibold text-foreground">
+                                Real-Time Telemetry
+                            </h3>
+                            <p class="text-xs leading-relaxed text-muted-foreground">
+                                Comprehensive audit trail logs, query profiling, security event monitoring, and automatic sensitive data redaction.
+                            </p>
+                        </div>
+                        <div class="mt-4 border-t border-border/50 pt-3">
+                            <span class="font-mono text-[11px] text-muted-foreground">
+                                Sub-ms Latency · Sentry Ready
+                            </span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
+                    >
+                        <div class="space-y-3">
+                            <div
+                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                            >
+                                <ShieldCheck class="size-4" aria-hidden="true" />
+                            </div>
+                            <h3 class="text-sm font-semibold text-foreground">
+                                Fortify & Passkeys
+                            </h3>
+                            <p class="text-xs leading-relaxed text-muted-foreground">
+                                Complete authentication suite with WebAuthn biometric passkeys, TOTP two-factor auth, and granular Spatie permissions.
+                            </p>
+                        </div>
+                        <div class="mt-4 border-t border-border/50 pt-3">
+                            <span class="font-mono text-[11px] text-muted-foreground">
+                                FIDO2 · Role-Based Access
+                            </span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
+                    >
+                        <div class="space-y-3">
+                            <div
+                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                            >
+                                <Database class="size-4" aria-hidden="true" />
+                            </div>
+                            <h3 class="text-sm font-semibold text-foreground">
+                                Financial Ledgers
+                            </h3>
+                            <p class="text-xs leading-relaxed text-muted-foreground">
+                                Relational transactional ledger architecture with category hierarchies, soft deletes, and idempotent payment webhooks.
+                            </p>
+                        </div>
+                        <div class="mt-4 border-t border-border/50 pt-3">
+                            <span class="font-mono text-[11px] text-muted-foreground">
+                                ACID Safe · SSLCommerz/bKash
+                            </span>
+                        </div>
                     </div>
                 </div>
             </section>
