@@ -25,7 +25,7 @@ import {
     store,
     update,
 } from '@/actions/App/Http/Controllers/Admin/CategoryController';
-import * as LucideIcons from '@lucide/vue';
+import { getCategoryIcon } from '@/utils/iconRegistry';
 import InputError from '@/components/InputError.vue';
 import IconPicker from '@/components/IconPicker.vue';
 import { Switch } from '@/components/ui/switch';
@@ -194,7 +194,7 @@ watch(
 );
 
 const getLucideIcon = (name: string) => {
-    return (LucideIcons as any)[name] || LucideIcons.HelpCircle;
+    return getCategoryIcon(name);
 };
 
 const isEditing = computed(() => !!props.category);

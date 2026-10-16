@@ -58,7 +58,7 @@ import {
     update,
 } from '@/actions/App/Http/Controllers/Admin/CategoryController';
 import CategoryDrawer from './CategoryDrawer.vue';
-import * as LucideIcons from '@lucide/vue';
+import { getCategoryIcon } from '@/utils/iconRegistry';
 import { usePermissions } from '@/composables/usePermissions';
 import type { AcceptableValue } from 'reka-ui';
 
@@ -87,7 +87,7 @@ defineOptions({
 const { can } = usePermissions();
 
 const getLucideIcon = (name: string) => {
-    return (LucideIcons as any)[name] || LucideIcons.HelpCircle;
+    return getCategoryIcon(name);
 };
 
 const filterModule = ref(props.filters.module || 'all');

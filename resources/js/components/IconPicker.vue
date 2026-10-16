@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import * as LucideIcons from '@lucide/vue';
 import {
     Search,
     X,
@@ -9,6 +8,10 @@ import {
     Folder,
     Sparkles,
 } from '@lucide/vue';
+import {
+    allSupportedIconNames,
+    getCategoryIcon,
+} from '@/utils/iconRegistry';
 import {
     Popover,
     PopoverContent,
@@ -41,18 +44,8 @@ const activeCategory = ref<'all' | string>('all');
 const hoveredIcon = ref<string | null>(null);
 const visibleCount = ref(60);
 
-// Extract all 2,000+ clean PascalCase Lucide icon names sorted alphabetically
-const excluded = new Set(['createLucideIcon', 'default']);
-const allLucideIconNames: string[] = Object.keys(LucideIcons)
-    .filter(
-        (key) =>
-            !key.endsWith('Icon') &&
-            !key.startsWith('Lucide') &&
-            typeof (LucideIcons as any)[key] === 'function' &&
-            /^[A-Z]/.test(key) &&
-            !excluded.has(key),
-    )
-    .sort();
+// All clean PascalCase supported icon names sorted alphabetically
+const allLucideIconNames: string[] = allSupportedIconNames;
 
 // Curated categories for fast discovery
 const categories: Record<
@@ -352,8 +345,7 @@ const searchTags: Record<string, string[]> = {
 
 // Safe icon component resolver
 const getLucideIcon = (name: string | undefined | null) => {
-    if (!name) return Folder;
-    return (LucideIcons as any)[name] || Folder;
+    return getCategoryIcon(name, Folder);
 };
 
 // Reset pagination when search or category changes
