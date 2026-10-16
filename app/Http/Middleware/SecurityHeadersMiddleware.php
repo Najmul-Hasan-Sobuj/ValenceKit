@@ -30,28 +30,30 @@ class SecurityHeadersMiddleware
             $connectSrc = "'self'";
         }
 
-        $csp = implode('; ', [
-            "default-src 'self'",
-            "script-src {$scriptSrc}",
-            "style-src 'self' 'unsafe-inline' https: http:",
-            "img-src 'self' data: blob: https:",
-            "font-src 'self' data: https:",
-            "connect-src {$connectSrc}",
-            "frame-ancestors 'none'",
-            "form-action 'self'",
-            "base-uri 'self'",
-            "object-src 'none'",
-        ]);
-
-        $response->headers->set('Content-Security-Policy', $csp);
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-Frame-Options', 'DENY');
-        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), publickey-credentials-get=(self)');
+        $headers = [
+            'Content-Security-Policy' => implode('; ', [
+                "default-src 'self'",
+                "script-src {$scriptSrc}",
+                "style-src 'self' 'unsafe-inline' https: http:",
+                "img-src 'self' data: blob: https:",
+                "font-src 'self' data: https:",
+                "connect-src {$connectSrc}",
+                "frame-ancestors 'none'",
+                "form-action 'self'",
+                "base-uri 'self'",
+                "object-src 'none'",
+            ]),
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'DENY',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+            'Permissions-Policy' => 'geolocation=(), microphone=(), camera=(), publickey-credentials-get=(self)',
+        ];
 
         if ($request->isSecure() || app()->isProduction()) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            $headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains';
         }
+
+        $response->headers->add($headers);
 
         return $response;
     }
