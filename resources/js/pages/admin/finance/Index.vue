@@ -2,6 +2,7 @@
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
+import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
 import {
     Activity,
     ArrowDownLeft,
@@ -1108,7 +1109,7 @@ defineOptions({
                             : null
                     "
                 >
-                    <span v-html="link.label" />
+                    <span>{{ decodePaginationLabel(link.label) }}</span>
                 </Button>
             </div>
         </div>

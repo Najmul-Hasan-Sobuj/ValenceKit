@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { watchDebounced } from '@vueuse/core';
+import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
 import {
     MoreHorizontal,
     Pencil,
@@ -612,7 +613,7 @@ const toggleStatus = (category: any, newStatus: boolean) => {
                         ]"
                         @click="link.url ? handlePageChange(link.url) : null"
                     >
-                        <span v-html="link.label" />
+                        <span>{{ decodePaginationLabel(link.label) }}</span>
                     </Button>
                 </div>
             </div>

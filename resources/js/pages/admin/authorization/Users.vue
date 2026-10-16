@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
+import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
 import {
     MoreHorizontal,
     Pencil,
@@ -575,7 +576,7 @@ defineOptions({
                     }"
                     @click="link.url ? router.get(link.url) : null"
                 >
-                    <span v-html="link.label" />
+                    <span>{{ decodePaginationLabel(link.label) }}</span>
                 </Button>
             </div>
         </div>

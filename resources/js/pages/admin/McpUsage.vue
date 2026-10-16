@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
+import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
 import {
     Table,
     TableBody,
@@ -407,7 +408,7 @@ defineOptions({
                     }"
                     @click="link.url ? router.get(link.url) : null"
                 >
-                    <span v-html="link.label" />
+                    <span>{{ decodePaginationLabel(link.label) }}</span>
                 </Button>
             </div>
         </div>

@@ -23,6 +23,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import { confirm } from '@/routes/two-factor';
 import type { TwoFactorConfigContent } from '@/types';
+import { sanitizeSvg } from '@/utils/sanitizeSvg';
 
 type Props = {
     requiresConfirmation: boolean;
@@ -40,6 +41,7 @@ const { qrCodeSvg, manualSetupKey, clearSetupData, fetchSetupData, errors } =
 
 const showVerificationStep = ref(false);
 const code = ref<string>('');
+const safeQrCodeSvg = computed(() => sanitizeSvg(qrCodeSvg.value));
 
 const pinInputContainerRef = useTemplateRef('pinInputContainerRef');
 
@@ -161,7 +163,7 @@ watch(
                                 class="relative mx-auto aspect-square w-64 overflow-hidden rounded-lg border border-border"
                             >
                                 <div
-                                    v-if="!qrCodeSvg"
+                                    v-if="!safeQrCodeSvg"
                                     class="absolute inset-0 z-10 flex aspect-square h-auto w-full animate-pulse items-center justify-center bg-background"
                                 >
                                     <Spinner class="size-6" />
@@ -171,7 +173,7 @@ watch(
                                     class="relative z-10 overflow-hidden border p-5"
                                 >
                                     <div
-                                        v-html="qrCodeSvg"
+                                        v-html="safeQrCodeSvg"
                                         class="flex aspect-square size-full items-center justify-center"
                                         :style="{
                                             filter:
