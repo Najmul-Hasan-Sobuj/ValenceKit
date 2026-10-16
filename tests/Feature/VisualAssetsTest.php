@@ -1,17 +1,17 @@
 <?php
 
-test('visual assets exist in public/images with optimized file sizes', function () {
+test('visual assets exist in public/static subdirectories with optimized file sizes', function () {
     $expectedImages = [
-        'dashboard-preview.webp',
-        'audit-service.webp',
-        'architecture-service.webp',
-        'apps-service.webp',
-        'cloud-service.webp',
+        'welcome/dashboard-preview.webp',
+        'service/audit.webp',
+        'service/architecture.webp',
+        'service/apps.webp',
+        'service/cloud.webp',
     ];
 
     foreach ($expectedImages as $image) {
-        $path = public_path("images/{$image}");
-        expect(file_exists($path))->toBeTrue("Expected {$image} to exist in public/images/");
+        $path = public_path("static/{$image}");
+        expect(file_exists($path))->toBeTrue("Expected {$image} to exist in public/static/");
 
         // Ensure images are optimized WebP under 150KB
         $sizeBytes = filesize($path);
@@ -20,25 +20,25 @@ test('visual assets exist in public/images with optimized file sizes', function 
     }
 });
 
-test('public pages render accessible and performance-safe image tags', function () {
+test('public pages render accessible and performance-safe image tags with static paths', function () {
     $welcomeComponent = file_get_contents(resource_path('js/pages/Welcome.vue'));
     $servicesComponent = file_get_contents(resource_path('js/pages/Services.vue'));
 
     // Check Welcome.vue image attributes
     expect($welcomeComponent)
-        ->toContain('/images/dashboard-preview.webp')
-        ->toContain('width="1200"')
-        ->toContain('height="675"')
+        ->toContain('/static/welcome/dashboard-preview.webp')
+        ->toContain('width="1376"')
+        ->toContain('height="768"')
         ->toContain('loading="lazy"')
         ->toContain('decoding="async"')
         ->toContain('alt="ValenceKit administrative dashboard');
 
     // Check Services.vue images attributes
     $phaseImages = [
-        '/images/audit-service.webp',
-        '/images/architecture-service.webp',
-        '/images/apps-service.webp',
-        '/images/cloud-service.webp',
+        '/static/service/audit.webp',
+        '/static/service/architecture.webp',
+        '/static/service/apps.webp',
+        '/static/service/cloud.webp',
     ];
 
     foreach ($phaseImages as $img) {
@@ -46,8 +46,8 @@ test('public pages render accessible and performance-safe image tags', function 
     }
 
     expect($servicesComponent)
-        ->toContain('width="960"')
-        ->toContain('height="540"')
+        ->toContain('width="1376"')
+        ->toContain('height="768"')
         ->toContain('loading="lazy"')
         ->toContain('decoding="async"');
 });

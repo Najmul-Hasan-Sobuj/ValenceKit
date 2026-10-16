@@ -598,10 +598,10 @@ const resetForm = () => {
                 >
                     <div class="aspect-video w-full overflow-hidden bg-muted">
                         <img
-                            src="/images/dashboard-preview.webp"
+                            src="/static/welcome/dashboard-preview.webp"
                             alt="ValenceKit administrative dashboard showing financial analytics, user management, and MCP telemetry"
-                            width="1200"
-                            height="675"
+                            width="1376"
+                            height="768"
                             loading="lazy"
                             decoding="async"
                             class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.01]"
