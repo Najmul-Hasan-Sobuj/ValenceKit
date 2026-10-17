@@ -11,6 +11,7 @@ import { edit as editMcp } from '@/routes/admin/mcp';
 import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import { edit as editFinanceSettings } from '@/routes/admin/finance/settings';
+import { edit as editTrackingSettings } from '@/routes/admin/tracking/settings';
 import type { NavItem } from '@/types';
 import { usePermissions } from '@/composables/usePermissions';
 
@@ -33,6 +34,10 @@ const sidebarNavItems = computed<NavItem[]>(() => {
 
     if (can('settings.finance.view')) {
         items.push({ title: 'Finance', href: editFinanceSettings() });
+    }
+
+    if (can('settings.tracking.view')) {
+        items.push({ title: 'Tracking & Pixels', href: editTrackingSettings() });
     }
 
     if (can('settings.appearance.view')) {

@@ -44,6 +44,7 @@ import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import { edit as editAppearance } from '@/routes/admin/appearance';
 import { edit as editFinanceSettings } from '@/routes/admin/finance/settings';
+import { edit as editTrackingSettings } from '@/routes/admin/tracking/settings';
 import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
 import { index as indexAuditLogs } from '@/routes/admin/audit-logs';
 import { index as indexFinance } from '@/routes/admin/finance';
@@ -59,6 +60,7 @@ const firstAvailableSettingsUrl = computed(() => {
     if (can('settings.profile.view')) return editProfile();
     if (can('settings.security.view')) return editSecurity();
     if (can('settings.finance.view')) return editFinanceSettings();
+    if (can('settings.tracking.view')) return editTrackingSettings();
     if (can('settings.appearance.view')) return editAppearance();
     return null;
 });

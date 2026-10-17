@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\Settings\McpSettingsController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
 use App\Http\Controllers\Admin\Settings\ProfileController;
 use App\Http\Controllers\Admin\Settings\SecurityController;
+use App\Http\Controllers\Admin\Settings\TrackingSettingsController;
 use App\Http\Middleware\Admin\Authenticate;
 use App\Http\Middleware\Admin\EnsureAdminIsActive;
 use App\Http\Middleware\Admin\RedirectIfAuthenticated;
@@ -103,6 +104,9 @@ Route::prefix(config('admin.alias'))
 
             Route::get('settings/finance', [FinanceSettingsController::class, 'edit'])->name('finance.settings.edit');
             Route::patch('settings/finance', [FinanceSettingsController::class, 'update'])->name('finance.settings.update');
+
+            Route::get('settings/tracking', [TrackingSettingsController::class, 'edit'])->name('tracking.settings.edit');
+            Route::patch('settings/tracking', [TrackingSettingsController::class, 'update'])->name('tracking.settings.update');
 
             Route::get('passkeys/register/options', [SettingsPasskeyController::class, 'options'])->name('passkeys.register.options');
             Route::post('passkeys/register', [SettingsPasskeyController::class, 'store'])->name('passkeys.register');

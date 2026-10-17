@@ -22,12 +22,15 @@ class SecurityHeadersMiddleware
 
         $nonce = Vite::cspNonce();
 
+        $trackingScriptSrc = 'https://www.clarity.ms https://*.clarity.ms https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net';
+        $trackingConnectSrc = 'https://*.clarity.ms https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.facebook.com';
+
         if (app()->environment('local', 'testing')) {
-            $scriptSrc = "'self' 'unsafe-eval' 'nonce-{$nonce}' http://localhost:5173 http://127.0.0.1:5173";
+            $scriptSrc = "'self' 'unsafe-eval' 'nonce-{$nonce}' http://localhost:5173 http://127.0.0.1:5173 {$trackingScriptSrc}";
             $connectSrc = "'self' http://localhost:5173 ws://localhost:5173 http://127.0.0.1:5173 ws://127.0.0.1:5173 https:";
         } else {
-            $scriptSrc = "'self' 'nonce-{$nonce}'";
-            $connectSrc = "'self'";
+            $scriptSrc = "'self' 'nonce-{$nonce}' {$trackingScriptSrc}";
+            $connectSrc = "'self' {$trackingConnectSrc}";
         }
 
         $headers = [
@@ -38,6 +41,7 @@ class SecurityHeadersMiddleware
                 "img-src 'self' data: blob: https:",
                 "font-src 'self' data: https:",
                 "connect-src {$connectSrc}",
+                "frame-src 'self' https://www.googletagmanager.com",
                 "frame-ancestors 'none'",
                 "form-action 'self'",
                 "base-uri 'self'",

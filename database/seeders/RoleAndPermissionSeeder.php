@@ -54,6 +54,8 @@ class RoleAndPermissionSeeder extends Seeder
             'settings.mcp.usage.view' => 'View MCP usage logs to monitor who uses the server',
             'settings.finance.view' => 'View global finance currency and budget settings',
             'settings.finance.edit' => 'Update global currency and financial configuration',
+            'settings.tracking.view' => 'View analytics, tracking pixels, and custom scripts tab',
+            'settings.tracking.edit' => 'Update tracking IDs, pixels, and custom scripts',
         ],
 
         'Audit & Compliance' => [
@@ -107,6 +109,8 @@ class RoleAndPermissionSeeder extends Seeder
                 'finance.export',
                 'settings.finance.view',
                 'settings.finance.edit',
+                'settings.tracking.view',
+                'settings.tracking.edit',
                 'categories.view',
                 'categories.create',
                 'categories.edit',
