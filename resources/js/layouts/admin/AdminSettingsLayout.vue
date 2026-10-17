@@ -48,7 +48,11 @@ const sidebarNavItems = computed<NavItem[]>(() => {
 });
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
-const isMcpPage = computed(() => isCurrentOrParentUrl(editMcp()));
+const isFullWidthPage = computed(
+    () =>
+        isCurrentOrParentUrl(editMcp()) ||
+        isCurrentOrParentUrl(editTrackingSettings()),
+);
 </script>
 
 <template>
@@ -81,8 +85,10 @@ const isMcpPage = computed(() => isCurrentOrParentUrl(editMcp()));
 
             <Separator class="my-6 lg:hidden" />
 
-            <div :class="['flex-1', { 'md:max-w-2xl': !isMcpPage }]">
-                <section :class="['space-y-12', { 'max-w-xl': !isMcpPage }]">
+            <div :class="['flex-1', { 'md:max-w-2xl': !isFullWidthPage }]">
+                <section
+                    :class="['space-y-12', { 'max-w-xl': !isFullWidthPage }]"
+                >
                     <slot />
                 </section>
             </div>
