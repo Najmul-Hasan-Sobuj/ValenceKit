@@ -11,6 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { home, privacyPolicy, terms } from '@/routes';
+import ScrollProgress from '@/components/ScrollProgress.vue';
+import ScrollToTop from '@/components/ScrollToTop.vue';
+import CardSpotlight from '@/components/CardSpotlight.vue';
+import { useScrollReveal } from '@/composables/useScrollReveal';
 import {
     Scale,
     Shield,
@@ -205,9 +209,12 @@ const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 };
+
+useScrollReveal();
 </script>
 
 <template>
+    <ScrollProgress />
     <div
         class="min-h-screen bg-[#FDFDFC] text-[#1b1b18] antialiased selection:bg-primary selection:text-primary-foreground dark:bg-[#0a0a0a] dark:text-[#EDEDEC]"
     >
@@ -300,10 +307,9 @@ const scrollToTop = () => {
                     <div
                         class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
                     >
-                        <div
+                        <CardSpotlight
                             v-for="(item, index) in highlights"
                             :key="index"
-                            class="group relative rounded-xl border border-border/80 bg-card p-4 transition-all duration-200 hover:border-foreground/20 hover:shadow-xs"
                         >
                             <div class="flex items-start gap-3">
                                 <div
@@ -327,7 +333,7 @@ const scrollToTop = () => {
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </CardSpotlight>
                     </div>
                 </div>
             </header>
@@ -430,7 +436,7 @@ const scrollToTop = () => {
                     <!-- Section 01: Agreement -->
                     <section
                         id="agreement"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors"
+                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
                     >
                         <header
                             class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
@@ -490,7 +496,7 @@ const scrollToTop = () => {
                     <!-- Section 02: Accounts and security -->
                     <section
                         id="accounts"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors"
+                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
                     >
                         <header
                             class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
@@ -585,7 +591,7 @@ const scrollToTop = () => {
                     <!-- Section 03: Acceptable use -->
                     <section
                         id="acceptable-use"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors"
+                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
                     >
                         <header
                             class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
@@ -676,7 +682,7 @@ const scrollToTop = () => {
                     <!-- Section 04: Availability and changes -->
                     <section
                         id="availability"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors"
+                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
                     >
                         <header
                             class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
@@ -742,7 +748,7 @@ const scrollToTop = () => {
                     <!-- Section 05: Contact -->
                     <section
                         id="contact"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors"
+                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
                     >
                         <header
                             class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
@@ -837,5 +843,6 @@ const scrollToTop = () => {
         </main>
 
         <PublicFooter />
+        <ScrollToTop />
     </div>
 </template>

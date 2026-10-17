@@ -113,7 +113,23 @@ export function useAppearance(): UseAppearanceReturn {
         // Store in cookie for SSR...
         setCookie('appearance', value);
 
-        updateTheme(value);
+        if (typeof document !== 'undefined') {
+            if ('startViewTransition' in document) {
+                // Modern browsers (Chrome, Edge, Safari 18+) native snapshot cross-fade
+                document.startViewTransition(() => {
+                    updateTheme(value);
+                });
+            } else {
+                // Fallback for Safari <18 and Firefox: smooth CSS color interpolation
+                document.documentElement.classList.add('theme-transitioning');
+                updateTheme(value);
+                setTimeout(() => {
+                    document.documentElement.classList.remove('theme-transitioning');
+                }, 400);
+            }
+        } else {
+            updateTheme(value);
+        }
     }
 
     return {

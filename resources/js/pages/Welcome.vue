@@ -7,7 +7,15 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import StructuredData from '@/components/StructuredData.vue';
+import ScrollProgress from '@/components/ScrollProgress.vue';
+import ScrollToTop from '@/components/ScrollToTop.vue';
+import CardSpotlight from '@/components/CardSpotlight.vue';
+import ContentCrossFade from '@/components/ContentCrossFade.vue';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useScrollReveal } from '@/composables/useScrollReveal';
 import { Button } from '@/components/ui/button';
+
+useScrollReveal();
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -98,6 +106,25 @@ const errors = reactive({
 const isSubmitting = ref(false);
 const isSubmitted = ref(false);
 
+const isTelemetryLoading = ref(false);
+let telemetryTimer: ReturnType<typeof setTimeout> | null = null;
+
+const refreshTelemetry = () => {
+    if (telemetryTimer) {
+        clearTimeout(telemetryTimer);
+        telemetryTimer = null;
+    }
+
+    isTelemetryLoading.value = !isTelemetryLoading.value;
+
+    if (isTelemetryLoading.value) {
+        telemetryTimer = setTimeout(() => {
+            isTelemetryLoading.value = false;
+            telemetryTimer = null;
+        }, 12000);
+    }
+};
+
 const validateForm = () => {
     errors.name = '';
     errors.email = '';
@@ -161,6 +188,12 @@ const resetForm = () => {
             image-alt="ValenceKit - Modern Laravel & Vue.js Boilerplate"
         />
         <StructuredData :entities="structuredData" />
+
+        <!-- Scroll-Linked Progress Indicator -->
+        <ScrollProgress />
+
+        <!-- Scroll To Top Button -->
+        <ScrollToTop />
 
         <!-- Top Header Navigation -->
         <header
@@ -666,100 +699,136 @@ const resetForm = () => {
                     </div>
                 </div>
 
-                <!-- Architecture Capabilities Bento Grid -->
-                <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div
-                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
-                    >
-                        <div class="space-y-3">
-                            <div
-                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
-                            >
-                                <Boxes class="size-4" aria-hidden="true" />
-                            </div>
-                            <h3 class="text-sm font-semibold text-foreground">
-                                MCP Protocol Native
-                            </h3>
-                            <p class="text-xs leading-relaxed text-muted-foreground">
-                                Direct integration with AI agents via Model Context Protocol tools, resources, and live prompts in routes/ai.php.
-                            </p>
-                        </div>
-                        <div class="mt-4 border-t border-border/50 pt-3">
-                            <span class="font-mono text-[11px] text-muted-foreground">
-                                SSE Transport · Read/Write
-                            </span>
-                        </div>
+                <!-- Architecture Capabilities Bento Grid Header with Live Simulation -->
+                <div class="mt-8 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span class="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                            Architecture Capabilities & Telemetry
+                        </span>
                     </div>
-
-                    <div
-                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
+                    <button
+                        id="btn-simulate-stream"
+                        type="button"
+                        @click="refreshTelemetry"
+                        class="inline-flex h-7 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+                        :title="isTelemetryLoading ? 'Click to cross-fade back to live content' : 'Simulate live telemetry fetch'"
                     >
-                        <div class="space-y-3">
-                            <div
-                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
-                            >
-                                <Activity class="size-4" aria-hidden="true" />
-                            </div>
-                            <h3 class="text-sm font-semibold text-foreground">
-                                Real-Time Telemetry
-                            </h3>
-                            <p class="text-xs leading-relaxed text-muted-foreground">
-                                Comprehensive audit trail logs, query profiling, security event monitoring, and automatic sensitive data redaction.
-                            </p>
-                        </div>
-                        <div class="mt-4 border-t border-border/50 pt-3">
-                            <span class="font-mono text-[11px] text-muted-foreground">
-                                Sub-ms Latency · Sentry Ready
-                            </span>
-                        </div>
-                    </div>
-
-                    <div
-                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
-                    >
-                        <div class="space-y-3">
-                            <div
-                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
-                            >
-                                <ShieldCheck class="size-4" aria-hidden="true" />
-                            </div>
-                            <h3 class="text-sm font-semibold text-foreground">
-                                Fortify & Passkeys
-                            </h3>
-                            <p class="text-xs leading-relaxed text-muted-foreground">
-                                Complete authentication suite with WebAuthn biometric passkeys, TOTP two-factor auth, and granular Spatie permissions.
-                            </p>
-                        </div>
-                        <div class="mt-4 border-t border-border/50 pt-3">
-                            <span class="font-mono text-[11px] text-muted-foreground">
-                                FIDO2 · Role-Based Access
-                            </span>
-                        </div>
-                    </div>
-
-                    <div
-                        class="flex flex-col justify-between rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:border-border hover:bg-card"
-                    >
-                        <div class="space-y-3">
-                            <div
-                                class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
-                            >
-                                <Database class="size-4" aria-hidden="true" />
-                            </div>
-                            <h3 class="text-sm font-semibold text-foreground">
-                                Financial Ledgers
-                            </h3>
-                            <p class="text-xs leading-relaxed text-muted-foreground">
-                                Relational transactional ledger architecture with category hierarchies, soft deletes, and idempotent payment webhooks.
-                            </p>
-                        </div>
-                        <div class="mt-4 border-t border-border/50 pt-3">
-                            <span class="font-mono text-[11px] text-muted-foreground">
-                                ACID Safe · SSLCommerz/bKash
-                            </span>
-                        </div>
-                    </div>
+                        <RotateCcw class="size-3 transition-transform" :class="isTelemetryLoading ? 'animate-spin' : ''" />
+                        <span>{{ isTelemetryLoading ? 'Streaming...' : 'Simulate Stream' }}</span>
+                    </button>
                 </div>
+
+                <!-- Shimmer Skeleton to Content Cross-Fade Container -->
+                <ContentCrossFade :loading="isTelemetryLoading" class="mt-4">
+                    <!-- Shimmer Skeleton State (Exact zero-layout-shift replica with sweeping light wave) -->
+                    <template #skeleton>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <div
+                                v-for="i in 4"
+                                :key="i"
+                                class="flex h-[204px] flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-2xs"
+                            >
+                                <div class="space-y-3">
+                                    <Skeleton class="size-8 rounded-lg" />
+                                    <Skeleton class="h-4 w-3/4" />
+                                    <Skeleton class="h-3 w-full" />
+                                    <Skeleton class="h-3 w-5/6" />
+                                </div>
+                                <div class="border-t border-border/50 pt-3">
+                                    <Skeleton class="h-3 w-1/2" />
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Real Content State -->
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <CardSpotlight>
+                            <div class="space-y-3">
+                                <div
+                                    class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                                >
+                                    <Boxes class="size-4" aria-hidden="true" />
+                                </div>
+                                <h3 class="text-sm font-semibold text-foreground">
+                                    MCP Protocol Native
+                                </h3>
+                                <p class="text-xs leading-relaxed text-muted-foreground">
+                                    Direct integration with AI agents via Model Context Protocol tools, resources, and live prompts in routes/ai.php.
+                                </p>
+                            </div>
+                            <div class="mt-4 border-t border-border/50 pt-3">
+                                <span class="font-mono text-[11px] text-muted-foreground">
+                                    SSE Transport · Read/Write
+                                </span>
+                            </div>
+                        </CardSpotlight>
+
+                        <CardSpotlight>
+                            <div class="space-y-3">
+                                <div
+                                    class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                                >
+                                    <Activity class="size-4" aria-hidden="true" />
+                                </div>
+                                <h3 class="text-sm font-semibold text-foreground">
+                                    Real-Time Telemetry
+                                </h3>
+                                <p class="text-xs leading-relaxed text-muted-foreground">
+                                    Comprehensive audit trail logs, query profiling, security event monitoring, and automatic sensitive data redaction.
+                                </p>
+                            </div>
+                            <div class="mt-4 border-t border-border/50 pt-3">
+                                <span class="font-mono text-[11px] text-muted-foreground">
+                                    Sub-ms Latency · Sentry Ready
+                                </span>
+                            </div>
+                        </CardSpotlight>
+
+                        <CardSpotlight>
+                            <div class="space-y-3">
+                                <div
+                                    class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                                >
+                                    <ShieldCheck class="size-4" aria-hidden="true" />
+                                </div>
+                                <h3 class="text-sm font-semibold text-foreground">
+                                    Fortify & Passkeys
+                                </h3>
+                                <p class="text-xs leading-relaxed text-muted-foreground">
+                                    Complete authentication suite with WebAuthn biometric passkeys, TOTP two-factor auth, and granular Spatie permissions.
+                                </p>
+                            </div>
+                            <div class="mt-4 border-t border-border/50 pt-3">
+                                <span class="font-mono text-[11px] text-muted-foreground">
+                                    FIDO2 · Role-Based Access
+                                </span>
+                            </div>
+                        </CardSpotlight>
+
+                        <CardSpotlight>
+                            <div class="space-y-3">
+                                <div
+                                    class="flex size-8 items-center justify-center rounded-lg border border-border/80 bg-muted/60 text-foreground"
+                                >
+                                    <Database class="size-4" aria-hidden="true" />
+                                </div>
+                                <h3 class="text-sm font-semibold text-foreground">
+                                    Financial Ledgers
+                                </h3>
+                                <p class="text-xs leading-relaxed text-muted-foreground">
+                                    Relational transactional ledger architecture with category hierarchies, soft deletes, and idempotent payment webhooks.
+                                </p>
+                            </div>
+                            <div class="mt-4 border-t border-border/50 pt-3">
+                                <span class="font-mono text-[11px] text-muted-foreground">
+                                    ACID Safe · SSLCommerz/bKash
+                                </span>
+                            </div>
+                        </CardSpotlight>
+                    </div>
+                </ContentCrossFade>
             </section>
         </main>
 

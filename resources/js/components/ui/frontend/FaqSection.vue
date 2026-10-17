@@ -130,15 +130,21 @@ export function createFaqSchema(faqs: FaqItem[], url?: string) {
                     </div>
                 </button>
 
-                <!-- Expanded Answer with generous indentation -->
+                <!-- Expanded Answer with Smooth CSS Grid Height Morphing -->
                 <div
-                    v-if="activeFaq === index"
                     :id="`faq-content-${index}`"
                     role="region"
                     :aria-labelledby="`faq-trigger-${index}`"
-                    class="max-w-4xl animate-in pr-4 pb-8 pl-13 text-base leading-relaxed text-muted-foreground duration-200 fade-in slide-in-from-top-2 sm:pr-14 sm:pl-16 sm:text-lg"
+                    class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                    :class="activeFaq === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
                 >
-                    <p>{{ faq.answer }}</p>
+                    <div class="overflow-hidden">
+                        <div
+                            class="max-w-4xl pr-4 pb-8 pl-13 text-base leading-relaxed text-muted-foreground sm:pr-14 sm:pl-16 sm:text-lg"
+                        >
+                            <p>{{ faq.answer }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

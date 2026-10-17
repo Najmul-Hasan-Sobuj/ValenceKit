@@ -7,6 +7,9 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import StructuredData from '@/components/StructuredData.vue';
+import ScrollProgress from '@/components/ScrollProgress.vue';
+import ScrollToTop from '@/components/ScrollToTop.vue';
+import CardSpotlight from '@/components/CardSpotlight.vue';
 import FaqSection, { createFaqSchema } from '@/components/ui/frontend/FaqSection.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -609,6 +612,12 @@ const structuredDataEntities = [
         />
         <StructuredData :entities="structuredDataEntities" />
 
+        <!-- Scroll-Linked Progress Indicator -->
+        <ScrollProgress />
+
+        <!-- Scroll To Top Button -->
+        <ScrollToTop />
+
         <!-- Top Header Navigation -->
         <header
             class="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md transition-colors"
@@ -945,23 +954,27 @@ const structuredDataEntities = [
                                 </div>
                             </button>
 
-                            <!-- Expanded Content -->
+                            <!-- Expanded Content with Smooth Grid Height -->
                             <div
-                                v-if="activeAccordion.audit === index"
-                                class="mt-4 animate-in space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground duration-200 fade-in slide-in-from-top-2"
+                                class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                                :class="activeAccordion.audit === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
                             >
-                                <div
-                                    v-for="(point, pIdx) in item.details"
-                                    :key="pIdx"
-                                    class="flex items-baseline gap-2.5"
-                                >
-                                    <CheckCircle2
-                                        class="mt-0.5 size-4 shrink-0 text-foreground/70"
-                                        aria-hidden="true"
-                                    />
-                                    <span class="leading-relaxed">{{
-                                        point
-                                    }}</span>
+                                <div class="overflow-hidden">
+                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                        <div
+                                            v-for="(point, pIdx) in item.details"
+                                            :key="pIdx"
+                                            class="flex items-baseline gap-2.5"
+                                        >
+                                            <CheckCircle2
+                                                class="mt-0.5 size-4 shrink-0 text-foreground/70"
+                                                aria-hidden="true"
+                                            />
+                                            <span class="leading-relaxed">{{
+                                                point
+                                            }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1085,22 +1098,27 @@ const structuredDataEntities = [
                                 </div>
                             </button>
 
+                            <!-- Expanded Content with Smooth Grid Height -->
                             <div
-                                v-if="activeAccordion.design === index"
-                                class="mt-4 animate-in space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground duration-200 fade-in slide-in-from-top-2"
+                                class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                                :class="activeAccordion.design === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
                             >
-                                <div
-                                    v-for="(point, pIdx) in item.details"
-                                    :key="pIdx"
-                                    class="flex items-baseline gap-2.5"
-                                >
-                                    <CheckCircle2
-                                        class="mt-0.5 size-4 shrink-0 text-foreground/70"
-                                        aria-hidden="true"
-                                    />
-                                    <span class="leading-relaxed">{{
-                                        point
-                                    }}</span>
+                                <div class="overflow-hidden">
+                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                        <div
+                                            v-for="(point, pIdx) in item.details"
+                                            :key="pIdx"
+                                            class="flex items-baseline gap-2.5"
+                                        >
+                                            <CheckCircle2
+                                                class="mt-0.5 size-4 shrink-0 text-foreground/70"
+                                                aria-hidden="true"
+                                            />
+                                            <span class="leading-relaxed">{{
+                                                point
+                                            }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1228,63 +1246,70 @@ const structuredDataEntities = [
                                 </div>
                             </button>
 
+                            <!-- Expanded Content with Smooth Grid Height -->
                             <div
-                                v-if="activeAccordion.migrate === index"
-                                class="mt-4 animate-in space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground duration-200 fade-in slide-in-from-top-2"
+                                class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                                :class="activeAccordion.migrate === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
                             >
-                                <div
-                                    v-for="(point, pIdx) in item.details"
-                                    :key="pIdx"
-                                    class="flex items-baseline gap-2.5"
-                                >
-                                    <CheckCircle2
-                                        class="mt-0.5 size-4 shrink-0 text-foreground/70"
-                                        aria-hidden="true"
-                                    />
-                                    <span class="leading-relaxed">{{
-                                        point
-                                    }}</span>
+                                <div class="overflow-hidden">
+                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                        <div
+                                            v-for="(point, pIdx) in item.details"
+                                            :key="pIdx"
+                                            class="flex items-baseline gap-2.5"
+                                        >
+                                            <CheckCircle2
+                                                class="mt-0.5 size-4 shrink-0 text-foreground/70"
+                                                aria-hidden="true"
+                                            />
+                                            <span class="leading-relaxed">{{
+                                                point
+                                            }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Scoped Acceptance Criteria Callout -->
+                        <!-- Scoped Acceptance Criteria Callout with Spotlight -->
                         <div class="pt-8">
-                            <div
-                                class="flex flex-col justify-between gap-5 rounded-xl border border-border bg-card p-6 shadow-xs sm:flex-row sm:items-center sm:p-7"
-                            >
-                                <div class="max-w-xl space-y-1.5">
-                                    <p
-                                        class="flex items-center gap-2 text-sm font-semibold text-foreground"
+                            <CardSpotlight class="p-6 sm:p-7">
+                                <div
+                                    class="flex flex-col justify-between gap-5 sm:flex-row sm:items-center"
+                                >
+                                    <div class="max-w-xl space-y-1.5">
+                                        <p
+                                            class="flex items-center gap-2 text-sm font-semibold text-foreground"
+                                        >
+                                            <ShieldCheck
+                                                class="size-4 text-emerald-500"
+                                                aria-hidden="true"
+                                            />
+                                            Code quality, automated tests, and
+                                            security are standard criteria
+                                        </p>
+                                        <p
+                                            class="text-xs leading-relaxed text-muted-foreground sm:text-sm"
+                                        >
+                                            Every application includes input
+                                            validation, CSRF protection, SQL
+                                            injection prevention, and Pest automated
+                                            tests. No unverified third-party
+                                            libraries or fragile shortcuts.
+                                        </p>
+                                    </div>
+                                    <Link
+                                        :href="home()"
+                                        class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 sm:text-sm"
                                     >
-                                        <ShieldCheck
-                                            class="size-4 text-emerald-500"
+                                        Discuss your project
+                                        <ArrowRight
+                                            class="size-3.5"
                                             aria-hidden="true"
                                         />
-                                        Code quality, automated tests, and
-                                        security are standard criteria
-                                    </p>
-                                    <p
-                                        class="text-xs leading-relaxed text-muted-foreground sm:text-sm"
-                                    >
-                                        Every application includes input
-                                        validation, CSRF protection, SQL
-                                        injection prevention, and Pest automated
-                                        tests. No unverified third-party
-                                        libraries or fragile shortcuts.
-                                    </p>
+                                    </Link>
                                 </div>
-                                <Link
-                                    :href="home()"
-                                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 sm:text-sm"
-                                >
-                                    Discuss your project
-                                    <ArrowRight
-                                        class="size-3.5"
-                                        aria-hidden="true"
-                                    />
-                                </Link>
-                            </div>
+                            </CardSpotlight>
                         </div>
                     </div>
                 </div>
@@ -1405,22 +1430,27 @@ const structuredDataEntities = [
                                 </div>
                             </button>
 
+                            <!-- Expanded Content with Smooth Grid Height -->
                             <div
-                                v-if="activeAccordion.run === index"
-                                class="mt-4 animate-in space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground duration-200 fade-in slide-in-from-top-2"
+                                class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                                :class="activeAccordion.run === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
                             >
-                                <div
-                                    v-for="(point, pIdx) in item.details"
-                                    :key="pIdx"
-                                    class="flex items-baseline gap-2.5"
-                                >
-                                    <CheckCircle2
-                                        class="mt-0.5 size-4 shrink-0 text-foreground/70"
-                                        aria-hidden="true"
-                                    />
-                                    <span class="leading-relaxed">{{
-                                        point
-                                    }}</span>
+                                <div class="overflow-hidden">
+                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                        <div
+                                            v-for="(point, pIdx) in item.details"
+                                            :key="pIdx"
+                                            class="flex items-baseline gap-2.5"
+                                        >
+                                            <CheckCircle2
+                                                class="mt-0.5 size-4 shrink-0 text-foreground/70"
+                                                aria-hidden="true"
+                                            />
+                                            <span class="leading-relaxed">{{
+                                                point
+                                            }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
