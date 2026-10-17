@@ -7,7 +7,7 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import StructuredData from '@/components/StructuredData.vue';
-import FaqSection, { createFaqSchema } from '@/components/FaqSection.vue';
+import FaqSection, { createFaqSchema } from '@/components/frontend/FaqSection.vue';
 import { Button } from '@/components/ui/button';
 import {
     Sun,
