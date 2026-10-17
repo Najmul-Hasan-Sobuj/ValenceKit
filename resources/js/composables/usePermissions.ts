@@ -163,6 +163,27 @@ export function usePermissions() {
         return true;
     }
 
+    /**
+     * Check if the current admin can edit a given category.
+     */
+    function canEditCategory(category?: any): boolean {
+        return can('categories.edit');
+    }
+
+    /**
+     * Check if the current admin can delete a given category.
+     * System categories cannot be deleted.
+     */
+    function canDeleteCategory(category?: any): boolean {
+        if (!can('categories.delete')) {
+            return false;
+        }
+        if (category?.is_system) {
+            return false;
+        }
+        return true;
+    }
+
     return {
         admin,
         roles,
@@ -179,5 +200,7 @@ export function usePermissions() {
         canEditRole,
         canDeleteRole,
         canDuplicateRole,
+        canEditCategory,
+        canDeleteCategory,
     };
 }

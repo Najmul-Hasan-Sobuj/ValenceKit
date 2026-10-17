@@ -84,7 +84,7 @@ defineOptions({
     },
 });
 
-const { can } = usePermissions();
+const { can, canEditCategory, canDeleteCategory } = usePermissions();
 
 const getLucideIcon = (name: string) => {
     return getCategoryIcon(name);
@@ -149,30 +149,32 @@ const openEditDrawer = (category: any) => {
 };
 
 const categoryToDelete = ref<any>(null);
-const isDeleteDialogOpen = ref(false);
+const deleteDialogOpen = ref(false);
 const isDeleting = ref(false);
 
-const confirmDelete = (category: any) => {
+function promptDeleteCategory(category: any): void {
     categoryToDelete.value = category;
-    isDeleteDialogOpen.value = true;
-};
+    isDrawerOpen.value = false;
+    deleteDialogOpen.value = true;
+}
 
-const executeDelete = () => {
-    if (!categoryToDelete.value) return;
-
-    isDeleting.value = true;
-    router.delete(destroy.url(categoryToDelete.value.id), {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-            isDeleteDialogOpen.value = false;
-            categoryToDelete.value = null;
-        },
-        onFinish: () => {
-            isDeleting.value = false;
-        },
-    });
-};
+function confirmDeleteCategory(event?: Event): void {
+    event?.preventDefault();
+    if (categoryToDelete.value && !isDeleting.value) {
+        isDeleting.value = true;
+        router.delete(destroy.url(categoryToDelete.value.id), {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                deleteDialogOpen.value = false;
+                categoryToDelete.value = null;
+            },
+            onFinish: () => {
+                isDeleting.value = false;
+            },
+        });
+    }
+}
 
 const updatingStatusId = ref<number | null>(null);
 
@@ -506,42 +508,47 @@ const toggleStatus = (category: any, newStatus: boolean) => {
                                 System
                             </Badge>
                         </TableCell>
-                        <TableCell class="pr-5" @click.stop>
-                            <DropdownMenu>
+                        <TableCell class="pr-5 text-right" @click.stop>
+                            <DropdownMenu
+                                v-if="
+                                    canEditCategory(category) ||
+                                    canDeleteCategory(category)
+                                "
+                            >
                                 <DropdownMenuTrigger as-child>
                                     <Button
                                         variant="ghost"
-                                        size="icon"
-                                        class="h-8 w-8 text-muted-foreground"
+                                        size="icon-sm"
+                                        aria-label="Open category actions"
                                     >
-                                        <span class="sr-only">Open menu</span>
-                                        <MoreHorizontal class="h-4 w-4" />
+                                        <MoreHorizontal class="size-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" class="w-40">
+                                <DropdownMenuContent align="end" class="w-36">
                                     <DropdownMenuItem
+                                        v-if="canEditCategory(category)"
+                                        class="cursor-pointer gap-2"
                                         @click="openEditDrawer(category)"
-                                        v-if="can('categories.edit')"
                                     >
-                                        <Pencil class="mr-2 h-4 w-4" />
-                                        Edit
+                                        <Pencil
+                                            class="size-4 text-muted-foreground"
+                                        />
+                                        <span>Edit</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator
                                         v-if="
-                                            !category.is_system &&
-                                            can('categories.delete')
+                                            canEditCategory(category) &&
+                                            canDeleteCategory(category)
                                         "
                                     />
                                     <DropdownMenuItem
-                                        v-if="
-                                            !category.is_system &&
-                                            can('categories.delete')
-                                        "
-                                        @click="confirmDelete(category)"
-                                        class="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                                        v-if="canDeleteCategory(category)"
+                                        variant="destructive"
+                                        class="cursor-pointer gap-2"
+                                        @click="promptDeleteCategory(category)"
                                     >
-                                        <Trash2 class="mr-2 h-4 w-4" />
-                                        Delete
+                                        <Trash2 class="size-4" />
+                                        <span>Delete</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -590,31 +597,50 @@ const toggleStatus = (category: any, newStatus: boolean) => {
         </div>
     </div>
 
-    <!-- Delete Confirmation Dialog -->
-    <AlertDialog
-        :open="isDeleteDialogOpen"
-        @update:open="isDeleteDialogOpen = $event"
-    >
-        <AlertDialogContent>
+    <!-- Delete Category Confirmation Dialog -->
+    <AlertDialog v-model:open="deleteDialogOpen">
+        <AlertDialogContent class="sm:max-w-md">
             <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This will permanently delete the category
-                    <strong>{{ categoryToDelete?.name }}</strong
-                    >. If this category has existing records attached to it,
-                    they may lose their categorization depending on the module.
-                </AlertDialogDescription>
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive"
+                    >
+                        <Trash2 class="size-5" />
+                    </div>
+                    <div>
+                        <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                        <AlertDialogDescription class="mt-1">
+                            Are you sure you want to delete
+                            <span class="font-medium text-foreground">{{
+                                categoryToDelete?.name
+                            }}</span
+                            >?
+                        </AlertDialogDescription>
+                    </div>
+                </div>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel :disabled="isDeleting"
-                    >Cancel</AlertDialogCancel
-                >
-                <AlertDialogAction
-                    @click="executeDelete"
-                    :disabled="isDeleting"
-                    class="bg-red-600 text-white hover:bg-red-700 dark:bg-red-900 dark:text-red-100 dark:hover:bg-red-800"
-                >
-                    {{ isDeleting ? 'Deleting...' : 'Delete Category' }}
+            <div class="text-sm text-muted-foreground">
+                This action cannot be undone. This category will be permanently
+                deleted. If this category has existing records attached to it,
+                they may lose their categorization depending on the module.
+            </div>
+            <AlertDialogFooter class="gap-2 sm:gap-0">
+                <AlertDialogCancel as-child>
+                    <Button variant="outline" :disabled="isDeleting"
+                        >Cancel</Button
+                    >
+                </AlertDialogCancel>
+                <AlertDialogAction as-child>
+                    <Button
+                        variant="destructive"
+                        :disabled="isDeleting"
+                        @click="confirmDeleteCategory"
+                    >
+                        <Trash2 class="size-4" />
+                        <span>{{
+                            isDeleting ? 'Deleting...' : 'Delete Category'
+                        }}</span>
+                    </Button>
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -626,5 +652,6 @@ const toggleStatus = (category: any, newStatus: boolean) => {
         :module="filterModule"
         :parent-categories="parentCategories"
         @update:is-open="isDrawerOpen = $event"
+        @request-delete="promptDeleteCategory"
     />
 </template>

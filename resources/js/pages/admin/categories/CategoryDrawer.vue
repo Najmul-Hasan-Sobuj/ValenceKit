@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { Folder, FolderOpen } from '@lucide/vue';
+import { Folder, FolderOpen, Trash2 } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/composables/usePermissions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -47,7 +48,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:isOpen': [value: boolean];
+    'request-delete': [category: any];
 }>();
+
+const { canDeleteCategory } = usePermissions();
 
 const form = useForm({
     module: props.module && props.module !== 'all' ? props.module : 'finance',
@@ -478,7 +482,17 @@ const handleOpenChange = (open: boolean) => {
                 <DrawerFooter
                     class="flex flex-row items-center justify-between gap-2 px-4"
                 >
-                    <span />
+                    <Button
+                        v-if="category && canDeleteCategory(category)"
+                        variant="ghost"
+                        size="sm"
+                        class="cursor-pointer gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        @click="emit('request-delete', category)"
+                    >
+                        <Trash2 class="size-4" />
+                        Delete category
+                    </Button>
+                    <span v-else />
                     <div class="flex items-center gap-2">
                         <Button
                             variant="outline"
