@@ -37,6 +37,10 @@ class TrackingService
     public static function renderHeadScripts(): string
     {
         if (! static::shouldTrack()) {
+            if (Auth::guard('admin')->check() && ! Request::is('admin*')) {
+                return "<!-- Tracking scripts suppressed: Logged in as administrator (to view, open in an incognito window or disable 'Exclude Authenticated Admins' in Admin Settings > Tracking & Pixels) -->";
+            }
+
             return '';
         }
 
