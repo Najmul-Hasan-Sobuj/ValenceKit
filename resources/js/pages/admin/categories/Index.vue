@@ -118,9 +118,6 @@ const handleTypeChange = (val: AcceptableValue) => {
     applyFilters();
 };
 
-const showPaginationLine = computed(
-    () => (props.categories.meta?.total ?? props.categories.total ?? 0) > 0,
-);
 const fromItem = computed(
     () => props.categories.meta?.from ?? props.categories.from ?? 0,
 );
@@ -137,17 +134,6 @@ const paginationLinks = computed(() => {
         (Array.isArray(props.categories.links) ? props.categories.links : [])
     );
 });
-
-const showPaginationControls = computed(() => paginationLinks.value.length > 3);
-
-const handlePageChange = (url: string | null) => {
-    if (url) {
-        router.visit(url, {
-            preserveScroll: true,
-            preserveState: true,
-        });
-    }
-};
 
 const isDrawerOpen = ref(false);
 const editingCategory = ref<any>(null);
@@ -575,47 +561,31 @@ const toggleStatus = (category: any, newStatus: boolean) => {
                 </TableBody>
             </Table>
 
-            <div
-                class="flex items-center justify-between border-t border-border/40 p-4 text-sm text-muted-foreground"
-            >
-                <span v-if="showPaginationLine">
-                    Showing
-                    <span class="font-medium text-foreground">{{
-                        fromItem
-                    }}</span>
-                    to
-                    <span class="font-medium text-foreground">{{
-                        toItem
-                    }}</span>
-                    of
-                    <span class="font-medium text-foreground">{{
-                        totalItems
-                    }}</span>
-                    categories
-                </span>
-                <span v-else> No categories found </span>
+        </div>
 
-                <div
-                    v-if="showPaginationControls"
-                    class="flex items-center gap-1"
+        <!-- Pagination -->
+        <div
+            class="flex flex-col justify-between gap-3 text-sm sm:flex-row sm:items-center"
+        >
+            <p class="text-muted-foreground">
+                Showing {{ fromItem }} to {{ toItem }} of
+                {{ totalItems }} categories
+            </p>
+            <div class="flex items-center gap-1">
+                <Button
+                    v-for="link in paginationLinks"
+                    :key="link.label"
+                    variant="outline"
+                    size="sm"
+                    :disabled="!link.url"
+                    :class="{
+                        'border-primary/20 bg-primary/10 text-primary':
+                            link.active,
+                    }"
+                    @click="link.url ? router.get(link.url) : null"
                 >
-                    <Button
-                        v-for="(link, index) in paginationLinks"
-                        :key="index"
-                        variant="outline"
-                        size="sm"
-                        :disabled="!link.url"
-                        :class="[
-                            'h-8 rounded-lg px-3 text-xs',
-                            link.active
-                                ? 'border-primary/20 bg-primary/10 font-medium text-primary'
-                                : 'text-muted-foreground',
-                        ]"
-                        @click="link.url ? handlePageChange(link.url) : null"
-                    >
-                        <span>{{ decodePaginationLabel(link.label) }}</span>
-                    </Button>
-                </div>
+                    <span>{{ decodePaginationLabel(link.label) }}</span>
+                </Button>
             </div>
         </div>
     </div>
