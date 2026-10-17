@@ -1,9 +1,9 @@
 <?php
 
 test('FaqSection component exists with accessible accordion markup and schema helper', function () {
-    $faqComponentPath = resource_path('js/components/frontend/FaqSection.vue');
+    $faqComponentPath = resource_path('js/components/ui/frontend/FaqSection.vue');
 
-    expect(file_exists($faqComponentPath))->toBeTrue('resources/js/components/frontend/FaqSection.vue must exist');
+    expect(file_exists($faqComponentPath))->toBeTrue('resources/js/components/ui/frontend/FaqSection.vue must exist');
 
     $content = file_get_contents($faqComponentPath);
 
@@ -29,7 +29,7 @@ test('Services page delegates FAQ rendering to FaqSection component and generate
 
     // Component import and usage
     expect($content)
-        ->toContain("import FaqSection, { createFaqSchema } from '@/components/frontend/FaqSection.vue'")
+        ->toContain("import FaqSection, { createFaqSchema } from '@/components/ui/frontend/FaqSection.vue'")
         ->toContain('<FaqSection :items="faqs" />');
 
     // FAQPage schema in structuredDataEntities
