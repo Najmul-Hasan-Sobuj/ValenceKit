@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
+import PublicHeader from '@/components/PublicHeader.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import StructuredData from '@/components/StructuredData.vue';
 import ScrollProgress from '@/components/ScrollProgress.vue';
 import ScrollToTop from '@/components/ScrollToTop.vue';
 import CardSpotlight from '@/components/CardSpotlight.vue';
 import FaqSection, { createFaqSchema } from '@/components/ui/frontend/FaqSection.vue';
+import PricingSection, { createPricingSchema } from '@/components/ui/frontend/PricingSection.vue';
+import ApplicationsDeliveredSection from '@/components/ui/frontend/ApplicationsDeliveredSection.vue';
 import { Button } from '@/components/ui/button';
 import {
     Sun,
@@ -79,9 +84,19 @@ const heroNavItems = [
 ];
 
 const isHeroEntered = ref(false);
+let lenis: Lenis | null = null;
 
 onMounted(() => {
     if (typeof window !== 'undefined') {
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            lenis = new Lenis({
+                autoRaf: true,
+                duration: 0.5,
+                wheelMultiplier: 1.2,
+                touchMultiplier: 1.0,
+                syncTouch: false,
+            });
+        }
         if (
             window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
             window.innerWidth < 1024
@@ -95,10 +110,21 @@ onMounted(() => {
     }
 });
 
+onUnmounted(() => {
+    if (lenis) {
+        lenis.destroy();
+        lenis = null;
+    }
+});
+
 const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (lenis) {
+            lenis.scrollTo(el, { offset: -60, duration: 1.2 });
+        } else {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         if (typeof window !== 'undefined') {
             window.history.pushState(null, '', `#${id}`);
         }
@@ -563,8 +589,41 @@ const structuredData = {
     },
 };
 
+const pricingSchema = {
+    '@type': 'OfferCatalog',
+    '@id': `${appUrl}/services#pricing`,
+    name: 'Laravel Engineering & Consulting Tiers',
+    itemListElement: [
+        {
+            '@type': 'Offer',
+            name: 'Audit & Quick Fix Sprint',
+            description: 'Root-cause exception isolation, database query profiling, and server audit within 1–3 business days.',
+            price: '490',
+            priceCurrency: 'USD',
+            category: 'Fixed Sprint',
+        },
+        {
+            '@type': 'Offer',
+            name: 'Custom Web Application & POS',
+            description: 'Full-stack Laravel, Vue 3, Inertia.js, POS, inventory, payments, and 4–8 week milestone delivery.',
+            price: '2400',
+            priceCurrency: 'USD',
+            category: 'Project',
+        },
+        {
+            '@type': 'Offer',
+            name: 'Dedicated Monthly Retainer',
+            description: 'Routine framework security patches, offsite database backups, 24/7 server monitoring, and 20h priority support.',
+            price: '790',
+            priceCurrency: 'USD',
+            category: 'Monthly Retainer',
+        },
+    ],
+};
+
 const structuredDataEntities = [
     structuredData,
+    pricingSchema,
     createFaqSchema(faqs, `${appUrl}/services`),
     {
         '@type': 'WebPage',
@@ -619,100 +678,7 @@ const structuredDataEntities = [
         <ScrollToTop />
 
         <!-- Top Header Navigation -->
-        <header
-            class="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md transition-colors"
-        >
-            <div
-                class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
-            >
-                <!-- App Logo -->
-                <Link
-                    :href="home()"
-                    class="flex items-center gap-2 outline-none"
-                    :aria-label="`${appName} home`"
-                >
-                    <div
-                        class="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"
-                    >
-                        <AppLogoIcon
-                            class="size-5 fill-current text-white dark:text-black"
-                        />
-                    </div>
-                    <span
-                        class="hidden text-base font-semibold tracking-tight sm:inline"
-                        >{{ appName }}</span
-                    >
-                </Link>
-
-                <!-- Navigation Links -->
-                <nav
-                    class="flex items-center gap-4 text-sm sm:gap-6"
-                    aria-label="Main Navigation"
-                >
-                    <Link
-                        :href="services()"
-                        class="font-semibold text-foreground transition-colors hover:text-foreground"
-                    >
-                        Services
-                    </Link>
-                    <Link
-                        :href="home()"
-                        class="font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                        Contact
-                    </Link>
-                </nav>
-
-                <!-- Header Actions -->
-                <div class="flex items-center gap-2 text-sm sm:gap-3">
-                    <!-- Theme Toggle -->
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        @click="toggleTheme"
-                        class="size-8 rounded-md text-muted-foreground hover:text-foreground sm:size-9"
-                        :title="
-                            resolvedAppearance === 'dark'
-                                ? 'Switch to light mode'
-                                : 'Switch to dark mode'
-                        "
-                        type="button"
-                    >
-                        <Sun
-                            v-if="resolvedAppearance === 'dark'"
-                            class="size-4"
-                            aria-hidden="true"
-                        />
-                        <Moon v-else class="size-4" aria-hidden="true" />
-                        <span class="sr-only">Toggle theme</span>
-                    </Button>
-
-                    <!-- Auth Links -->
-                    <template v-if="$page.props.auth?.user">
-                        <Link
-                            :href="dashboard()"
-                            class="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 sm:h-9 sm:px-4 sm:text-sm"
-                        >
-                            Dashboard
-                        </Link>
-                    </template>
-                    <template v-else>
-                        <Link
-                            :href="login()"
-                            class="inline-flex h-8 items-center justify-center rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground sm:h-9 sm:px-3 sm:text-sm"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            :href="register()"
-                            class="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 sm:h-9 sm:px-4 sm:text-sm"
-                        >
-                            Register
-                        </Link>
-                    </template>
-                </div>
-            </div>
-        </header>
+        <PublicHeader />
 
         <main
             class="mx-auto max-w-7xl space-y-24 px-4 py-12 sm:px-6 lg:space-y-32 lg:px-8 lg:py-20"
@@ -1620,73 +1586,11 @@ const structuredDataEntities = [
                 </div>
             </section>
 
-            <!-- CLIENTS & APPLICATION DOMAINS SECTION: BORDER GRID -->
-            <section
-                class="w-full space-y-12 border-t border-border pt-16 lg:pt-24"
-            >
-                <div class="max-w-3xl space-y-4">
-                    <p
-                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                    >
-                        Project Domains & Client Work
-                    </p>
-                    <h2
-                        class="text-3xl font-medium tracking-tight text-foreground md:text-5xl"
-                    >
-                        Applications Delivered
-                    </h2>
-                    <p
-                        class="text-xl leading-relaxed font-normal text-muted-foreground lg:text-2xl"
-                    >
-                        Custom software solutions built for business owners,
-                        retail stores, and service companies.
-                    </p>
-                </div>
+            <!-- APPLICATIONS DELIVERED SECTION: INTEGRATED ENGINEERING TIMELINE EFFECT -->
+            <ApplicationsDeliveredSection id="applications-delivered" />
 
-                <!-- Responsive Border Grid Table -->
-                <div class="w-full border-t border-border">
-                    <div
-                        v-for="domain in clientCategories"
-                        :key="domain.title"
-                        class="grid grid-cols-1 border-b border-border lg:grid-cols-4"
-                    >
-                        <!-- Category Header -->
-                        <div
-                            class="flex flex-col justify-start p-6 text-lg font-normal text-foreground lg:p-8 lg:text-xl"
-                        >
-                            <span class="font-medium lg:sticky lg:top-28">{{
-                                domain.title
-                            }}</span>
-                            <span
-                                class="mt-2 block text-xs leading-relaxed text-muted-foreground"
-                                >{{ domain.deliverables }}</span
-                            >
-                        </div>
-
-                        <!-- Deliverables 2x2 Subgrid -->
-                        <div
-                            class="-mt-px -ml-px grid grid-cols-1 border-t border-border sm:grid-cols-2 lg:col-span-3 lg:border-t-0 lg:border-l"
-                        >
-                            <div
-                                v-for="plat in domain.platforms"
-                                :key="plat"
-                                class="flex min-h-[5.5rem] items-center border-t border-l border-border p-5 transition-colors hover:bg-muted/40 sm:p-6 lg:h-28"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <span
-                                        class="size-2 shrink-0 rounded-full bg-foreground/60"
-                                        aria-hidden="true"
-                                    />
-                                    <span
-                                        class="text-sm font-medium text-foreground sm:text-base"
-                                        >{{ plat }}</span
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- THREE-CARD PRICING SECTION -->
+            <PricingSection id="pricing" />
 
             <!-- FAQS SECTION: FULL WIDTH & MODERN ACCORDION -->
             <FaqSection :items="faqs" />
@@ -1694,6 +1598,7 @@ const structuredDataEntities = [
 
             <!-- BOTTOM CTA BANNER -->
             <section
+                id="contact"
                 class="space-y-6 rounded-2xl border border-border bg-card p-8 text-center shadow-xs sm:p-14"
             >
                 <div class="mx-auto max-w-2xl space-y-4">

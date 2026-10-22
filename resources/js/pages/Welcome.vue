@@ -5,6 +5,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
+import PublicHeader from '@/components/PublicHeader.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import StructuredData from '@/components/StructuredData.vue';
 import ScrollProgress from '@/components/ScrollProgress.vue';
@@ -196,96 +197,7 @@ const resetForm = () => {
         <ScrollToTop />
 
         <!-- Top Header Navigation -->
-        <header
-            class="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md transition-colors"
-        >
-            <div
-                class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8"
-            >
-                <!-- App Logo -->
-                <Link
-                    :href="home()"
-                    class="flex items-center gap-2 outline-none"
-                    :aria-label="`${appName} home`"
-                >
-                    <div
-                        class="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"
-                    >
-                        <AppLogoIcon
-                            class="size-5 fill-current text-white dark:text-black"
-                        />
-                    </div>
-                    <span
-                        class="hidden text-base font-semibold tracking-tight sm:inline"
-                        >{{ appName }}</span
-                    >
-                </Link>
-
-                <!-- Navigation Links -->
-                <nav class="flex items-center gap-4 text-sm sm:gap-6">
-                    <Link
-                        :href="services()"
-                        class="font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                        Services
-                    </Link>
-                    <Link
-                        :href="home()"
-                        class="font-semibold text-foreground transition-colors"
-                    >
-                        Contact
-                    </Link>
-                </nav>
-
-                <!-- Header Actions -->
-                <div class="flex items-center gap-2 text-sm sm:gap-3">
-                    <!-- Theme Toggle -->
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        @click="toggleTheme"
-                        class="size-8 rounded-md text-muted-foreground hover:text-foreground sm:size-9"
-                        :title="
-                            resolvedAppearance === 'dark'
-                                ? 'Switch to light mode'
-                                : 'Switch to dark mode'
-                        "
-                        type="button"
-                    >
-                        <Sun
-                            v-if="resolvedAppearance === 'dark'"
-                            class="size-4"
-                        />
-                        <Moon v-else class="size-4" />
-                        <span class="sr-only">Toggle theme</span>
-                    </Button>
-
-                    <!-- Auth Links -->
-                    <template v-if="$page.props.auth?.user">
-                        <Link
-                            :href="dashboard()"
-                            class="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 sm:h-9 sm:px-4 sm:text-sm"
-                        >
-                            Dashboard
-                        </Link>
-                    </template>
-                    <template v-else>
-                        <Link
-                            :href="login()"
-                            class="inline-flex h-8 items-center justify-center rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground sm:h-9 sm:px-3 sm:text-sm"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            :href="register()"
-                            class="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 sm:h-9 sm:px-4 sm:text-sm"
-                        >
-                            Register
-                        </Link>
-                    </template>
-                </div>
-            </div>
-        </header>
+        <PublicHeader />
 
         <!-- Main Contact Section (UI reference from Bejamas get-in-touch, styled with project design & classes) -->
         <main class="mx-auto max-w-6xl px-6 py-12 lg:px-8 lg:py-20">
