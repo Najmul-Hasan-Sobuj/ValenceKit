@@ -5,4 +5,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
-})->middleware(['rate-limit:api', 'auth:sanctum']);
+})->middleware(['throttle:api', 'auth:sanctum']);
