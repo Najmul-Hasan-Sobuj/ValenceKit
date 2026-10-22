@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Authorization;
 
-use App\Enums\SystemRoleStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\Authorization\RoleResource;
 use App\Models\Admin;
@@ -46,7 +45,7 @@ class RoleController extends Controller
         if ($request->filled('duplicate')) {
             $sourceRole = Role::where('guard_name', 'admin')->find($request->query('duplicate'));
             if ($sourceRole) {
-                if ($sourceRole->is_system == SystemRoleStatus::System->value && ! $request->user('admin')->hasRole('Super Admin')) {
+                if ($sourceRole->is_system && ! $request->user('admin')->hasRole('Super Admin')) {
                     abort(403, 'Only Super Admins can duplicate system roles.');
                 }
 
@@ -97,7 +96,7 @@ class RoleController extends Controller
         $role = Role::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'is_system' => SystemRoleStatus::Custom->value,
+            'is_system' => false,
             'guard_name' => 'admin',
         ]);
 
@@ -118,7 +117,7 @@ class RoleController extends Controller
     {
         abort_unless($request->user('admin')->can('roles.edit'), 403);
 
-        if ($role->is_system == SystemRoleStatus::System->value && ! $request->user('admin')->hasRole('Super Admin')) {
+        if ($role->is_system && ! $request->user('admin')->hasRole('Super Admin')) {
             abort(403, 'Only Super Admins can manage system roles.');
         }
 
@@ -135,7 +134,7 @@ class RoleController extends Controller
     {
         abort_unless($request->user('admin')->can('roles.edit'), 403);
 
-        if ($role->is_system == SystemRoleStatus::System->value && ! $request->user('admin')->hasRole('Super Admin')) {
+        if ($role->is_system && ! $request->user('admin')->hasRole('Super Admin')) {
             abort(403, 'Only Super Admins can manage system roles.');
         }
 
@@ -173,7 +172,7 @@ class RoleController extends Controller
     {
         abort_unless($request->user('admin')->can('roles.delete'), 403);
 
-        if ($role->is_system == SystemRoleStatus::System->value) {
+        if ($role->is_system) {
             return back()->with('error', 'System roles cannot be deleted.');
         }
 

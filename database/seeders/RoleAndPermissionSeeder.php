@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\SystemRoleStatus;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -82,17 +81,17 @@ class RoleAndPermissionSeeder extends Seeder
     /**
      * Roles and their attributes and permissions.
      *
-     * @var array<string, array{description: string, is_system: SystemRoleStatus, permissions: list<string>|string}>
+     * @var array<string, array{description: string, is_system: bool, permissions: list<string>|string}>
      */
     private const ROLES = [
         'Super Admin' => [
             'description' => 'Unrestricted access to all system features',
-            'is_system' => SystemRoleStatus::System,
+            'is_system' => true,
             'permissions' => '*',
         ],
         'Staff' => [
             'description' => 'Manage user accounts and view system settings',
-            'is_system' => SystemRoleStatus::Custom,
+            'is_system' => false,
             'permissions' => [
                 'users.view',
                 'users.invite',
@@ -119,7 +118,7 @@ class RoleAndPermissionSeeder extends Seeder
         ],
         'Support' => [
             'description' => 'Inspect user directory and view appearance settings',
-            'is_system' => SystemRoleStatus::Custom,
+            'is_system' => false,
             'permissions' => [
                 'users.view',
                 'settings.profile.view',
@@ -172,14 +171,14 @@ class RoleAndPermissionSeeder extends Seeder
                 ['name' => $roleName, 'guard_name' => $guard],
                 [
                     'description' => $roleData['description'],
-                    'is_system' => $roleData['is_system']->value,
+                    'is_system' => $roleData['is_system'],
                 ]
             );
 
             // In case the role already existed, ensure attributes are up-to-date
             $role->update([
                 'description' => $roleData['description'],
-                'is_system' => $roleData['is_system']->value,
+                'is_system' => $roleData['is_system'],
             ]);
 
             if ($roleData['permissions'] === '*') {
