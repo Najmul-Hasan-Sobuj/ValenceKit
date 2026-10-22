@@ -22,16 +22,19 @@ class McpSettingsController extends Controller
 
         $admin = $request->user('admin');
 
-        $dates = collect(range(6, 0))->map(function ($daysAgo) {
+        $dailyCounts = McpUsageLog::where('created_at', '>=', now()->subDays(6)->startOfDay())
+            ->selectRaw('DATE(created_at) as date, count(*) as count')
+            ->groupBy('date')
+            ->pluck('count', 'date');
+
+        $dates = collect(range(6, 0))->map(function ($daysAgo) use ($dailyCounts) {
             $date = now()->subDays($daysAgo);
-            $start = $date->copy()->startOfDay();
-            $end = $date->copy()->endOfDay();
-            $count = McpUsageLog::whereBetween('created_at', [$start, $end])->count();
+            $dateKey = $date->format('Y-m-d');
 
             return [
                 'day' => $date->format('D'),
                 'date' => $date->format('M d'),
-                'requests' => $count,
+                'requests' => (int) ($dailyCounts[$dateKey] ?? 0),
             ];
         });
 
