@@ -5,7 +5,7 @@ import { watchDebounced } from '@vueuse/core';
 import { Download, Minus, Plus, Search } from '@lucide/vue';
 import { parseDate } from '@internationalized/date';
 import Heading from '@/components/Heading.vue';
-import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
+import { decodePaginationLabel } from '@/lib/decodePaginationLabel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

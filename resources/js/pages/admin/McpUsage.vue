@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
-import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
+import { decodePaginationLabel } from '@/lib/decodePaginationLabel';
 import {
     Table,
     TableBody,

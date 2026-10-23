@@ -11,7 +11,7 @@ import {
 import {
     allSupportedIconNames,
     getCategoryIcon,
-} from '@/utils/iconRegistry';
+} from '@/lib/iconRegistry';
 import {
     Popover,
     PopoverContent,

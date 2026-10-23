@@ -2,7 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { watchDebounced } from '@vueuse/core';
-import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
+import { decodePaginationLabel } from '@/lib/decodePaginationLabel';
 import {
     MoreHorizontal,
     Pencil,
@@ -58,7 +58,7 @@ import {
     update,
 } from '@/actions/App/Http/Controllers/Admin/CategoryController';
 import CategoryDrawer from './CategoryDrawer.vue';
-import { getCategoryIcon } from '@/utils/iconRegistry';
+import { getCategoryIcon } from '@/lib/iconRegistry';
 import { usePermissions } from '@/composables/usePermissions';
 import type { AcceptableValue } from 'reka-ui';
 

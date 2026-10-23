@@ -26,7 +26,7 @@ import {
     store,
     update,
 } from '@/actions/App/Http/Controllers/Admin/CategoryController';
-import { getCategoryIcon } from '@/utils/iconRegistry';
+import { getCategoryIcon } from '@/lib/iconRegistry';
 import InputError from '@/components/InputError.vue';
 import IconPicker from '@/components/IconPicker.vue';
 import { Switch } from '@/components/ui/switch';

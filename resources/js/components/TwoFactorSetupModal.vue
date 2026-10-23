@@ -23,7 +23,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
 import { confirm } from '@/routes/two-factor';
 import type { TwoFactorConfigContent } from '@/types';
-import { sanitizeSvg } from '@/utils/sanitizeSvg';
+import { sanitizeSvg } from '@/lib/sanitizeSvg';
 
 type Props = {
     requiresConfirmation: boolean;

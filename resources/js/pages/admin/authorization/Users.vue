@@ -2,7 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
-import { decodePaginationLabel } from '@/utils/decodePaginationLabel';
+import { decodePaginationLabel } from '@/lib/decodePaginationLabel';
 import {
     MoreHorizontal,
     Pencil,
