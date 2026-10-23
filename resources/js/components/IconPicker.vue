@@ -105,8 +105,6 @@ const categories: Record<
             'ChartLine',
             'ChartPie',
             'ChartBar',
-            'ArrowUpRight',
-            'ArrowDownLeft',
         ],
     },
     commerce: {
@@ -128,9 +126,7 @@ const categories: Record<
             'Ticket',
             'Shirt',
             'Sparkles',
-            'Footprints',
             'Watch',
-            'BadgePercent',
             'Warehouse',
         ],
     },
@@ -162,8 +158,6 @@ const categories: Record<
             'GitBranch',
             'TerminalSquare',
             'Bug',
-            'Cable',
-            'Webhook',
         ],
     },
     office: {
@@ -189,11 +183,10 @@ const categories: Record<
             'CheckSquare',
             'ListTodo',
             'Inbox',
-            'Paperclip',
             'Presentation',
         ],
     },
-    living: {
+    lifestyle: {
         label: 'Lifestyle',
         icon: 'Home',
         items: [
@@ -248,99 +241,20 @@ const categories: Record<
             'ShieldCheck',
         ],
     },
-    tools: {
-        label: 'Tools & Media',
-        icon: 'Wrench',
-        items: [
-            'Wrench',
-            'Hammer',
-            'Sliders',
-            'Search',
-            'Filter',
-            'Image',
-            'Video',
-            'Mic',
-            'Volume2',
-            'Printer',
-            'Anchor',
-            'Flame',
-            'Sun',
-            'Moon',
-            'Eye',
-            'LifeBuoy',
-        ],
-    },
 };
 
-// Keyword / synonym tag map
-const searchTags: Record<string, string[]> = {
-    money: [
-        'Wallet',
-        'Banknote',
-        'Coins',
-        'DollarSign',
-        'PiggyBank',
-        'CreditCard',
-        'HandCoins',
-        'Landmark',
-        'Receipt',
-    ],
-    cash: [
-        'Wallet',
-        'Banknote',
-        'Coins',
-        'DollarSign',
-        'PiggyBank',
-        'HandCoins',
-    ],
-    cart: ['ShoppingCart', 'ShoppingBag', 'Store', 'Package', 'Box', 'Tag'],
-    shop: [
-        'ShoppingBag',
-        'ShoppingCart',
-        'Store',
-        'Tag',
-        'Tags',
-        'Gift',
-        'Barcode',
-    ],
+// Common search synonyms
+const searchSynonyms: Record<string, string[]> = {
+    money: ['Wallet', 'Banknote', 'Coins', 'DollarSign', 'PiggyBank', 'CreditCard', 'HandCoins', 'Receipt'],
+    cash: ['Wallet', 'Banknote', 'Coins', 'DollarSign', 'PiggyBank'],
+    shop: ['ShoppingBag', 'ShoppingCart', 'Store', 'Tag', 'Package', 'Box'],
     food: ['Utensils', 'UtensilsCrossed', 'Coffee', 'Pizza', 'Apple'],
-    eat: ['Utensils', 'UtensilsCrossed', 'Pizza', 'Apple', 'Coffee'],
-    drink: ['Coffee'],
-    car: ['Car', 'Bus', 'Plane', 'Fuel', 'Truck'],
     vehicle: ['Car', 'Bus', 'Plane', 'Truck', 'Train'],
     house: ['Home', 'Building', 'Building2'],
-    rent: ['Home', 'Building', 'Key', 'Receipt'],
-    bill: ['Receipt', 'ReceiptText', 'FileText', 'Calculator'],
-    salary: ['TrendingUp', 'Wallet', 'Banknote', 'HandCoins', 'ArrowDownLeft'],
-    income: [
-        'TrendingUp',
-        'Wallet',
-        'Banknote',
-        'ArrowDownLeft',
-        'CircleDollarSign',
-    ],
-    expense: [
-        'TrendingDown',
-        'CreditCard',
-        'Receipt',
-        'ArrowUpRight',
-        'Percent',
-    ],
-    tax: ['Receipt', 'Scale', 'Landmark', 'Calculator', 'FileText'],
-    code: ['Code', 'Terminal', 'GitBranch', 'Laptop', 'Cpu', 'TerminalSquare'],
-    dev: ['Code', 'Terminal', 'Server', 'Database', 'GitBranch', 'Cpu'],
-    web: ['Globe', 'Wifi', 'Server', 'Cloud', 'Code'],
-    cloud: ['Cloud', 'Server', 'Database', 'Globe'],
-    security: ['Shield', 'ShieldCheck', 'Lock', 'Key', 'Eye'],
-    auth: ['Shield', 'Lock', 'Key', 'UserCheck'],
-    travel: ['Plane', 'Luggage', 'MapPin', 'Compass', 'Palmtree', 'Ticket'],
-    gym: ['Dumbbell', 'Activity', 'Heart'],
-    health: ['Heart', 'Activity', 'Dumbbell'],
-    book: ['Book', 'BookOpen', 'Bookmark', 'Archive'],
-    learn: ['Book', 'BookOpen', 'GraduationCap'],
-    mail: ['Mail', 'Send', 'Inbox'],
-    message: ['MessageSquare', 'MessagesSquare', 'Send', 'Phone'],
-    chat: ['MessageSquare', 'MessagesSquare'],
+    income: ['TrendingUp', 'Wallet', 'Banknote', 'Coins', 'DollarSign'],
+    expense: ['TrendingDown', 'CreditCard', 'Receipt', 'Percent'],
+    dev: ['Code', 'Terminal', 'Server', 'Database', 'Cpu', 'GitBranch'],
+    security: ['Shield', 'ShieldCheck', 'Lock', 'Key'],
 };
 
 // Safe icon component resolver
@@ -368,14 +282,12 @@ const allFilteredIcons = computed(() => {
 
     const matchedSet = new Set<string>();
 
-    // 1. Check keyword tags first
-    Object.entries(searchTags).forEach(([tag, icons]) => {
+    for (const [tag, icons] of Object.entries(searchSynonyms)) {
         if (tag.includes(query) || query.includes(tag)) {
             icons.forEach((icon) => matchedSet.add(icon));
         }
-    });
+    }
 
-    // 2. Search all 2,000+ Lucide icons with substring match
     for (const name of allLucideIconNames) {
         if (name.toLowerCase().includes(query)) {
             matchedSet.add(name);
@@ -384,6 +296,7 @@ const allFilteredIcons = computed(() => {
 
     return Array.from(matchedSet);
 });
+
 
 // Sliced list for smooth rendering
 const displayedIcons = computed(() => {
