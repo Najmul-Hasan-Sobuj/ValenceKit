@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { decodePaginationLabel } from '@/lib/decodePaginationLabel';
+import { getInitials } from '@/lib/utils';
 import {
     MoreHorizontal,
     Pencil,
@@ -207,13 +208,6 @@ watchDebounced(
     { debounce: 300 },
 );
 
-function getInitials(name: string): string {
-    return name
-        .split(' ')
-        .map((p) => p[0])
-        .join('')
-        .toUpperCase();
-}
 
 function openUserDrawer(user: any): void {
     selectedUser.value = user;
