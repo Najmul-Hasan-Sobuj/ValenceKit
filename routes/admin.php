@@ -18,9 +18,7 @@ use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyCont
 use App\Http\Controllers\Admin\Settings\ProfileController;
 use App\Http\Controllers\Admin\Settings\SecurityController;
 use App\Http\Controllers\Admin\Settings\TrackingSettingsController;
-use App\Http\Middleware\Admin\Authenticate;
 use App\Http\Middleware\Admin\EnsureAdminIsActive;
-use App\Http\Middleware\Admin\RedirectIfAuthenticated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,7 +28,7 @@ Route::prefix(config('admin.alias'))
     ->group(function () {
 
         // Guest-only admin routes (login, password reset, passkeys)
-        Route::middleware(RedirectIfAuthenticated::class)->group(function () {
+        Route::middleware('guest:admin')->group(function () {
             Route::get('login', [AuthenticatedSessionController::class, 'create'])
                 ->name('login');
 
@@ -61,7 +59,7 @@ Route::prefix(config('admin.alias'))
         });
 
         // Authenticated admin routes
-        Route::middleware([Authenticate::class.':admin', EnsureAdminIsActive::class])->group(function () {
+        Route::middleware(['auth:admin', EnsureAdminIsActive::class])->group(function () {
             Route::delete('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 

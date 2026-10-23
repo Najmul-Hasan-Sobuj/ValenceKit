@@ -18,6 +18,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
@@ -32,6 +33,11 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectTo(
+            guests: fn (Request $request) => $request->is(config('admin.alias', 'admin').'*') ? route('admin.login') : route('login'),
+            users: fn () => Auth::guard('admin')->check() ? route('admin.dashboard') : route('dashboard'),
+        );
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->priority([
             HandlePrecognitiveRequests::class,

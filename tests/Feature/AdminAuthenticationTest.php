@@ -64,3 +64,10 @@ test('admin and user identities are shared separately', function () {
             ->where('auth.admin.id', $admin->id)
             ->where('auth.user.id', $user->id));
 });
+
+test('authenticated admin visiting login page is redirected to admin dashboard', function () {
+    $admin = Admin::factory()->create();
+
+    $this->actingAs($admin, 'admin')->get(route('admin.login'))
+        ->assertRedirect(route('admin.dashboard'));
+});
