@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Concerns\HasSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'module',
@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Category extends Model
 {
-    use HasFactory, HasSlug;
+    use HasFactory;
 
     /**
      * @return array<string, mixed>
@@ -34,11 +34,23 @@ class Category extends Model
     }
 
     /**
-     * Scope the slug uniqueness check to the current module.
+     * Generate a unique slug for the category within its module.
      */
-    protected function scopeSlugUniqueness($query): void
+    public function generateUniqueSlug(?string $source = null): string
     {
-        $query->where('module', $this->module);
+        $base = Str::slug($source ?: $this->name ?: Str::random(8));
+        $slug = $base;
+        $count = 1;
+
+        while (static::where('module', $this->module)
+            ->where('slug', $slug)
+            ->when($this->exists, fn ($q) => $q->where('id', '!=', $this->id))
+            ->exists()) {
+            $slug = "{$base}-{$count}";
+            $count++;
+        }
+
+        return $slug;
     }
 
     /**
@@ -46,6 +58,12 @@ class Category extends Model
      */
     protected static function booted(): void
     {
+        static::saving(function (Category $category) {
+            if (empty($category->slug)) {
+                $category->slug = $category->generateUniqueSlug();
+            }
+        });
+
         static::saved(function (Category $category) {
             if ($category->wasChanged('is_active') && ! $category->is_active) {
                 $category->deactivateDescendants();
