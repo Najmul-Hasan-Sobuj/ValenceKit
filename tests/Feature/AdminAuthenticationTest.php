@@ -1,10 +1,14 @@
 <?php
 
+use App\Actions\Admin\VerifyAdminPasskey;
+use App\Http\Requests\Admin\AdminPasskeyVerificationRequest;
 use App\Models\Admin;
 use App\Models\User;
 use App\Notifications\AdminResetPassword;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Passkeys\Actions\GenerateVerificationOptions;
+use Webauthn\PublicKeyCredential;
 
 test('admin logout targets its own route and does not log out the web user', function () {
     $admin = Admin::factory()->create();
@@ -82,4 +86,44 @@ test('authenticated admin visiting login page is redirected to admin dashboard',
 
     $this->actingAs($admin, 'admin')->get(route('admin.login'))
         ->assertRedirect(route('admin.dashboard'));
+});
+
+test('admin passkey authentication records admin.login audit log', function () {
+    $admin = Admin::factory()->create();
+    $passkey = $admin->passkeys()->create([
+        'name' => 'Security Key',
+        'credential_id' => 'credential-xyz',
+        'credential' => [],
+    ]);
+
+    $mockVerify = Mockery::mock(VerifyAdminPasskey::class);
+    $mockVerify->shouldReceive('__invoke')
+        ->once()
+        ->andReturn($passkey);
+    $this->app->instance(VerifyAdminPasskey::class, $mockVerify);
+
+    $options = app(GenerateVerificationOptions::class)(null);
+    $mockRequest = Mockery::mock(AdminPasskeyVerificationRequest::class);
+    $mockRequest->shouldReceive('credential')->andReturn(Mockery::mock(PublicKeyCredential::class));
+    $mockRequest->shouldReceive('verificationOptions')->andReturn($options);
+    $mockRequest->shouldReceive('remember')->andReturn(false);
+    $mockRequest->shouldReceive('ip')->andReturn('127.0.0.1');
+    $mockRequest->shouldReceive('session')->andReturn(session()->driver());
+    $this->app->instance(AdminPasskeyVerificationRequest::class, $mockRequest);
+
+    $response = $this->postJson(route('admin.passkeys.authenticate'));
+
+    $response->assertOk()
+        ->assertJson(['redirect' => route('admin.dashboard')]);
+
+    $this->assertAuthenticatedAs($admin, 'admin');
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'admin.login',
+        'actor_type' => Admin::class,
+        'actor_id' => $admin->id,
+        'subject_type' => Admin::class,
+        'subject_id' => $admin->id,
+        'description' => 'An administrator signed in.',
+    ]);
 });

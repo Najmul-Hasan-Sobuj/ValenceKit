@@ -6,6 +6,7 @@ use App\Actions\Admin\VerifyAdminPasskey;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminPasskeyVerificationRequest;
 use App\Models\Admin;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,6 +39,7 @@ class PasskeyController extends Controller
     public function authenticate(
         AdminPasskeyVerificationRequest $request,
         VerifyAdminPasskey $verify,
+        AuditLogService $auditLogService,
     ): JsonResponse {
         try {
             $passkey = $verify($request->credential(), $request->verificationOptions());
@@ -62,6 +64,13 @@ class PasskeyController extends Controller
         ])->save();
 
         $request->session()->regenerate();
+
+        $auditLogService->record(
+            'admin.login',
+            $admin,
+            description: 'An administrator signed in.',
+            actor: $admin,
+        );
 
         return response()->json([
             'redirect' => route('admin.dashboard'),
