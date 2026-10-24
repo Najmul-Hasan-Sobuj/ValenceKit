@@ -147,6 +147,10 @@ class RoleController extends Controller
             'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
+        if ($role->is_system && $validated['name'] !== $role->name) {
+            return back()->with('error', 'System role names cannot be changed.');
+        }
+
         $role->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,

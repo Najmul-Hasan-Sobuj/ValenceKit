@@ -121,3 +121,21 @@ it('prevents non-super-admin from duplicating system roles', function () {
         ->get(route('admin.authorization.roles.create', ['duplicate' => $superAdminRole->id]))
         ->assertForbidden();
 });
+
+it('prevents renaming system roles such as Super Admin', function () {
+    $superAdmin = Admin::factory()->create();
+    $superAdmin->assignRole('Super Admin');
+
+    $superAdminRole = Role::where('name', 'Super Admin')->first();
+
+    $response = $this->actingAs($superAdmin, 'admin')
+        ->put(route('admin.authorization.roles.update', $superAdminRole), [
+            'name' => 'Renamed Super Admin',
+            'description' => 'Attempted rename',
+            'permissions' => $superAdminRole->permissions->pluck('name')->all(),
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('error', 'System role names cannot be changed.');
+    expect($superAdminRole->fresh()->name)->toBe('Super Admin');
+});
