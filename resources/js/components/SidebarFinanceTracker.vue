@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     ArrowDownLeft,
@@ -56,11 +56,27 @@ async function fetchSummary() {
     }
 }
 
+let removeFinishListener: (() => void) | null = null;
+
 onMounted(() => {
     fetchSummary();
-    router.on('finish', () => {
-        fetchSummary();
+    removeFinishListener = router.on('finish', (event: any) => {
+        const url = event.detail?.visit?.url;
+        const path =
+            url instanceof URL
+                ? url.pathname
+                : typeof url === 'string'
+                  ? url
+                  : (url?.pathname ?? '');
+
+        if (path.includes('/admin/finance')) {
+            fetchSummary();
+        }
     });
+});
+
+onUnmounted(() => {
+    removeFinishListener?.();
 });
 
 const netBalance = computed(() => summaryData.value?.net_balance ?? 0);
