@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "valencekit": {
+      "serverUrl": "http://valencekit.test/mcp/valencekit",
+      "headers": {
+        "Authorization": "Bearer valencekit-local-dev-token-2026"
+      }
+    }
+  }
+}
