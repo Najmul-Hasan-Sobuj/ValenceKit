@@ -336,7 +336,7 @@ class FinanceService
             ->get(['category_key', 'category_name', 'amount']);
 
         $grouped = $expenses->groupBy('category_key');
-        $expenseCategories = collect(config('finance.categories.expense', []))->keyBy('id');
+        $expenseCategories = collect($this->getCategories()['expense'] ?? [])->keyBy('id');
 
         $labels = [];
         $data = [];

@@ -331,3 +331,39 @@ it('properly aggregates analytics timeline using SQL for daily and monthly inter
     expect($monthly['interval'])->toBe('month')
         ->and(count($monthly['labels']))->toBeGreaterThanOrEqual(3);
 });
+
+it('loads dynamic database categories with custom colors and icons in category breakdown', function () {
+    $category = Category::create([
+        'module' => 'finance',
+        'type' => 'expense',
+        'slug' => 'custom-tools',
+        'name' => 'Custom Dev Tools',
+        'color' => '#8b5cf6',
+        'icon' => 'Sparkles',
+        'is_active' => true,
+    ]);
+
+    FinanceTransaction::create([
+        'type' => 'expense',
+        'amount' => 175.50,
+        'category_key' => $category->slug,
+        'category_name' => $category->name,
+        'description' => 'IDE Subscription',
+        'transaction_date' => now()->toDateString(),
+        'payment_method' => 'card',
+        'admin_id' => $this->superAdmin->id,
+    ]);
+
+    $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('admin.finance.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/finance/Index')
+            ->has('categoryChart', fn ($chart) => $chart
+                ->where('labels', fn ($labels) => collect($labels)->contains('Custom Dev Tools'))
+                ->where('colors', fn ($colors) => collect($colors)->contains('#8b5cf6'))
+                ->where('icons', fn ($icons) => collect($icons)->contains('Sparkles'))
+                ->etc()
+            )
+        );
+});
