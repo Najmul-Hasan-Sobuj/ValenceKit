@@ -3,8 +3,9 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { privacyPolicy, terms } from '@/routes';
 import { ArrowUpRight } from '@lucide/vue';
 
-const page = usePage<{ name?: string }>();
+const page = usePage<{ name?: string; supportEmail?: string }>();
 const appName = page.props.name || 'ValenceKit';
+const supportEmail = page.props.supportEmail || 'support@valencekit.com';
 </script>
 
 <template>
@@ -34,9 +35,9 @@ const appName = page.props.name || 'ValenceKit';
                         Terms of Service
                     </Link>
                     <a
-                        href="mailto:hello@valencekit.test"
+                        :href="`mailto:${supportEmail}`"
                         class="group inline-flex items-center gap-1 transition-colors hover:text-foreground"
-                        title="Contact ValenceKit Support"
+                        :title="`Contact ${appName} Support`"
                     >
                         <span>Support</span>
                         <ArrowUpRight

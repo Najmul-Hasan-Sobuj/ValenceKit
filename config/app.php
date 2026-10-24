@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'support_email' => env('SUPPORT_EMAIL', 'support@valencekit.com'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

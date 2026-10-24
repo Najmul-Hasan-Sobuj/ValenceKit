@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'appUrl' => config('app.url'),
+            'supportEmail' => config('app.support_email', 'support@valencekit.com'),
             'flash' => fn () => $request->session()->get('flash'),
             'success' => fn () => $request->session()->get('success'),
             'auth' => [

@@ -25,3 +25,11 @@ test('sitemap and llms endpoints return valid responses', function () {
         ->assertOk()
         ->assertHeader('Content-Type', 'text/markdown; charset=UTF-8');
 });
+
+test('public pages share dynamic supportEmail in inertia props', function () {
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('supportEmail', config('app.support_email', 'support@valencekit.com'))
+        );
+});
