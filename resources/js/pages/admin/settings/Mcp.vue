@@ -25,7 +25,7 @@ import {
     store as storeToken,
     destroy as destroyToken,
 } from '@/routes/admin/mcp/tokens';
-import { sync as syncTools } from '@/routes/admin/mcp/tools';
+import { sync as syncTools, update as updateTool } from '@/routes/admin/mcp/tools';
 import { useClipboard } from '@vueuse/core';
 import { toast } from 'vue-sonner';
 import RelativeTime from '@/components/RelativeTime.vue';
@@ -82,7 +82,6 @@ const props = defineProps<{
 }>();
 
 import { Switch } from '@/components/ui/switch';
-import { update } from '@/actions/App/Http/Controllers/Admin/Settings/McpController';
 
 const form = useForm({
     name: '',
@@ -132,7 +131,7 @@ const revokeToken = (id: string | number) => {
 
 const updateToolStatus = (toolId: number, isActive: boolean): void => {
     router.patch(
-        update.url(toolId),
+        updateTool.url(toolId),
         { is_active: isActive },
         {
             preserveScroll: true,

@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\McpUsageController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
-use App\Http\Controllers\Admin\Settings\McpController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
 use App\Http\Controllers\Admin\Settings\ProfileController;
@@ -87,8 +86,8 @@ Route::prefix(config('admin.alias'))
             Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
             Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
             Route::get('settings/mcp', [McpSettingsController::class, 'edit'])->name('mcp.edit');
-            Route::patch('settings/mcp/tools/{mcpTool}', [McpController::class, 'update'])->name('mcp.tools.update');
-            Route::post('settings/mcp/tools/sync', [McpController::class, 'sync'])->name('mcp.tools.sync');
+            Route::patch('settings/mcp/tools/{mcpTool}', [McpSettingsController::class, 'update'])->name('mcp.tools.update');
+            Route::post('settings/mcp/tools/sync', [McpSettingsController::class, 'sync'])->name('mcp.tools.sync');
             Route::post('settings/mcp/tokens', [McpSettingsController::class, 'store'])->name('mcp.tokens.store');
             Route::delete('settings/mcp/tokens/{tokenId}', [McpSettingsController::class, 'destroy'])->name('mcp.tokens.destroy');
 
