@@ -11,9 +11,7 @@ const props = defineProps<{
     financeSummary?: any;
     mcpStats?: {
         total_calls: number;
-        total_tokens: number;
         calls_today: number;
-        tokens_today: number;
     } | null;
     platformStats?: {
         total_users: number;

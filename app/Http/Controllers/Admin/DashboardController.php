@@ -38,9 +38,7 @@ class DashboardController extends Controller
         if ($admin && $admin->can('settings.mcp.usage.view')) {
             $mcpStats = [
                 'total_calls' => McpUsageLog::count(),
-                'total_tokens' => (int) McpUsageLog::sum('token_used'),
                 'calls_today' => McpUsageLog::whereDate('created_at', now()->toDateString())->count(),
-                'tokens_today' => (int) McpUsageLog::whereDate('created_at', now()->toDateString())->sum('token_used'),
             ];
         }
 
