@@ -100,7 +100,7 @@ class AppServiceProvider extends ServiceProvider
 
     protected function mcpLimit(Request $request, int $maxAttempts, string $operation): Limit
     {
-        $actor = auth('mcp')->user() ?: auth('sanctum')->user();
+        $actor = rescue(static fn () => auth('mcp')->user(), null, false) ?: auth('sanctum')->user();
         $identity = $actor
             ? get_class($actor).':'.$actor->getAuthIdentifier()
             : hash('sha256', (string) $request->bearerToken());

@@ -16,7 +16,7 @@ abstract class BaseDbTool extends Tool
      */
     protected function allows(Request $request, string $scope): bool
     {
-        $admin = $request->user('mcp') ?? $request->user('sanctum');
+        $admin = rescue(static fn () => $request->user('mcp'), null, false) ?? $request->user('sanctum');
 
         if (! $admin instanceof Admin) {
             return false;

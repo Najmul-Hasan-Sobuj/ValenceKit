@@ -112,7 +112,7 @@ class AuditLogService
     private function actor(): ?Model
     {
         foreach (['admin', 'mcp', 'sanctum', 'web'] as $guard) {
-            $actor = Auth::guard($guard)->user();
+            $actor = rescue(static fn () => Auth::guard($guard)->user(), null, false);
 
             if ($actor instanceof Model) {
                 return $actor;

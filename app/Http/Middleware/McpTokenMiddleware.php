@@ -19,7 +19,7 @@ class McpTokenMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $oauthActor = auth('mcp')->user();
+        $oauthActor = rescue(static fn () => auth('mcp')->user(), null, false);
         $sanctumActor = auth('sanctum')->user();
         $actor = $oauthActor ?: $sanctumActor;
         $token = $actor?->currentAccessToken();
@@ -59,7 +59,7 @@ class McpTokenMiddleware
             return null;
         }
 
-        $guard = auth()->guard('mcp');
+        $guard = rescue(static fn () => auth()->guard('mcp'), null, false);
 
         return method_exists($guard, 'client')
             ? (string) ($guard->client()?->getKey())
