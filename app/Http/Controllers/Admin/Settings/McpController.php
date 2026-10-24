@@ -52,6 +52,7 @@ class McpController extends Controller
         abort_unless($request->user('admin')->can('settings.mcp.edit'), 403);
 
         $syncService->sync();
+        Cache::forget('active_mcp_tools');
 
         $auditLogService->record(
             'mcp.registry.synced',
