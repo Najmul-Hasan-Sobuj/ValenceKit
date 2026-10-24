@@ -24,9 +24,7 @@ const sidebarNavItems = computed<NavItem[]>(() => {
         items.push({ title: 'Profile', href: editProfile() });
     }
 
-    if (can('settings.security.view')) {
-        items.push({ title: 'Security', href: editSecurity() });
-    }
+    items.push({ title: 'Security', href: editSecurity() });
 
     if (can('settings.mcp.view')) {
         items.push({ title: 'MCP (AI Tools)', href: editMcp() });

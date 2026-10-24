@@ -67,9 +67,7 @@ defineOptions({
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
-            <Button :disabled="processing || !can('settings.security.edit')"
-                >Save</Button
-            >
+            <Button :disabled="processing">Save</Button>
         </Form>
     </div>
 
