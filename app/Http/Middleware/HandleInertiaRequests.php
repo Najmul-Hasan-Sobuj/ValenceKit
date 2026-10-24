@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 use Spatie\Permission\Models\Permission;
 
@@ -51,7 +52,7 @@ class HandleInertiaRequests extends Middleware
                     [
                         'roles' => Auth::guard('admin')->user()->roles->pluck('name')->values()->all(),
                         'permissions' => Auth::guard('admin')->user()->hasRole('Super Admin')
-                            ? Permission::pluck('name')->values()->all()
+                            ? Cache::rememberForever('admin_all_permissions', fn () => Permission::pluck('name')->values()->all())
                             : Auth::guard('admin')->user()->getAllPermissions()->pluck('name')->values()->all(),
                     ]
                 ) : null,
