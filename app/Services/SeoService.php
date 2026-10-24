@@ -45,7 +45,7 @@ class SeoService
     public function generateRobots(): string
     {
         $baseUrl = rtrim((string) config('app.url'), '/');
-        $adminPath = trim((string) config('admin.alias'), '/');
+        $adminPath = trim((string) config('admin.alias', 'admin'), '/');
 
         return implode(PHP_EOL, [
             'User-agent: *',
@@ -55,7 +55,6 @@ class SeoService
             "Disallow: /{$adminPath}",
             'Disallow: /api/',
             'Disallow: /settings',
-            'Disallow: /.well-known/',
             "Sitemap: {$baseUrl}/sitemap.xml",
             '',
         ]);
