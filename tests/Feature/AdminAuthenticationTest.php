@@ -19,6 +19,18 @@ test('admin logout targets its own route and does not log out the web user', fun
     $this->assertAuthenticatedAs($user, 'web');
 });
 
+test('admin logout invalidates the session and regenerates token', function () {
+    $admin = Admin::factory()->create();
+
+    $response = $this->actingAs($admin, 'admin')
+        ->withSession(['custom_admin_key' => 'secret_value'])
+        ->delete(route('admin.logout'));
+
+    $response->assertRedirect(route('admin.login'));
+    $this->assertGuest('admin');
+    $response->assertSessionMissing('custom_admin_key');
+});
+
 test('web user cannot access admin settings or dashboard', function () {
     $user = User::factory()->create();
 

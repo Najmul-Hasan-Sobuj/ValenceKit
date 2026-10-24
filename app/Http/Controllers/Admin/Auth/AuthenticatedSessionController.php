@@ -83,6 +83,7 @@ class AuthenticatedSessionController extends Controller
             actor: $admin,
         );
 
+        $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('admin.login');
