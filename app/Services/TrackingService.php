@@ -17,8 +17,10 @@ class TrackingService
         $settings = TrackingSetting::instance();
 
         if ($settings->exclude_admins) {
+            $adminPrefix = trim((string) config('admin.alias', 'admin'), '/');
+
             // Check if current request path is within admin area
-            if (Request::is('admin*')) {
+            if (Request::is("{$adminPrefix}*")) {
                 return false;
             }
 
@@ -36,8 +38,10 @@ class TrackingService
      */
     public static function renderHeadScripts(): string
     {
+        $adminPrefix = trim((string) config('admin.alias', 'admin'), '/');
+
         if (! static::shouldTrack()) {
-            if (Auth::guard('admin')->check() && ! Request::is('admin*')) {
+            if (Auth::guard('admin')->check() && ! Request::is("{$adminPrefix}*")) {
                 return "<!-- Tracking scripts suppressed: Logged in as administrator (to view, open in an incognito window or disable 'Exclude Authenticated Admins' in Admin Settings > Tracking & Pixels) -->";
             }
 

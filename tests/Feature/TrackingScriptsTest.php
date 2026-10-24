@@ -2,6 +2,7 @@
 
 use App\Models\Admin;
 use App\Models\TrackingSetting;
+use App\Services\TrackingService;
 use Database\Seeders\RoleAndPermissionSeeder;
 
 beforeEach(function () {
@@ -103,4 +104,19 @@ test('tracking scripts are suppressed on admin requests when exclude_admins is t
     // Clarity should not be rendered
     $response->assertDontSee('https://www.clarity.ms/tag/');
     $response->assertDontSee('yyvng93thl');
+});
+
+test('tracking scripts respect dynamic admin alias configuration', function () {
+    config(['admin.alias' => 'secret-manage']);
+
+    $setting = TrackingSetting::instance();
+    $setting->update([
+        'clarity_enabled' => true,
+        'clarity_project_id' => 'yyvng93thl',
+        'exclude_admins' => true,
+    ]);
+    TrackingSetting::flushCache();
+
+    $this->get('/secret-manage/login');
+    expect(TrackingService::shouldTrack())->toBeFalse();
 });
