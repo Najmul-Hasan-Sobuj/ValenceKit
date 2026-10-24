@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Admin\Authorization;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\Authorization\RoleResource;
-use App\Models\Admin;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -20,12 +18,7 @@ class RoleController extends Controller
 
         $roles = Role::where('guard_name', 'admin')
             ->with('permissions')
-            ->addSelect([
-                'members_count' => DB::table('model_has_roles')
-                    ->selectRaw('count(*)')
-                    ->whereColumn('model_has_roles.role_id', 'roles.id')
-                    ->where('model_has_roles.model_type', Admin::class),
-            ])
+            ->withCount('users as members_count')
             ->orderBy('name')
             ->get();
 
@@ -180,10 +173,7 @@ class RoleController extends Controller
             return back()->with('error', 'System roles cannot be deleted.');
         }
 
-        $assignedMembersCount = DB::table('model_has_roles')
-            ->where('role_id', $role->id)
-            ->where('model_type', Admin::class)
-            ->count();
+        $assignedMembersCount = $role->users()->count();
 
         if ($assignedMembersCount > 0) {
             return back()->with('error', 'Cannot delete role with assigned members.');

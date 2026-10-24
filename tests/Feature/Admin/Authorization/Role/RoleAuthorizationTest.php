@@ -139,3 +139,33 @@ it('prevents renaming system roles such as Super Admin', function () {
     $response->assertSessionHas('error', 'System role names cannot be changed.');
     expect($superAdminRole->fresh()->name)->toBe('Super Admin');
 });
+
+it('accurately counts role members using native withCount on index and prevents deletion when members assigned', function () {
+    $superAdmin = Admin::factory()->create();
+    $superAdmin->assignRole('Super Admin');
+
+    $customRole = Role::create(['name' => 'Custom Editor', 'guard_name' => 'admin']);
+    $editor1 = Admin::factory()->create();
+    $editor2 = Admin::factory()->create();
+    $editor1->assignRole($customRole);
+    $editor2->assignRole($customRole);
+
+    $this->actingAs($superAdmin, 'admin')
+        ->get(route('admin.authorization.roles.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/authorization/Roles')
+            ->has('roles', fn ($roles) => $roles
+                ->where('data', fn ($collection) => collect($collection)->contains(
+                    fn ($item) => $item['name'] === 'Custom Editor' && $item['members'] === 2
+                ))
+            )
+        );
+
+    $this->actingAs($superAdmin, 'admin')
+        ->delete(route('admin.authorization.roles.destroy', $customRole))
+        ->assertRedirect()
+        ->assertSessionHas('error', 'Cannot delete role with assigned members.');
+
+    expect(Role::where('id', $customRole->id)->exists())->toBeTrue();
+});
