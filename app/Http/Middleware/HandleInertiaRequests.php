@@ -57,11 +57,11 @@ class HandleInertiaRequests extends Middleware
                 ) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'finance' => [
+            'finance' => fn () => Auth::guard('admin')->user()?->can('finance.view') ? [
                 'currency' => app(FinanceService::class)->getActiveCurrency(),
                 'categories' => app(FinanceService::class)->getCategories(),
                 'payment_methods' => config('finance.payment_methods', []),
-            ],
+            ] : null,
         ];
     }
 }
