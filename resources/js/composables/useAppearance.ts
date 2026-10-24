@@ -121,10 +121,14 @@ export function useAppearance(): UseAppearanceReturn {
                 });
             } else {
                 // Fallback for Safari <18 and Firefox: smooth CSS color interpolation
-                document.documentElement.classList.add('theme-transitioning');
+                (document as Document).documentElement.classList.add(
+                    'theme-transitioning',
+                );
                 updateTheme(value);
                 setTimeout(() => {
-                    document.documentElement.classList.remove('theme-transitioning');
+                    (document as Document).documentElement.classList.remove(
+                        'theme-transitioning',
+                    );
                 }, 400);
             }
         } else {

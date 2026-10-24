@@ -7,6 +7,7 @@
 <p align="center">
   <a href="https://github.com/Najmul-Hasan-Sobuj/ValenceKit/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/Najmul-Hasan-Sobuj/ValenceKit/tests.yml?branch=main&label=tests&logo=github" alt="Tests"></a>
   <a href="https://visitorbadge.io/status?path=Najmul-Hasan-Sobuj/ValenceKit"><img src="https://api.visitorbadge.io/api/visitors?path=Najmul-Hasan-Sobuj%2FValenceKit&label=Visitors&countColor=%23263759&style=flat" alt="Visitors"></a>
+  <a href="https://github.com/Najmul-Hasan-Sobuj/ValenceKit/releases"><img src="https://img.shields.io/github/v/release/Najmul-Hasan-Sobuj/ValenceKit?style=flat&logo=github" alt="Release"></a>
   <a href="https://github.com/Najmul-Hasan-Sobuj/ValenceKit/releases"><img src="https://img.shields.io/github/downloads/Najmul-Hasan-Sobuj/ValenceKit/total?style=flat&logo=github" alt="Downloads"></a>
   <a href="https://github.com/Najmul-Hasan-Sobuj/ValenceKit/stargazers"><img src="https://img.shields.io/github/stars/Najmul-Hasan-Sobuj/ValenceKit?style=flat&logo=github" alt="Stars"></a>
   <a href="https://github.com/Najmul-Hasan-Sobuj/ValenceKit/network/members"><img src="https://img.shields.io/github/forks/Najmul-Hasan-Sobuj/ValenceKit?style=flat&logo=github" alt="Forks"></a>
@@ -16,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white" alt="PHP">
+  <img src="https://img.shields.io/badge/PHP-8.5%2B-777BB4?logo=php&logoColor=white" alt="PHP">
   <img src="https://img.shields.io/badge/Laravel-13.x-FF2D20?logo=laravel&logoColor=white" alt="Laravel">
   <img src="https://img.shields.io/badge/Vue.js-3.x-4FC08D?logo=vue.js&logoColor=white" alt="Vue.js">
   <img src="https://img.shields.io/badge/Inertia.js-3.x-9553E9?logo=inertia&logoColor=white" alt="Inertia.js">

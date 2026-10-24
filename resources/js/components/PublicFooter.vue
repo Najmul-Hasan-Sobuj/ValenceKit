@@ -9,9 +9,7 @@ const appName = page.props.name || 'ValenceKit';
 
 <template>
     <footer class="border-t border-border py-8 text-sm text-muted-foreground">
-        <div
-            class="mx-auto flex max-w-7xl flex-col gap-5 px-4 sm:px-6 lg:px-8"
-        >
+        <div class="mx-auto flex max-w-7xl flex-col gap-5 px-4 sm:px-6 lg:px-8">
             <div
                 class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
@@ -42,7 +40,7 @@ const appName = page.props.name || 'ValenceKit';
                     >
                         <span>Support</span>
                         <ArrowUpRight
-                            class="size-3 text-muted-foreground/60 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+                            class="size-3 text-muted-foreground/60 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground"
                             aria-hidden="true"
                         />
                     </a>

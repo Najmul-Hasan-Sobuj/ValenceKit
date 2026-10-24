@@ -4,8 +4,13 @@ export function useScrollReveal(selector = '.reveal-on-scroll') {
     let observer: IntersectionObserver | null = null;
 
     onMounted(() => {
-        if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
-            document.querySelectorAll(selector).forEach((el) => el.classList.add('is-revealed'));
+        if (
+            typeof window === 'undefined' ||
+            !('IntersectionObserver' in window)
+        ) {
+            document
+                .querySelectorAll(selector)
+                .forEach((el) => el.classList.add('is-revealed'));
             return;
         }
 
@@ -21,7 +26,9 @@ export function useScrollReveal(selector = '.reveal-on-scroll') {
             { threshold: 0.1, rootMargin: '0px 0px -40px 0px' },
         );
 
-        document.querySelectorAll(selector).forEach((el) => observer?.observe(el));
+        document
+            .querySelectorAll(selector)
+            .forEach((el) => observer?.observe(el));
     });
 
     onUnmounted(() => {

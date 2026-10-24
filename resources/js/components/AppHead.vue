@@ -71,14 +71,26 @@ const absoluteOgImage = computed(() => {
             property="og:image:secure_url"
             :content="absoluteOgImage"
         />
-        <meta head-key="og:image:width" property="og:image:width" content="1200" />
-        <meta head-key="og:image:height" property="og:image:height" content="630" />
+        <meta
+            head-key="og:image:width"
+            property="og:image:width"
+            content="1200"
+        />
+        <meta
+            head-key="og:image:height"
+            property="og:image:height"
+            content="630"
+        />
         <meta
             head-key="og:image:alt"
             property="og:image:alt"
             :content="imageAlt"
         />
-        <meta head-key="og:image:type" property="og:image:type" content="image/png" />
+        <meta
+            head-key="og:image:type"
+            property="og:image:type"
+            content="image/png"
+        />
 
         <meta
             head-key="twitter:card"

@@ -18,10 +18,14 @@ const jsonLd = computed(() =>
 const structuredDataHead = () =>
     h(Head, null, {
         default: () =>
-            h('script', {
-                'head-key': 'structured-data',
-                type: 'application/ld+json',
-            }, jsonLd.value),
+            h(
+                'script',
+                {
+                    'head-key': 'structured-data',
+                    type: 'application/ld+json',
+                },
+                jsonLd.value,
+            ),
     });
 </script>
 

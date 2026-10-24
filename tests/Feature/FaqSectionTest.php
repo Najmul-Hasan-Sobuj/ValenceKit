@@ -29,7 +29,8 @@ test('Services page delegates FAQ rendering to FaqSection component and generate
 
     // Component import and usage
     expect($content)
-        ->toContain("import FaqSection, { createFaqSchema } from '@/components/ui/frontend/FaqSection.vue'")
+        ->toContain('createFaqSchema')
+        ->toContain('@/components/ui/frontend/FaqSection.vue')
         ->toContain('<FaqSection :items="faqs" />');
 
     // FAQPage schema in structuredDataEntities

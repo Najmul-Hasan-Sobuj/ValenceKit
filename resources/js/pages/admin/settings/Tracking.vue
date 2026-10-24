@@ -112,7 +112,7 @@ defineOptions({
                     <div class="flex items-center justify-between">
                         <Label
                             for="exclude_admins"
-                            class="text-sm font-semibold text-foreground cursor-pointer"
+                            class="cursor-pointer text-sm font-semibold text-foreground"
                         >
                             Exclude Authenticated Admins & Admin Routes
                         </Label>
@@ -137,7 +137,7 @@ defineOptions({
             >
                 <div
                     @click="toggleSection('clarity')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 hover:bg-muted/30 select-none transition-colors"
+                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
                 >
                     <div class="flex items-center gap-3.5">
                         <div
@@ -147,12 +147,14 @@ defineOptions({
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="text-sm font-semibold text-foreground">
+                                <h3
+                                    class="text-sm font-semibold text-foreground"
+                                >
                                     Microsoft Clarity
                                 </h3>
                                 <Badge
                                     variant="outline"
-                                    class="text-[10px] uppercase font-bold tracking-wider"
+                                    class="text-[10px] font-bold tracking-wider uppercase"
                                 >
                                     Heatmaps & Session Replays
                                 </Badge>
@@ -164,7 +166,8 @@ defineOptions({
                                 </Badge>
                             </div>
                             <p class="text-xs text-muted-foreground">
-                                Free behavioral analytics, clicks, scrolling, and session video recordings.
+                                Free behavioral analytics, clicks, scrolling,
+                                and session video recordings.
                             </p>
                         </div>
                     </div>
@@ -172,13 +175,15 @@ defineOptions({
                         <Switch
                             id="clarity_enabled"
                             v-model="form.clarity_enabled"
-                            @update:model-value="handleSwitchToggle('clarity', $event)"
+                            @update:model-value="
+                                handleSwitchToggle('clarity', $event)
+                            "
                             :disabled="!can('settings.tracking.edit')"
                         />
                         <button
                             type="button"
                             @click="toggleSection('clarity')"
-                            class="text-muted-foreground hover:text-foreground p-1 transition-colors"
+                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
                             aria-label="Toggle Clarity details"
                         >
                             <ChevronDown
@@ -191,11 +196,11 @@ defineOptions({
 
                 <div
                     v-if="openSections.clarity"
-                    class="border-t border-border/60 bg-muted/10 p-5 space-y-2.5 animate-in fade-in-50 duration-200"
+                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
                 >
                     <Label
                         for="clarity_project_id"
-                        class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                     >
                         Clarity Project ID or Snippet
                     </Label>
@@ -207,10 +212,14 @@ defineOptions({
                         class="h-10 rounded-xl font-mono text-sm"
                         :disabled="!can('settings.tracking.edit')"
                     />
-                    <p class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <p
+                        class="flex items-center gap-1.5 text-xs text-muted-foreground"
+                    >
                         <Info class="size-3.5 shrink-0" />
                         <span>
-                            You can enter the Project ID directly (e.g. <code>yyvng93thl</code>) or paste the full tracking code — the ID will be automatically extracted.
+                            You can enter the Project ID directly (e.g.
+                            <code>yyvng93thl</code>) or paste the full tracking
+                            code — the ID will be automatically extracted.
                         </span>
                     </p>
                     <InputError :message="form.errors.clarity_project_id" />
@@ -223,7 +232,7 @@ defineOptions({
             >
                 <div
                     @click="toggleSection('ga4')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 hover:bg-muted/30 select-none transition-colors"
+                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
                 >
                     <div class="flex items-center gap-3.5">
                         <div
@@ -233,12 +242,14 @@ defineOptions({
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="text-sm font-semibold text-foreground">
+                                <h3
+                                    class="text-sm font-semibold text-foreground"
+                                >
                                     Google Analytics 4 (GA4)
                                 </h3>
                                 <Badge
                                     variant="outline"
-                                    class="text-[10px] uppercase font-bold tracking-wider"
+                                    class="text-[10px] font-bold tracking-wider uppercase"
                                 >
                                     Web Metrics
                                 </Badge>
@@ -250,7 +261,8 @@ defineOptions({
                                 </Badge>
                             </div>
                             <p class="text-xs text-muted-foreground">
-                                Track visitors, pageviews, events, and conversions using Google gtag.js.
+                                Track visitors, pageviews, events, and
+                                conversions using Google gtag.js.
                             </p>
                         </div>
                     </div>
@@ -258,13 +270,15 @@ defineOptions({
                         <Switch
                             id="google_analytics_enabled"
                             v-model="form.google_analytics_enabled"
-                            @update:model-value="handleSwitchToggle('ga4', $event)"
+                            @update:model-value="
+                                handleSwitchToggle('ga4', $event)
+                            "
                             :disabled="!can('settings.tracking.edit')"
                         />
                         <button
                             type="button"
                             @click="toggleSection('ga4')"
-                            class="text-muted-foreground hover:text-foreground p-1 transition-colors"
+                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
                             aria-label="Toggle GA4 details"
                         >
                             <ChevronDown
@@ -277,11 +291,11 @@ defineOptions({
 
                 <div
                     v-if="openSections.ga4"
-                    class="border-t border-border/60 bg-muted/10 p-5 space-y-2.5 animate-in fade-in-50 duration-200"
+                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
                 >
                     <Label
                         for="google_analytics_id"
-                        class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                     >
                         GA4 Measurement ID
                     </Label>
@@ -294,7 +308,8 @@ defineOptions({
                         :disabled="!can('settings.tracking.edit')"
                     />
                     <p class="text-xs text-muted-foreground">
-                        Found in your Google Analytics Admin &gt; Data Streams &gt; Measurement ID.
+                        Found in your Google Analytics Admin &gt; Data Streams
+                        &gt; Measurement ID.
                     </p>
                     <InputError :message="form.errors.google_analytics_id" />
                 </div>
@@ -306,7 +321,7 @@ defineOptions({
             >
                 <div
                     @click="toggleSection('gtm')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 hover:bg-muted/30 select-none transition-colors"
+                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
                 >
                     <div class="flex items-center gap-3.5">
                         <div
@@ -316,12 +331,14 @@ defineOptions({
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="text-sm font-semibold text-foreground">
+                                <h3
+                                    class="text-sm font-semibold text-foreground"
+                                >
                                     Google Tag Manager (GTM)
                                 </h3>
                                 <Badge
                                     variant="outline"
-                                    class="text-[10px] uppercase font-bold tracking-wider"
+                                    class="text-[10px] font-bold tracking-wider uppercase"
                                 >
                                     Container
                                 </Badge>
@@ -333,7 +350,8 @@ defineOptions({
                                 </Badge>
                             </div>
                             <p class="text-xs text-muted-foreground">
-                                Manage all marketing and analytics tags centrally via Google Tag Manager container.
+                                Manage all marketing and analytics tags
+                                centrally via Google Tag Manager container.
                             </p>
                         </div>
                     </div>
@@ -341,13 +359,15 @@ defineOptions({
                         <Switch
                             id="google_tag_manager_enabled"
                             v-model="form.google_tag_manager_enabled"
-                            @update:model-value="handleSwitchToggle('gtm', $event)"
+                            @update:model-value="
+                                handleSwitchToggle('gtm', $event)
+                            "
                             :disabled="!can('settings.tracking.edit')"
                         />
                         <button
                             type="button"
                             @click="toggleSection('gtm')"
-                            class="text-muted-foreground hover:text-foreground p-1 transition-colors"
+                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
                             aria-label="Toggle GTM details"
                         >
                             <ChevronDown
@@ -360,11 +380,11 @@ defineOptions({
 
                 <div
                     v-if="openSections.gtm"
-                    class="border-t border-border/60 bg-muted/10 p-5 space-y-2.5 animate-in fade-in-50 duration-200"
+                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
                 >
                     <Label
                         for="google_tag_manager_id"
-                        class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                     >
                         GTM Container ID
                     </Label>
@@ -377,7 +397,8 @@ defineOptions({
                         :disabled="!can('settings.tracking.edit')"
                     />
                     <p class="text-xs text-muted-foreground">
-                        Both the header script and noscript body iframe are automatically injected.
+                        Both the header script and noscript body iframe are
+                        automatically injected.
                     </p>
                     <InputError :message="form.errors.google_tag_manager_id" />
                 </div>
@@ -389,7 +410,7 @@ defineOptions({
             >
                 <div
                     @click="toggleSection('pixel')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 hover:bg-muted/30 select-none transition-colors"
+                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
                 >
                     <div class="flex items-center gap-3.5">
                         <div
@@ -399,12 +420,14 @@ defineOptions({
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="text-sm font-semibold text-foreground">
+                                <h3
+                                    class="text-sm font-semibold text-foreground"
+                                >
                                     Meta (Facebook) Pixel
                                 </h3>
                                 <Badge
                                     variant="outline"
-                                    class="text-[10px] uppercase font-bold tracking-wider"
+                                    class="text-[10px] font-bold tracking-wider uppercase"
                                 >
                                     Ad Retargeting
                                 </Badge>
@@ -416,7 +439,8 @@ defineOptions({
                                 </Badge>
                             </div>
                             <p class="text-xs text-muted-foreground">
-                                Track conversions and run retargeting campaigns with Meta Ads.
+                                Track conversions and run retargeting campaigns
+                                with Meta Ads.
                             </p>
                         </div>
                     </div>
@@ -424,13 +448,15 @@ defineOptions({
                         <Switch
                             id="facebook_pixel_enabled"
                             v-model="form.facebook_pixel_enabled"
-                            @update:model-value="handleSwitchToggle('pixel', $event)"
+                            @update:model-value="
+                                handleSwitchToggle('pixel', $event)
+                            "
                             :disabled="!can('settings.tracking.edit')"
                         />
                         <button
                             type="button"
                             @click="toggleSection('pixel')"
-                            class="text-muted-foreground hover:text-foreground p-1 transition-colors"
+                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
                             aria-label="Toggle Meta Pixel details"
                         >
                             <ChevronDown
@@ -443,11 +469,11 @@ defineOptions({
 
                 <div
                     v-if="openSections.pixel"
-                    class="border-t border-border/60 bg-muted/10 p-5 space-y-2.5 animate-in fade-in-50 duration-200"
+                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
                 >
                     <Label
                         for="facebook_pixel_id"
-                        class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                     >
                         Meta Pixel ID
                     </Label>
@@ -460,7 +486,8 @@ defineOptions({
                         :disabled="!can('settings.tracking.edit')"
                     />
                     <p class="text-xs text-muted-foreground">
-                        Standard PageView event tracking is automatically initialized.
+                        Standard PageView event tracking is automatically
+                        initialized.
                     </p>
                     <InputError :message="form.errors.facebook_pixel_id" />
                 </div>
@@ -472,7 +499,7 @@ defineOptions({
             >
                 <div
                     @click="toggleSection('custom')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 hover:bg-muted/30 select-none transition-colors"
+                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
                 >
                     <div class="flex items-center gap-3.5">
                         <div
@@ -482,12 +509,14 @@ defineOptions({
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="text-sm font-semibold text-foreground">
+                                <h3
+                                    class="text-sm font-semibold text-foreground"
+                                >
                                     Custom Header & Body Scripts
                                 </h3>
                                 <Badge
                                     variant="outline"
-                                    class="text-[10px] uppercase font-bold tracking-wider"
+                                    class="text-[10px] font-bold tracking-wider uppercase"
                                 >
                                     Raw Code
                                 </Badge>
@@ -499,7 +528,9 @@ defineOptions({
                                 </Badge>
                             </div>
                             <p class="text-xs text-muted-foreground">
-                                Paste any arbitrary &lt;script&gt; tags, meta tags, or pixels (e.g. TikTok, Twitter, LinkedIn, Hotjar).
+                                Paste any arbitrary &lt;script&gt; tags, meta
+                                tags, or pixels (e.g. TikTok, Twitter, LinkedIn,
+                                Hotjar).
                             </p>
                         </div>
                     </div>
@@ -507,13 +538,15 @@ defineOptions({
                         <Switch
                             id="custom_scripts_enabled"
                             v-model="form.custom_scripts_enabled"
-                            @update:model-value="handleSwitchToggle('custom', $event)"
+                            @update:model-value="
+                                handleSwitchToggle('custom', $event)
+                            "
                             :disabled="!can('settings.tracking.edit')"
                         />
                         <button
                             type="button"
                             @click="toggleSection('custom')"
-                            class="text-muted-foreground hover:text-foreground p-1 transition-colors"
+                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
                             aria-label="Toggle Custom Scripts details"
                         >
                             <ChevronDown
@@ -526,13 +559,13 @@ defineOptions({
 
                 <div
                     v-if="openSections.custom"
-                    class="border-t border-border/60 bg-muted/10 p-5 space-y-5 animate-in fade-in-50 duration-200"
+                    class="animate-in space-y-5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
                 >
                     <!-- Head Scripts -->
                     <div class="space-y-2">
                         <Label
                             for="custom_head_scripts"
-                            class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                         >
                             Custom &lt;head&gt; Scripts
                         </Label>
@@ -541,35 +574,43 @@ defineOptions({
                             v-model="form.custom_head_scripts"
                             rows="4"
                             placeholder="<!-- Paste any tracking script tags for the <head> section -->&#10;<script>&#10;  // custom analytics code&#10;<\/script>"
-                            class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                             :disabled="!can('settings.tracking.edit')"
                         ></textarea>
                         <p class="text-xs text-muted-foreground">
-                            Injected right before <code>&lt;/head&gt;</code>. Dynamic CSP nonces are automatically attached to any <code>&lt;script&gt;</code> tags.
+                            Injected right before <code>&lt;/head&gt;</code>.
+                            Dynamic CSP nonces are automatically attached to any
+                            <code>&lt;script&gt;</code> tags.
                         </p>
-                        <InputError :message="form.errors.custom_head_scripts" />
+                        <InputError
+                            :message="form.errors.custom_head_scripts"
+                        />
                     </div>
 
                     <!-- Body Scripts -->
                     <div class="space-y-2">
                         <Label
                             for="custom_body_scripts"
-                            class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                         >
-                            Custom &lt;body&gt; Scripts (e.g. &lt;noscript&gt; pixels)
+                            Custom &lt;body&gt; Scripts (e.g. &lt;noscript&gt;
+                            pixels)
                         </Label>
                         <textarea
                             id="custom_body_scripts"
                             v-model="form.custom_body_scripts"
                             rows="3"
                             placeholder="<!-- Paste any fallback tracking pixels or body tags -->&#10;<noscript><img src='...' /></noscript>"
-                            class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                             :disabled="!can('settings.tracking.edit')"
                         ></textarea>
                         <p class="text-xs text-muted-foreground">
-                            Injected immediately after the opening <code>&lt;body&gt;</code> tag.
+                            Injected immediately after the opening
+                            <code>&lt;body&gt;</code> tag.
                         </p>
-                        <InputError :message="form.errors.custom_body_scripts" />
+                        <InputError
+                            :message="form.errors.custom_body_scripts"
+                        />
                     </div>
                 </div>
             </div>
@@ -578,10 +619,14 @@ defineOptions({
             <div class="flex items-center justify-between pt-2">
                 <Button
                     type="submit"
-                    :disabled="form.processing || !can('settings.tracking.edit')"
+                    :disabled="
+                        form.processing || !can('settings.tracking.edit')
+                    "
                     class="rounded-xl px-6 py-2.5 font-semibold"
                 >
-                    {{ form.processing ? 'Saving...' : 'Save Tracking Settings' }}
+                    {{
+                        form.processing ? 'Saving...' : 'Save Tracking Settings'
+                    }}
                 </Button>
             </div>
         </form>

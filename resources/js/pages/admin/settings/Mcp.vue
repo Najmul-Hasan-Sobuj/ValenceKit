@@ -457,7 +457,10 @@ const synchronizeTools = () => {
                                 token.name
                             }}</TableCell>
                             <TableCell class="text-muted-foreground">
-                                <RelativeTime :date="token.last_used_at" fallback="Never" />
+                                <RelativeTime
+                                    :date="token.last_used_at"
+                                    fallback="Never"
+                                />
                             </TableCell>
                             <TableCell class="text-muted-foreground">
                                 <RelativeTime :date="token.created_at" />

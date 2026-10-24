@@ -35,7 +35,10 @@ const sidebarNavItems = computed<NavItem[]>(() => {
     }
 
     if (can('settings.tracking.view')) {
-        items.push({ title: 'Tracking & Pixels', href: editTrackingSettings() });
+        items.push({
+            title: 'Tracking & Pixels',
+            href: editTrackingSettings(),
+        });
     }
 
     if (can('settings.appearance.view')) {

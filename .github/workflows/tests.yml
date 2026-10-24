@@ -48,6 +48,8 @@ jobs:
           node-version: '22'
 
       - name: Setup Application
+        env:
+          APP_ENV: testing
         run: composer setup
 
       - name: Run CI Checks

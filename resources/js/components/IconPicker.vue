@@ -8,10 +8,7 @@ import {
     Folder,
     Sparkles,
 } from '@lucide/vue';
-import {
-    allSupportedIconNames,
-    getCategoryIcon,
-} from '@/lib/iconRegistry';
+import { allSupportedIconNames, getCategoryIcon } from '@/lib/iconRegistry';
 import {
     Popover,
     PopoverContent,
@@ -245,7 +242,16 @@ const categories: Record<
 
 // Common search synonyms
 const searchSynonyms: Record<string, string[]> = {
-    money: ['Wallet', 'Banknote', 'Coins', 'DollarSign', 'PiggyBank', 'CreditCard', 'HandCoins', 'Receipt'],
+    money: [
+        'Wallet',
+        'Banknote',
+        'Coins',
+        'DollarSign',
+        'PiggyBank',
+        'CreditCard',
+        'HandCoins',
+        'Receipt',
+    ],
     cash: ['Wallet', 'Banknote', 'Coins', 'DollarSign', 'PiggyBank'],
     shop: ['ShoppingBag', 'ShoppingCart', 'Store', 'Tag', 'Package', 'Box'],
     food: ['Utensils', 'UtensilsCrossed', 'Coffee', 'Pizza', 'Apple'],
@@ -296,7 +302,6 @@ const allFilteredIcons = computed(() => {
 
     return Array.from(matchedSet);
 });
-
 
 // Sliced list for smooth rendering
 const displayedIcons = computed(() => {

@@ -166,7 +166,7 @@ export function usePermissions() {
     /**
      * Check if the current admin can edit a given category.
      */
-    function canEditCategory(category?: any): boolean {
+    function canEditCategory(_category?: any): boolean {
         return can('categories.edit');
     }
 

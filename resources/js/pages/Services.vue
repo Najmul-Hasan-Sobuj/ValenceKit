@@ -13,8 +13,12 @@ import StructuredData from '@/components/StructuredData.vue';
 import ScrollProgress from '@/components/ScrollProgress.vue';
 import ScrollToTop from '@/components/ScrollToTop.vue';
 import CardSpotlight from '@/components/CardSpotlight.vue';
-import FaqSection, { createFaqSchema } from '@/components/ui/frontend/FaqSection.vue';
-import PricingSection, { createPricingSchema } from '@/components/ui/frontend/PricingSection.vue';
+import FaqSection, {
+    createFaqSchema,
+} from '@/components/ui/frontend/FaqSection.vue';
+import PricingSection, {
+    createPricingSchema,
+} from '@/components/ui/frontend/PricingSection.vue';
 import ApplicationsDeliveredSection from '@/components/ui/frontend/ApplicationsDeliveredSection.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -523,7 +527,6 @@ const clientCategories = [
     },
 ];
 
-
 // SEO Structured Data (JSON-LD)
 const structuredData = {
     '@type': 'Service',
@@ -597,7 +600,8 @@ const pricingSchema = {
         {
             '@type': 'Offer',
             name: 'Audit & Quick Fix Sprint',
-            description: 'Root-cause exception isolation, database query profiling, and server audit within 1–3 business days.',
+            description:
+                'Root-cause exception isolation, database query profiling, and server audit within 1–3 business days.',
             price: '490',
             priceCurrency: 'USD',
             category: 'Fixed Sprint',
@@ -605,7 +609,8 @@ const pricingSchema = {
         {
             '@type': 'Offer',
             name: 'Custom Web Application & POS',
-            description: 'Full-stack Laravel, Vue 3, Inertia.js, POS, inventory, payments, and 4–8 week milestone delivery.',
+            description:
+                'Full-stack Laravel, Vue 3, Inertia.js, POS, inventory, payments, and 4–8 week milestone delivery.',
             price: '2400',
             priceCurrency: 'USD',
             category: 'Project',
@@ -613,7 +618,8 @@ const pricingSchema = {
         {
             '@type': 'Offer',
             name: 'Dedicated Monthly Retainer',
-            description: 'Routine framework security patches, offsite database backups, 24/7 server monitoring, and 20h priority support.',
+            description:
+                'Routine framework security patches, offsite database backups, 24/7 server monitoring, and 20h priority support.',
             price: '790',
             priceCurrency: 'USD',
             category: 'Monthly Retainer',
@@ -923,12 +929,20 @@ const structuredDataEntities = [
                             <!-- Expanded Content with Smooth Grid Height -->
                             <div
                                 class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
-                                :class="activeAccordion.audit === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
+                                :class="
+                                    activeAccordion.audit === index
+                                        ? 'grid-rows-[1fr] opacity-100'
+                                        : 'grid-rows-[0fr] opacity-0'
+                                "
                             >
                                 <div class="overflow-hidden">
-                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                    <div
+                                        class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground"
+                                    >
                                         <div
-                                            v-for="(point, pIdx) in item.details"
+                                            v-for="(
+                                                point, pIdx
+                                            ) in item.details"
                                             :key="pIdx"
                                             class="flex items-baseline gap-2.5"
                                         >
@@ -1067,12 +1081,20 @@ const structuredDataEntities = [
                             <!-- Expanded Content with Smooth Grid Height -->
                             <div
                                 class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
-                                :class="activeAccordion.design === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
+                                :class="
+                                    activeAccordion.design === index
+                                        ? 'grid-rows-[1fr] opacity-100'
+                                        : 'grid-rows-[0fr] opacity-0'
+                                "
                             >
                                 <div class="overflow-hidden">
-                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                    <div
+                                        class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground"
+                                    >
                                         <div
-                                            v-for="(point, pIdx) in item.details"
+                                            v-for="(
+                                                point, pIdx
+                                            ) in item.details"
                                             :key="pIdx"
                                             class="flex items-baseline gap-2.5"
                                         >
@@ -1215,12 +1237,20 @@ const structuredDataEntities = [
                             <!-- Expanded Content with Smooth Grid Height -->
                             <div
                                 class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
-                                :class="activeAccordion.migrate === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
+                                :class="
+                                    activeAccordion.migrate === index
+                                        ? 'grid-rows-[1fr] opacity-100'
+                                        : 'grid-rows-[0fr] opacity-0'
+                                "
                             >
                                 <div class="overflow-hidden">
-                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                    <div
+                                        class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground"
+                                    >
                                         <div
-                                            v-for="(point, pIdx) in item.details"
+                                            v-for="(
+                                                point, pIdx
+                                            ) in item.details"
                                             :key="pIdx"
                                             class="flex items-baseline gap-2.5"
                                         >
@@ -1259,9 +1289,10 @@ const structuredDataEntities = [
                                         >
                                             Every application includes input
                                             validation, CSRF protection, SQL
-                                            injection prevention, and Pest automated
-                                            tests. No unverified third-party
-                                            libraries or fragile shortcuts.
+                                            injection prevention, and Pest
+                                            automated tests. No unverified
+                                            third-party libraries or fragile
+                                            shortcuts.
                                         </p>
                                     </div>
                                     <Link
@@ -1399,12 +1430,20 @@ const structuredDataEntities = [
                             <!-- Expanded Content with Smooth Grid Height -->
                             <div
                                 class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
-                                :class="activeAccordion.run === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
+                                :class="
+                                    activeAccordion.run === index
+                                        ? 'grid-rows-[1fr] opacity-100'
+                                        : 'grid-rows-[0fr] opacity-0'
+                                "
                             >
                                 <div class="overflow-hidden">
-                                    <div class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground">
+                                    <div
+                                        class="mt-4 space-y-2.5 pr-4 pl-12 text-sm text-muted-foreground"
+                                    >
                                         <div
-                                            v-for="(point, pIdx) in item.details"
+                                            v-for="(
+                                                point, pIdx
+                                            ) in item.details"
                                             :key="pIdx"
                                             class="flex items-baseline gap-2.5"
                                         >
@@ -1507,7 +1546,6 @@ const structuredDataEntities = [
 
             <!-- FAQS SECTION: FULL WIDTH & MODERN ACCORDION -->
             <FaqSection :items="faqs" />
-
 
             <!-- BOTTOM CTA BANNER -->
             <section

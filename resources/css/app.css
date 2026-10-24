@@ -173,12 +173,13 @@
     }
 }
 
-
 /* Motion 2: Staggered Scroll-Reveal */
 .reveal-on-scroll {
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+        opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
 }
 
@@ -200,11 +201,12 @@ html.theme-transitioning,
 html.theme-transitioning *,
 html.theme-transitioning *::before,
 html.theme-transitioning *::after {
-    transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                fill 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-                stroke 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition:
+        background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        fill 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        stroke 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
     transition-delay: 0s !important;
 }
 

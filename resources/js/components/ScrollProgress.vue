@@ -28,7 +28,9 @@ onMounted(() => {
         if (props.hideScrollbar) {
             document.documentElement.classList.add('page-hide-scrollbar');
         }
-        window.addEventListener('scroll', updateScrollProgress, { passive: true });
+        window.addEventListener('scroll', updateScrollProgress, {
+            passive: true,
+        });
         updateScrollProgress();
     }
 });
@@ -46,7 +48,7 @@ onUnmounted(() => {
 <template>
     <div
         id="scroll-indicator"
-        class="fixed top-0 left-0 right-0 z-50 h-1 origin-left bg-primary"
+        class="fixed top-0 right-0 left-0 z-50 h-1 origin-left bg-primary"
         :class="props.class"
         :style="{ transform: `scaleX(${scrollProgress})` }"
         aria-hidden="true"

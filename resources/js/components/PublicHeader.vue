@@ -27,28 +27,35 @@ const dummyServices = [
     {
         title: 'Point of Sale (POS)',
         href: '/services#pos',
-        tagline: 'High-speed checkout, barcode scanning, and multi-counter registers.',
+        tagline:
+            'High-speed checkout, barcode scanning, and multi-counter registers.',
     },
     {
         title: 'Inventory & Warehousing',
         href: '/services#inventory',
-        tagline: 'Multi-branch stock tracking, batch control, and automated supplier reorders.',
+        tagline:
+            'Multi-branch stock tracking, batch control, and automated supplier reorders.',
     },
     {
         title: 'E-Commerce Platforms',
         href: '/services#ecommerce',
-        tagline: 'Direct-to-consumer storefronts, SKU variations, and local payment checkouts.',
+        tagline:
+            'Direct-to-consumer storefronts, SKU variations, and local payment checkouts.',
     },
     {
         title: 'CRM & Custom Management',
         href: '/services#crm',
-        tagline: 'Client pipelines, automated PDF billing, and role-based staff permissions.',
+        tagline:
+            'Client pipelines, automated PDF billing, and role-based staff permissions.',
     },
 ];
 
 const handleServicesClick = (e: MouseEvent) => {
     e.preventDefault();
-    if (typeof window !== 'undefined' && window.location.pathname === '/services') {
+    if (
+        typeof window !== 'undefined' &&
+        window.location.pathname === '/services'
+    ) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
         router.visit(services());
@@ -89,21 +96,21 @@ const handleServicesClick = (e: MouseEvent) => {
                     <!-- Services with Getting Started Menu & Direct Click Navigation -->
                     <NavigationMenuItem>
                         <NavigationMenuTrigger
-                            class="bg-transparent hover:bg-accent/50 focus:bg-accent/50 data-[state=open]:bg-accent/50 text-muted-foreground hover:text-foreground font-medium cursor-pointer"
+                            class="cursor-pointer bg-transparent font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground focus:bg-accent/50 data-[state=open]:bg-accent/50"
                             @click="handleServicesClick"
                         >
                             Services
                         </NavigationMenuTrigger>
                         <NavigationMenuContent>
                             <ul
-                                class="grid gap-3 p-4 w-[340px] sm:w-[480px] md:w-[540px] lg:w-[620px] grid-cols-1 sm:grid-cols-[.85fr_1.15fr]"
+                                class="grid w-[340px] grid-cols-1 gap-3 p-4 sm:w-[480px] sm:grid-cols-[.85fr_1.15fr] md:w-[540px] lg:w-[620px]"
                             >
                                 <!-- Left Featured Card with Vertical Minimal Bolt Image -->
                                 <li class="sm:row-span-4">
                                     <NavigationMenuLink as-child>
                                         <Link
                                             :href="services()"
-                                            class="relative flex h-full w-full select-none flex-col justify-end overflow-hidden rounded-md p-5 no-underline outline-none transition-all hover:opacity-95 focus:shadow-md group border border-border/70 shadow-xs min-h-[300px]"
+                                            class="group relative flex h-full min-h-[300px] w-full flex-col justify-end overflow-hidden rounded-md border border-border/70 p-5 no-underline shadow-xs transition-all outline-none select-none hover:opacity-95 focus:shadow-md"
                                         >
                                             <!-- Vertical Bolt Background Image -->
                                             <img
@@ -114,25 +121,32 @@ const handleServicesClick = (e: MouseEvent) => {
                                             />
                                             <!-- Dark Gradient Scrim for crisp typography contrast -->
                                             <div
-                                                class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/15 pointer-events-none"
+                                                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/15"
                                             />
 
                                             <!-- Card Content Overlaid -->
-                                            <div class="relative z-10 text-white">
+                                            <div
+                                                class="relative z-10 text-white"
+                                            >
                                                 <div
-                                                    class="mb-1 text-base font-semibold font-display tracking-tight text-white"
+                                                    class="font-display mb-1 text-base font-semibold tracking-tight text-white"
                                                 >
                                                     All Services
                                                 </div>
                                                 <p
                                                     class="text-xs leading-relaxed text-zinc-300"
                                                 >
-                                                    Full-stack Laravel & Vue engineering: POS, inventory, and tailored platforms.
+                                                    Full-stack Laravel & Vue
+                                                    engineering: POS, inventory,
+                                                    and tailored platforms.
                                                 </p>
                                                 <div
                                                     class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-white/90"
                                                 >
-                                                    <span class="group-hover:underline underline-offset-4">Explore Overview</span>
+                                                    <span
+                                                        class="underline-offset-4 group-hover:underline"
+                                                        >Explore Overview</span
+                                                    >
                                                     <ArrowRight
                                                         class="size-3.5 transition-transform group-hover:translate-x-1"
                                                     />
@@ -150,10 +164,10 @@ const handleServicesClick = (e: MouseEvent) => {
                                     <NavigationMenuLink as-child>
                                         <Link
                                             :href="service.href"
-                                            class="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                            class="block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                                         >
                                             <div
-                                                class="text-sm font-medium leading-none text-foreground"
+                                                class="text-sm leading-none font-medium text-foreground"
                                             >
                                                 {{ service.title }}
                                             </div>
@@ -175,7 +189,7 @@ const handleServicesClick = (e: MouseEvent) => {
                             <Link
                                 :href="home()"
                                 :class="navigationMenuTriggerStyle()"
-                                class="bg-transparent hover:bg-accent/50 focus:bg-accent/50 text-muted-foreground hover:text-foreground font-medium"
+                                class="bg-transparent font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground focus:bg-accent/50"
                             >
                                 Contact
                             </Link>

@@ -212,7 +212,7 @@ function saveRole(): void {
         return;
     }
 
-    form.put(rolesRoute.update.url(String(props.role.data.id)));
+    form.put(rolesRoute.update.url(props.role.data.id));
 }
 
 defineOptions({

@@ -208,7 +208,6 @@ watchDebounced(
     { debounce: 300 },
 );
 
-
 function openUserDrawer(user: any): void {
     selectedUser.value = user;
     drawerOpen.value = true;

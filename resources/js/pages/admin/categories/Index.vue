@@ -567,7 +567,6 @@ const toggleStatus = (category: any, newStatus: boolean) => {
                     </TableRow>
                 </TableBody>
             </Table>
-
         </div>
 
         <!-- Pagination -->

@@ -80,7 +80,12 @@ const structuredData = computed(() => [
         '@id': `${pageUrl}#breadcrumb`,
         itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Home', item: appUrl },
-            { '@type': 'ListItem', position: 2, name: pageTitle, item: pageUrl },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: pageTitle,
+                item: pageUrl,
+            },
         ],
     },
 ]);
@@ -237,7 +242,7 @@ useScrollReveal();
             </div>
 
             <!-- Hero Section -->
-            <header class="space-y-6 pb-12 border-b border-border">
+            <header class="space-y-6 border-b border-border pb-12">
                 <div class="flex flex-wrap items-center gap-3">
                     <div
                         class="inline-flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3.5 py-1 text-xs font-semibold tracking-wide text-foreground shadow-xs"
@@ -253,12 +258,12 @@ useScrollReveal();
                         <span>Last updated: October 12, 2026</span>
                     </div>
 
-                    <span class="text-muted-foreground/40 hidden sm:inline"
+                    <span class="hidden text-muted-foreground/40 sm:inline"
                         >•</span
                     >
 
                     <div
-                        class="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground"
+                        class="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex"
                     >
                         <BookOpen class="size-3.5" />
                         <span>~3 min read</span>
@@ -284,7 +289,9 @@ useScrollReveal();
                     </div>
 
                     <!-- Document switcher & actions -->
-                    <div class="flex flex-wrap items-center gap-2.5 pt-2 lg:pt-0">
+                    <div
+                        class="flex flex-wrap items-center gap-2.5 pt-2 lg:pt-0"
+                    >
                         <div
                             class="inline-flex rounded-lg border border-border bg-muted/40 p-1"
                         >
@@ -323,14 +330,11 @@ useScrollReveal();
                                 <div
                                     class="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background text-primary shadow-2xs"
                                 >
-                                    <component
-                                        :is="item.icon"
-                                        class="size-4"
-                                    />
+                                    <component :is="item.icon" class="size-4" />
                                 </div>
                                 <div class="space-y-1">
                                     <h2
-                                        class="text-xs font-semibold text-foreground tracking-tight"
+                                        class="text-xs font-semibold tracking-tight text-foreground"
                                     >
                                         {{ item.title }}
                                     </h2>
@@ -352,12 +356,14 @@ useScrollReveal();
             >
                 <!-- Sticky Sidebar Table of Contents (Desktop) -->
                 <aside
-                    class="lg:sticky lg:top-24 lg:col-span-4 space-y-6 self-start"
+                    class="space-y-6 self-start lg:sticky lg:top-24 lg:col-span-4"
                 >
                     <div
                         class="rounded-xl border border-border/80 bg-card p-5 shadow-xs"
                     >
-                        <div class="flex items-center justify-between pb-3 mb-2">
+                        <div
+                            class="mb-2 flex items-center justify-between pb-3"
+                        >
                             <div class="flex items-center gap-2">
                                 <span
                                     class="flex size-6 items-center justify-center rounded-md border border-border/60 bg-muted text-foreground"
@@ -389,7 +395,7 @@ useScrollReveal();
                                 class="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-all"
                                 :class="[
                                     activeSection === sec.id
-                                        ? 'bg-primary/10 text-primary font-semibold'
+                                        ? 'bg-primary/10 font-semibold text-primary'
                                         : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                                 ]"
                             >
@@ -397,7 +403,7 @@ useScrollReveal();
                                     <span
                                         class="font-mono text-[11px] opacity-70"
                                         :class="{
-                                            'text-primary font-bold':
+                                            'font-bold text-primary':
                                                 activeSection === sec.id,
                                         }"
                                     >
@@ -418,7 +424,7 @@ useScrollReveal();
                         >
                             <div class="flex items-start gap-2.5">
                                 <Mail
-                                    class="mt-0.5 size-4 text-foreground/80 shrink-0"
+                                    class="mt-0.5 size-4 shrink-0 text-foreground/80"
                                 />
                                 <div class="space-y-1">
                                     <p class="font-medium text-foreground">
@@ -440,23 +446,23 @@ useScrollReveal();
                 </aside>
 
                 <!-- Detailed Policy Content -->
-                <div class="lg:col-span-8 space-y-8">
+                <div class="space-y-8 lg:col-span-8">
                     <!-- Section 01: What this policy covers -->
                     <section
                         id="scope"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
+                        class="reveal-on-scroll scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors sm:p-8"
                     >
                         <header
-                            class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
+                            class="flex items-start justify-between gap-4 border-b border-border/50 pb-4"
                         >
                             <div class="space-y-1">
                                 <span
-                                    class="inline-block text-xs font-mono font-semibold tracking-wider text-muted-foreground uppercase"
+                                    class="inline-block font-mono text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Section 01
                                 </span>
                                 <h2
-                                    class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground"
+                                    class="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
                                 >
                                     What this policy covers
                                 </h2>
@@ -486,17 +492,17 @@ useScrollReveal();
                                 authenticated application features.
                             </p>
                             <div
-                                class="rounded-lg border border-border/60 bg-muted/40 p-4 text-sm text-foreground/90 flex items-start gap-3"
+                                class="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 text-sm text-foreground/90"
                             >
                                 <Info
-                                    class="size-5 shrink-0 text-primary mt-0.5"
+                                    class="mt-0.5 size-5 shrink-0 text-primary"
                                 />
                                 <p>
                                     Whether interacting with public marketing
-                                    pages or managing private application
-                                    data, our engineering architecture is
-                                    designed to minimize collection and preserve
-                                    strict boundaries.
+                                    pages or managing private application data,
+                                    our engineering architecture is designed to
+                                    minimize collection and preserve strict
+                                    boundaries.
                                 </p>
                             </div>
                         </div>
@@ -505,19 +511,19 @@ useScrollReveal();
                     <!-- Section 02: Information we handle -->
                     <section
                         id="information"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
+                        class="reveal-on-scroll scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors sm:p-8"
                     >
                         <header
-                            class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
+                            class="flex items-start justify-between gap-4 border-b border-border/50 pb-4"
                         >
                             <div class="space-y-1">
                                 <span
-                                    class="inline-block text-xs font-mono font-semibold tracking-wider text-muted-foreground uppercase"
+                                    class="inline-block font-mono text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Section 02
                                 </span>
                                 <h2
-                                    class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground"
+                                    class="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
                                 >
                                     Information we handle
                                 </h2>
@@ -550,17 +556,19 @@ useScrollReveal();
 
                             <!-- Security highlight box -->
                             <div
-                                class="rounded-lg border border-border/70 bg-background p-4 shadow-2xs space-y-2"
+                                class="space-y-2 rounded-lg border border-border/70 bg-background p-4 shadow-2xs"
                             >
                                 <div class="flex items-center gap-2">
                                     <KeyRound class="size-4 text-primary" />
                                     <span
-                                        class="font-semibold text-foreground text-sm"
+                                        class="text-sm font-semibold text-foreground"
                                     >
                                         Credential Handling Standard
                                     </span>
                                 </div>
-                                <p class="text-xs sm:text-sm text-muted-foreground">
+                                <p
+                                    class="text-xs text-muted-foreground sm:text-sm"
+                                >
                                     Passwords are handled as credentials and
                                     should never be stored in plain text.
                                     Industry-standard hashing and FIDO2/WebAuthn
@@ -580,19 +588,19 @@ useScrollReveal();
                     <!-- Section 03: How information is used -->
                     <section
                         id="usage"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
+                        class="reveal-on-scroll scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors sm:p-8"
                     >
                         <header
-                            class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
+                            class="flex items-start justify-between gap-4 border-b border-border/50 pb-4"
                         >
                             <div class="space-y-1">
                                 <span
-                                    class="inline-block text-xs font-mono font-semibold tracking-wider text-muted-foreground uppercase"
+                                    class="inline-block font-mono text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Section 03
                                 </span>
                                 <h2
-                                    class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground"
+                                    class="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
                                 >
                                     How information is used
                                 </h2>
@@ -623,10 +631,12 @@ useScrollReveal();
                                 support requests when a supported communication
                                 channel is used.
                             </p>
-                            <ul class="space-y-2 text-sm text-foreground/90 pl-1">
+                            <ul
+                                class="space-y-2 pl-1 text-sm text-foreground/90"
+                            >
                                 <li class="flex items-center gap-2.5">
                                     <CheckCircle2
-                                        class="size-4 text-primary shrink-0"
+                                        class="size-4 shrink-0 text-primary"
                                     />
                                     <span
                                         >Authenticate authorized accounts and
@@ -635,7 +645,7 @@ useScrollReveal();
                                 </li>
                                 <li class="flex items-center gap-2.5">
                                     <CheckCircle2
-                                        class="size-4 text-primary shrink-0"
+                                        class="size-4 shrink-0 text-primary"
                                     />
                                     <span
                                         >Protect infrastructure against brute
@@ -644,7 +654,7 @@ useScrollReveal();
                                 </li>
                                 <li class="flex items-center gap-2.5">
                                     <CheckCircle2
-                                        class="size-4 text-primary shrink-0"
+                                        class="size-4 shrink-0 text-primary"
                                     />
                                     <span
                                         >Maintain audit-safe security logs for
@@ -653,7 +663,7 @@ useScrollReveal();
                                 </li>
                                 <li class="flex items-center gap-2.5">
                                     <CheckCircle2
-                                        class="size-4 text-primary shrink-0"
+                                        class="size-4 shrink-0 text-primary"
                                     />
                                     <span
                                         >Respond promptly to user support and
@@ -667,19 +677,19 @@ useScrollReveal();
                     <!-- Section 04: Cookies and service providers -->
                     <section
                         id="cookies"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
+                        class="reveal-on-scroll scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors sm:p-8"
                     >
                         <header
-                            class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
+                            class="flex items-start justify-between gap-4 border-b border-border/50 pb-4"
                         >
                             <div class="space-y-1">
                                 <span
-                                    class="inline-block text-xs font-mono font-semibold tracking-wider text-muted-foreground uppercase"
+                                    class="inline-block font-mono text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Section 04
                                 </span>
                                 <h2
-                                    class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground"
+                                    class="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
                                 >
                                     Cookies and service providers
                                 </h2>
@@ -712,14 +722,16 @@ useScrollReveal();
                             </p>
 
                             <div
-                                class="rounded-lg border border-border/60 bg-muted/30 p-4 text-xs sm:text-sm text-foreground/80 flex items-start gap-3"
+                                class="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-4 text-xs text-foreground/80 sm:text-sm"
                             >
-                                <Cookie class="size-4 text-primary mt-0.5 shrink-0" />
+                                <Cookie
+                                    class="mt-0.5 size-4 shrink-0 text-primary"
+                                />
                                 <div>
                                     <p class="font-medium text-foreground">
                                         Essential vs Third-Party Cookies
                                     </p>
-                                    <p class="text-muted-foreground mt-0.5">
+                                    <p class="mt-0.5 text-muted-foreground">
                                         We do not utilize invasive advertising
                                         trackers. Essential cookies allow the
                                         session state, CSRF protection, and
@@ -734,19 +746,19 @@ useScrollReveal();
                     <!-- Section 05: Your choices -->
                     <section
                         id="choices"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
+                        class="reveal-on-scroll scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors sm:p-8"
                     >
                         <header
-                            class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
+                            class="flex items-start justify-between gap-4 border-b border-border/50 pb-4"
                         >
                             <div class="space-y-1">
                                 <span
-                                    class="inline-block text-xs font-mono font-semibold tracking-wider text-muted-foreground uppercase"
+                                    class="inline-block font-mono text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Section 05
                                 </span>
                                 <h2
-                                    class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground"
+                                    class="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
                                 >
                                     Your choices
                                 </h2>
@@ -788,19 +800,19 @@ useScrollReveal();
                     <!-- Section 06: Changes -->
                     <section
                         id="changes"
-                        class="scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs transition-colors reveal-on-scroll"
+                        class="reveal-on-scroll scroll-mt-28 rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors sm:p-8"
                     >
                         <header
-                            class="flex items-start justify-between gap-4 pb-4 border-b border-border/50"
+                            class="flex items-start justify-between gap-4 border-b border-border/50 pb-4"
                         >
                             <div class="space-y-1">
                                 <span
-                                    class="inline-block text-xs font-mono font-semibold tracking-wider text-muted-foreground uppercase"
+                                    class="inline-block font-mono text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                                 >
                                     Section 06
                                 </span>
                                 <h2
-                                    class="text-xl sm:text-2xl font-semibold tracking-tight text-foreground"
+                                    class="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
                                 >
                                     Changes
                                 </h2>
@@ -834,18 +846,18 @@ useScrollReveal();
 
                     <!-- Bottom Navigation & Cross Link Card -->
                     <div
-                        class="mt-12 rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
+                        class="mt-12 flex flex-col items-start justify-between gap-6 rounded-xl border border-border/80 bg-card p-6 shadow-xs sm:flex-row sm:items-center sm:p-8"
                     >
                         <div class="space-y-1">
                             <span
-                                class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                                class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                             >
                                 Additional Legal Agreements
                             </span>
                             <h3 class="text-base font-semibold text-foreground">
                                 Read our Terms of Service
                             </h3>
-                            <p class="text-xs sm:text-sm text-muted-foreground">
+                            <p class="text-xs text-muted-foreground sm:text-sm">
                                 Understand rights, acceptable use, and account
                                 guidelines for {{ appName }}.
                             </p>
@@ -854,7 +866,7 @@ useScrollReveal();
                         <div class="flex items-center gap-3">
                             <Link
                                 :href="terms()"
-                                class="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-xs sm:text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+                                class="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 sm:text-sm"
                             >
                                 <span>Terms of Service</span>
                                 <ArrowRight class="size-4" />

@@ -67,7 +67,10 @@ export default defineConfig({
         singleAttributePerLine: false,
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
+            '.agents/**',
             '.github/**',
+            'docs/**',
+            '*.md',
             'composer.json',
             'resources/js/components/ui/*',
             'resources/views/mail/*',

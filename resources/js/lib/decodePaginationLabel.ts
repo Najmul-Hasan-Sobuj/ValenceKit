@@ -3,7 +3,9 @@
  * When rendered via standard Vue text interpolation {{ decodePaginationLabel(label) }},
  * output is escaped by default, preventing XSS while displaying clean pagination labels.
  */
-export function decodePaginationLabel(label: string | null | undefined): string {
+export function decodePaginationLabel(
+    label: string | null | undefined,
+): string {
     if (!label) {
         return '';
     }
