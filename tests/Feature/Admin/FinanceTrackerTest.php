@@ -293,3 +293,41 @@ it('can execute MCP tools to record transaction and get financial summary', func
     expect($summaryText)->toContain('Total Income');
     expect($summaryText)->toContain('Net Cash Flow');
 });
+
+it('properly aggregates analytics timeline using SQL for daily and monthly intervals', function () {
+    $service = app(FinanceService::class);
+
+    FinanceTransaction::create([
+        'type' => 'income',
+        'amount' => 150.00,
+        'category_key' => 'client_retainer',
+        'category_name' => 'Client Retainer',
+        'description' => 'Income today',
+        'transaction_date' => now()->toDateString(),
+        'payment_method' => 'card',
+        'admin_id' => $this->superAdmin->id,
+    ]);
+
+    FinanceTransaction::create([
+        'type' => 'expense',
+        'amount' => 50.00,
+        'category_key' => 'server_hosting',
+        'category_name' => 'Hosting',
+        'description' => 'Hosting today',
+        'transaction_date' => now()->toDateString(),
+        'payment_method' => 'card',
+        'admin_id' => $this->superAdmin->id,
+    ]);
+
+    // Daily interval (<= 31 days)
+    $daily = $service->getAnalyticsTimeline(now()->subDays(6)->startOfDay(), now()->endOfDay());
+    expect($daily['interval'])->toBe('day')
+        ->and($daily['labels'])->toHaveCount(7)
+        ->and(end($daily['income']))->toBe(150.00)
+        ->and(end($daily['expense']))->toBe(50.00);
+
+    // Monthly interval (> 31 days)
+    $monthly = $service->getAnalyticsTimeline(now()->subMonths(2)->startOfMonth(), now()->endOfMonth());
+    expect($monthly['interval'])->toBe('month')
+        ->and(count($monthly['labels']))->toBeGreaterThanOrEqual(3);
+});

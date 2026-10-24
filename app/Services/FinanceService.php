@@ -8,6 +8,7 @@ use App\Models\FinanceTransaction;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinanceService
@@ -248,8 +249,31 @@ class FinanceService
     public function getAnalyticsTimeline(CarbonInterface $from, CarbonInterface $to): array
     {
         $isMonthly = $from->diffInDays($to) > 31;
-        $transactions = FinanceTransaction::betweenDates($from->toDateString(), $to->toDateString())
-            ->get(['type', 'amount', 'transaction_date']);
+        $driver = DB::connection()->getDriverName();
+
+        if ($isMonthly) {
+            $periodExpr = match ($driver) {
+                'pgsql' => "to_char(transaction_date, 'YYYY-MM')",
+                'sqlite' => "strftime('%Y-%m', transaction_date)",
+                default => "DATE_FORMAT(transaction_date, '%Y-%m')",
+            };
+        } else {
+            $periodExpr = match ($driver) {
+                'pgsql' => "to_char(transaction_date, 'YYYY-MM-DD')",
+                'sqlite' => "strftime('%Y-%m-%d', transaction_date)",
+                default => "DATE_FORMAT(transaction_date, '%Y-%m-%d')",
+            };
+        }
+
+        $aggregates = FinanceTransaction::betweenDates($from, $to)
+            ->selectRaw("{$periodExpr} as period, type, SUM(amount) as total")
+            ->groupByRaw("{$periodExpr}, type")
+            ->get();
+
+        $dataMap = [];
+        foreach ($aggregates as $row) {
+            $dataMap[$row->period][$row->type] = (float) $row->total;
+        }
 
         $labels = [];
         $incomeData = [];
@@ -263,12 +287,8 @@ class FinanceService
                 $monthKey = $current->format('Y-m');
                 $labels[] = $current->format('M Y');
 
-                $monthTx = $transactions->filter(function ($tx) use ($monthKey) {
-                    return $tx->transaction_date->format('Y-m') === $monthKey;
-                });
-
-                $incomeData[] = round((float) $monthTx->where('type', 'income')->sum('amount'), 2);
-                $expenseData[] = round((float) $monthTx->where('type', 'expense')->sum('amount'), 2);
+                $incomeData[] = round((float) ($dataMap[$monthKey]['income'] ?? 0), 2);
+                $expenseData[] = round((float) ($dataMap[$monthKey]['expense'] ?? 0), 2);
 
                 $current = $current->addMonth();
             }
@@ -282,12 +302,8 @@ class FinanceService
                 $dateKey = $current->toDateString();
                 $labels[] = $current->format('M d');
 
-                $dayTx = $transactions->filter(function ($tx) use ($dateKey) {
-                    return $tx->transaction_date->toDateString() === $dateKey;
-                });
-
-                $incomeData[] = round((float) $dayTx->where('type', 'income')->sum('amount'), 2);
-                $expenseData[] = round((float) $dayTx->where('type', 'expense')->sum('amount'), 2);
+                $incomeData[] = round((float) ($dataMap[$dateKey]['income'] ?? 0), 2);
+                $expenseData[] = round((float) ($dataMap[$dateKey]['expense'] ?? 0), 2);
 
                 $current = $current->addDay();
             }
