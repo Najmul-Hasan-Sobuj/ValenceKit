@@ -59,10 +59,13 @@ class UpdateUserRequest extends FormRequest
                     $validator->errors()->add('is_active', 'You cannot deactivate your own account.');
                 }
 
-                if ($targetAdmin->hasRole('Super Admin')
-                    && $this->input('role') !== 'Super Admin'
-                    && Admin::role('Super Admin')->count() <= 1) {
-                    $validator->errors()->add('role', 'Cannot remove the last Super Admin role.');
+                if ($targetAdmin->hasRole('Super Admin') && Admin::role('Super Admin')->count() <= 1) {
+                    if ($this->input('role') !== 'Super Admin') {
+                        $validator->errors()->add('role', 'Cannot remove the last Super Admin role.');
+                    }
+                    if ($this->boolean('is_active') === false) {
+                        $validator->errors()->add('is_active', 'Cannot deactivate the only remaining Super Admin.');
+                    }
                 }
             },
         ];

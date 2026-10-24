@@ -93,6 +93,16 @@ class UserController extends Controller
             return back()->with('error', 'Only Super Admins can modify a Super Admin account.');
         }
 
+        if ($request->user('admin')->is($user) && ! $request->validated('is_active', true)) {
+            return back()->with('error', 'You cannot deactivate your own account.');
+        }
+
+        if ($user->hasRole('Super Admin') && Admin::role('Super Admin')->count() <= 1) {
+            if ($request->validated('role') !== 'Super Admin' || ! $request->validated('is_active', true)) {
+                return back()->with('error', 'Cannot demote or deactivate the only remaining Super Admin.');
+            }
+        }
+
         $before = $user->auditLogValues();
 
         $user->update([

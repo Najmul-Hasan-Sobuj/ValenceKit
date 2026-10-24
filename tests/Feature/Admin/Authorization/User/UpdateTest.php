@@ -36,3 +36,49 @@ it('can update an existing user', function () {
 
     expect($targetUser->fresh()->hasRole('Manager'))->toBeTrue();
 });
+
+it('prevents an admin from deactivating their own account', function () {
+    $this->actingAs($this->admin, 'admin')
+        ->put(route('admin.users.update', $this->admin), [
+            'name' => $this->admin->name,
+            'email' => $this->admin->email,
+            'role' => $this->admin->roles->first()->name,
+            'is_active' => false,
+        ])
+        ->assertSessionHasErrors(['is_active' => 'You cannot deactivate your own account.']);
+
+    expect($this->admin->fresh()->is_active)->toBeTrue();
+});
+
+it('prevents demoting or deactivating the only remaining super admin', function () {
+    $superAdminRole = Role::where('name', 'Super Admin')->where('guard_name', 'admin')->first();
+    $managerRole = Role::firstOrCreate(['name' => 'Manager', 'guard_name' => 'admin']);
+
+    $soleSuperAdmin = Admin::factory()->create(['is_active' => true]);
+    $soleSuperAdmin->syncRoles([$superAdminRole]);
+
+    // Ensure there is only 1 Super Admin in the system
+    Admin::role('Super Admin')->where('id', '!=', $soleSuperAdmin->id)->each(fn ($a) => $a->removeRole($superAdminRole));
+
+    // Try to demote role
+    $this->actingAs($soleSuperAdmin, 'admin')
+        ->put(route('admin.users.update', $soleSuperAdmin), [
+            'name' => 'Sole Super Admin',
+            'email' => $soleSuperAdmin->email,
+            'role' => 'Manager',
+            'is_active' => true,
+        ])
+        ->assertSessionHasErrors(['role' => 'Cannot remove the last Super Admin role.']);
+
+    expect($soleSuperAdmin->fresh()->hasRole('Super Admin'))->toBeTrue();
+
+    // Try to deactivate
+    $this->actingAs($soleSuperAdmin, 'admin')
+        ->put(route('admin.users.update', $soleSuperAdmin), [
+            'name' => 'Sole Super Admin',
+            'email' => $soleSuperAdmin->email,
+            'role' => 'Super Admin',
+            'is_active' => false,
+        ])
+        ->assertSessionHasErrors(['is_active']);
+});
