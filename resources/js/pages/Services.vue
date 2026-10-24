@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref, reactive, onMounted, onUnmounted } from 'vue';
-import Lenis from 'lenis';
-import 'lenis/dist/lenis.css';
+import { ref, reactive, onMounted } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
@@ -88,19 +86,9 @@ const heroNavItems = [
 ];
 
 const isHeroEntered = ref(false);
-let lenis: Lenis | null = null;
 
 onMounted(() => {
     if (typeof window !== 'undefined') {
-        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            lenis = new Lenis({
-                autoRaf: true,
-                duration: 0.5,
-                wheelMultiplier: 1.2,
-                touchMultiplier: 1.0,
-                syncTouch: false,
-            });
-        }
         if (
             window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
             window.innerWidth < 1024
@@ -114,21 +102,10 @@ onMounted(() => {
     }
 });
 
-onUnmounted(() => {
-    if (lenis) {
-        lenis.destroy();
-        lenis = null;
-    }
-});
-
 const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-        if (lenis) {
-            lenis.scrollTo(el, { offset: -60, duration: 1.2 });
-        } else {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         if (typeof window !== 'undefined') {
             window.history.pushState(null, '', `#${id}`);
         }
