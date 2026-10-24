@@ -34,6 +34,9 @@ test('ensures .env.example contains only blank placeholders for sensitive secret
 
     // Admin bootstrap password must be blank
     expect($content)->toMatch('/^ADMIN_BOOTSTRAP_PASSWORD=$/m');
+
+    // User bootstrap password must be blank
+    expect($content)->toMatch('/^USER_BOOTSTRAP_PASSWORD=$/m');
 });
 
 test('ensures gitleaks configuration exists and defines necessary allowlists', function () {

@@ -137,4 +137,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | User Bootstrap Credentials
+    |--------------------------------------------------------------------------
+    |
+    | Credentials used by database seeders to provision the default test user.
+    |
+    */
+
+    'bootstrap_user_email' => env('USER_BOOTSTRAP_EMAIL', 'test@example.com'),
+    'bootstrap_user_password' => env('USER_BOOTSTRAP_PASSWORD'),
+
 ];

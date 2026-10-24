@@ -28,18 +28,19 @@ Autonomous, sequential GitHub issue resolution for ValenceKit. Enforces strict c
 
 ## Browser Test Authentication Credentials
 
-When browser flows require authentication:
+When browser flows require authentication, read credentials dynamically from the local `.env` file (do NOT hardcode credentials):
 
-| Role | Login URL | Email | Password |
+| Role | Login URL | Email Key (`.env`) | Password Key (`.env`) |
 | :--- | :--- | :--- | :--- |
-| **Admin Panel** | `https://valencekit.test/admin/login` | `admin@example.com` | `AdminPassword123` |
-| **User Site** | `https://valencekit.test/login` | `test@example.com` | `password` |
+| **Admin Panel** | `https://valencekit.test/admin/login` | `ADMIN_BOOTSTRAP_EMAIL` | `ADMIN_BOOTSTRAP_PASSWORD` |
+| **User Site** | `https://valencekit.test/login` | `USER_BOOTSTRAP_EMAIL` | `USER_BOOTSTRAP_PASSWORD` |
 
 ### Browser Login Helper Pattern:
-1. Navigate to the login route via `chrome-devtools-mcp:navigate_page`.
-2. Inspect inputs with `chrome-devtools-mcp:take_snapshot`.
-3. Fill credentials with `chrome-devtools-mcp:fill` on the email & password uids.
-4. Click submit via `chrome-devtools-mcp:click` and verify landing page redirect.
+1. Retrieve email & password from the active environment / `.env`.
+2. Navigate to the login route via `chrome-devtools-mcp:navigate_page`.
+3. Inspect inputs with `chrome-devtools-mcp:take_snapshot`.
+4. Fill credentials with `chrome-devtools-mcp:fill` on the email & password uids.
+5. Click submit via `chrome-devtools-mcp:click` and verify landing page redirect.
 
 ---
 
@@ -111,7 +112,7 @@ Queue: [Issue #A, Issue #B, ...]
 ### Step 5: Open Browser (Chrome DevTools MCP)
 
 - Navigate to the page via `chrome-devtools-mcp:navigate_page` or `new_page` (`https://valencekit.test/<route>`).
-- If the route requires authentication, sign in using the **Browser Test Authentication Credentials** table (`admin@example.com` / `AdminPassword123` for Admin, `test@example.com` / `password` for User).
+- If the route requires authentication, sign in using credentials from `.env` (`ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD` for Admin, `USER_BOOTSTRAP_EMAIL` / `USER_BOOTSTRAP_PASSWORD` for User).
 - Check `list_console_messages` to ensure zero runtime errors.
 
 ### Step 6: Test on Browser & Run Test Suite
