@@ -47,11 +47,11 @@ class McpSettingsController extends Controller
         });
 
         return Inertia::render('admin/settings/Mcp', [
-            'tokens' => $admin->tokens()->orderBy('created_at', 'desc')->get()->map(fn ($token) => [
-                'id' => $token->id,
+            'tokens' => $admin->tokens()->where('revoked', false)->orderBy('created_at', 'desc')->get()->map(fn ($token) => [
+                'id' => (string) $token->id,
                 'name' => $token->name,
-                'last_used_at' => $token->last_used_at,
-                'created_at' => $token->created_at,
+                'last_used_at' => $token->updated_at?->toIso8601String(),
+                'created_at' => $token->created_at?->toIso8601String(),
             ]),
             'serverUrl' => url('/mcp/valencekit'),
             'oauthDiscoveryUrl' => url('/.well-known/oauth-protected-resource/mcp/valencekit'),
@@ -60,7 +60,7 @@ class McpSettingsController extends Controller
             'stats' => [
                 'totalRequests' => McpUsageLog::count(),
                 'uniqueClients' => McpUsageLog::distinct('ip_address')->count('ip_address'),
-                'activeTokensCount' => $admin->tokens()->count(),
+                'activeTokensCount' => $admin->tokens()->where('revoked', false)->count(),
             ],
             'mcpTools' => McpTool::orderBy('name')->get(),
         ]);
@@ -79,17 +79,17 @@ class McpSettingsController extends Controller
 
         $admin = $request->user('admin');
 
-        $token = $admin->createToken($request->name, ['mcp:access']);
+        $tokenResult = $admin->createToken($request->name, ['mcp:use', 'mcp:access']);
 
         $auditLogService->record(
             'mcp.token.created',
-            afterValues: ['name' => $token->accessToken->name, 'abilities' => ['mcp:access']],
-            description: 'A legacy MCP token was created.',
+            afterValues: ['name' => $tokenResult->token->name, 'abilities' => ['mcp:use', 'mcp:access']],
+            description: 'An MCP personal access token was created.',
             actor: $admin,
         );
 
         return back()->with('flash', [
-            'token' => $token->plainTextToken,
+            'token' => $tokenResult->accessToken,
             'message' => 'Token created successfully. Please copy it now, you won\'t be able to see it again.',
         ]);
     }
@@ -105,6 +105,7 @@ class McpSettingsController extends Controller
 
         $token = $admin->tokens()->where('id', $tokenId)->firstOrFail();
         $tokenName = $token->name;
+        $token->revoke();
         $token->delete();
 
         $auditLogService->record(

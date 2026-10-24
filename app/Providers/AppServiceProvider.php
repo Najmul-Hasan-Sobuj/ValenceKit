@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
 
         Passport::tokensCan([
             'mcp:use' => 'Connect to the ValenceKit MCP server',
+            'mcp:access' => 'Legacy MCP token access',
             ...config('mcp.scopes', []),
         ]);
 
@@ -105,7 +106,7 @@ class AppServiceProvider extends ServiceProvider
 
     protected function mcpLimit(Request $request, int $maxAttempts, string $operation): Limit
     {
-        $actor = rescue(static fn () => auth('mcp')->user(), null, false) ?: auth('sanctum')->user();
+        $actor = rescue(static fn () => auth('mcp')->user(), null, false);
         $identity = $actor
             ? get_class($actor).':'.$actor->getAuthIdentifier()
             : hash('sha256', (string) $request->bearerToken());

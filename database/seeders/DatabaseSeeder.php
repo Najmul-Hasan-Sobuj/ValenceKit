@@ -7,6 +7,7 @@ use App\Services\McpToolSyncService;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Passport\ClientRepository;
 
 class DatabaseSeeder extends Seeder
 {
@@ -24,6 +25,13 @@ class DatabaseSeeder extends Seeder
         ]);
 
         app(McpToolSyncService::class)->sync();
+
+        $clientRepo = app(ClientRepository::class);
+        try {
+            $clientRepo->personalAccessClient('admins');
+        } catch (\Throwable) {
+            $clientRepo->createPersonalAccessGrantClient('ValenceKit Admin Personal Access Client', 'admins');
+        }
 
         // User::factory(10)->create();
 

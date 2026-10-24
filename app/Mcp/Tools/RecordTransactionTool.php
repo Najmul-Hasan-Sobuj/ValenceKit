@@ -39,7 +39,7 @@ class RecordTransactionTool extends BaseDbTool
 
         $financeService = app(FinanceService::class);
         $currency = $financeService->getActiveCurrency();
-        $admin = rescue(static fn () => $request->user('mcp'), null, false) ?? $request->user('sanctum');
+        $admin = rescue(static fn () => $request->user('mcp'), null, false);
 
         if (! $admin instanceof Admin) {
             return Response::text('Error: Recording transactions requires an admin MCP token.');

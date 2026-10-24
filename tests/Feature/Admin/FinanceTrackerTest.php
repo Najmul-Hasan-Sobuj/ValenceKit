@@ -9,7 +9,7 @@ use App\Services\FinanceService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Mcp\Request as McpRequest;
-use Laravel\Sanctum\Sanctum;
+use Laravel\Passport\Passport;
 
 beforeEach(function () {
     $this->seed(RoleAndPermissionSeeder::class);
@@ -264,7 +264,7 @@ it('can update global currency to Bangladeshi Taka (BDT) and adjust monthly budg
 });
 
 it('can execute MCP tools to record transaction and get financial summary', function () {
-    Sanctum::actingAs($this->superAdmin, ['mcp:access']);
+    Passport::actingAs($this->superAdmin, ['mcp:access'], 'mcp');
 
     $recordTool = new RecordTransactionTool;
     $request = new McpRequest([

@@ -13,7 +13,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
-use Laravel\Sanctum\HasApiTokens;
+use Laravel\Passport\Contracts\OAuthenticatable;
+use Laravel\Passport\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -34,10 +35,12 @@ use Spatie\Permission\Traits\HasRoles;
  */
 #[Fillable(['name', 'email', 'password', 'is_active', 'must_change_password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class Admin extends Authenticatable implements PasskeyUser
+class Admin extends Authenticatable implements OAuthenticatable, PasskeyUser
 {
     /** @use HasFactory<AdminFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable;
+
+    protected string $guard_name = 'admin';
 
     /**
      * @return array<string, mixed>

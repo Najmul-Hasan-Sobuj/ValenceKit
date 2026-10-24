@@ -7,7 +7,7 @@ use App\Mcp\Tools\RecordTransactionTool;
 use App\Models\Admin;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request as McpRequest;
-use Laravel\Sanctum\Sanctum;
+use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -67,7 +67,7 @@ test('admin user filter accepts valid inputs', function () {
 });
 
 test('get user roles mcp tool validates email strictly', function () {
-    Sanctum::actingAs($this->admin, ['mcp:users.read']);
+    Passport::actingAs($this->admin, ['mcp:users.read'], 'mcp');
     $tool = new GetUserRoles;
 
     expect(fn () => $tool->handle(new McpRequest(['email' => 'not-an-email'])))
@@ -78,7 +78,7 @@ test('get user roles mcp tool validates email strictly', function () {
 });
 
 test('get categories for module mcp tool validates module and type strictly', function () {
-    Sanctum::actingAs($this->admin, ['mcp:tools.read']);
+    Passport::actingAs($this->admin, ['mcp:tools.read'], 'mcp');
     $tool = new GetCategoriesForModuleTool;
 
     expect(fn () => $tool->handle(new McpRequest(['module' => ''])))
@@ -91,7 +91,7 @@ test('get categories for module mcp tool validates module and type strictly', fu
 });
 
 test('get financial summary mcp tool validates year and month strictly', function () {
-    Sanctum::actingAs($this->admin, ['mcp:finance.read']);
+    Passport::actingAs($this->admin, ['mcp:finance.read'], 'mcp');
     $tool = new GetFinancialSummaryTool;
 
     expect(fn () => $tool->handle(new McpRequest(['month' => 13])))
@@ -102,7 +102,7 @@ test('get financial summary mcp tool validates year and month strictly', functio
 });
 
 test('record transaction mcp tool validates amount and type strictly', function () {
-    Sanctum::actingAs($this->admin, ['mcp:finance.write']);
+    Passport::actingAs($this->admin, ['mcp:finance.write'], 'mcp');
     $tool = new RecordTransactionTool;
 
     expect(fn () => $tool->handle(new McpRequest([

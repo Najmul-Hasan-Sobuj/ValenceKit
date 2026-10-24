@@ -6,7 +6,7 @@ use App\Models\Admin;
 use App\Services\McpToolSyncService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Laravel\Mcp\Request as McpRequest;
-use Laravel\Sanctum\Sanctum;
+use Laravel\Passport\Passport;
 
 beforeEach(function () {
     $this->seed(RoleAndPermissionSeeder::class);
@@ -56,7 +56,7 @@ it('denies finance tools when the admin lacks the mapped permission', function (
     $admin = Admin::factory()->create();
     $admin->assignRole('Support');
 
-    Sanctum::actingAs($admin, ['mcp:access']);
+    Passport::actingAs($admin, ['mcp:access'], 'mcp');
 
     $response = (new GetFinancialSummaryTool)->handle(new McpRequest);
 
@@ -76,7 +76,7 @@ it('allows an admin with finance permission to use finance tools', function () {
     $admin = Admin::factory()->create();
     $admin->assignRole('Staff');
 
-    Sanctum::actingAs($admin, ['mcp:access']);
+    Passport::actingAs($admin, ['mcp:access'], 'mcp');
 
     $response = (new RecordTransactionTool)->handle(new McpRequest([
         'type' => 'income',
@@ -92,7 +92,7 @@ it('allows an admin with finance permission to use finance tools', function () {
 it('allows tool execution when token has direct scope without relying on role permissions', function () {
     $admin = Admin::factory()->create();
     // Admin has no roles or permissions
-    Sanctum::actingAs($admin, ['mcp:finance.read']);
+    Passport::actingAs($admin, ['mcp:finance.read'], 'mcp');
 
     $response = (new GetFinancialSummaryTool)->handle(new McpRequest([
         'year' => now()->year,

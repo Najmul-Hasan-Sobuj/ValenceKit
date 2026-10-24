@@ -71,7 +71,7 @@ Production environments must NOT rely on manual `.env` file editing on productio
 ---
 
 ### B. MCP & OAuth Tokens
-Tokens issued for Model Context Protocol (MCP) clients or Sanctum/Passport API access.
+Tokens issued for Model Context Protocol (MCP) clients or Passport API access.
 
 #### Revocation & Rotation Procedure:
 1. **Per-Token Revocation**:
@@ -80,10 +80,10 @@ Tokens issued for Model Context Protocol (MCP) clients or Sanctum/Passport API a
 2. **Emergency Mass Revocation**:
    Execute via Laravel Tinker:
    ```bash
-   php artisan tinker --execute 'Laravel\Sanctum\PersonalAccessToken::where("name", "like", "mcp%")->delete();'
+   php artisan tinker --execute 'Laravel\Passport\Token::where("name", "like", "mcp%")->update(["revoked" => true]);'
    ```
 3. **Re-issuance**:
-   - Re-issue a token with strictly scoped permissions (`mcp:access`, `mcp:finance.read`, etc.).
+   - Re-issue a token with strictly scoped permissions (`mcp:use`, `mcp:access`, `mcp:finance.read`, etc.).
    - Distribute via secure channel to authorized clients.
 
 ---

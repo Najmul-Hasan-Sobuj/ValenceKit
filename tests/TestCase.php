@@ -4,6 +4,8 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Laravel\Fortify\Features;
+use Laravel\Passport\Client;
+use Laravel\Passport\ClientRepository;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -20,6 +22,20 @@ abstract class TestCase extends BaseTestCase
     {
         if (! Features::enabled($feature)) {
             $this->markTestSkipped($message ?? "Fortify feature [{$feature}] is not enabled.");
+        }
+    }
+
+    protected function createPersonalAccessClient(string $provider = 'admins'): Client
+    {
+        $clientRepo = app(ClientRepository::class);
+
+        try {
+            return $clientRepo->personalAccessClient($provider);
+        } catch (\Throwable) {
+            return $clientRepo->createPersonalAccessGrantClient(
+                "ValenceKit Test {$provider} Personal Access Client",
+                $provider,
+            );
         }
     }
 }

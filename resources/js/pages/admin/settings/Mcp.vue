@@ -171,9 +171,14 @@ const synchronizeTools = () => {
             <CardContent>
                 <div class="space-y-4">
                     <div class="space-y-2">
-                        <Label>Server URL</Label>
+                        <Label for="server-url">Server URL</Label>
                         <div class="flex items-center gap-2">
-                            <Input :model-value="serverUrl" readonly />
+                            <Input
+                                id="server-url"
+                                name="server_url"
+                                :model-value="serverUrl"
+                                readonly
+                            />
                             <Button
                                 variant="secondary"
                                 @click="
@@ -208,9 +213,14 @@ const synchronizeTools = () => {
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="space-y-2">
-                    <Label>Protected Resource Metadata</Label>
+                    <Label for="oauth-discovery-url">Protected Resource Metadata</Label>
                     <div class="flex items-center gap-2">
-                        <Input :model-value="oauthDiscoveryUrl" readonly />
+                        <Input
+                            id="oauth-discovery-url"
+                            name="oauth_discovery_url"
+                            :model-value="oauthDiscoveryUrl"
+                            readonly
+                        />
                         <Button
                             variant="secondary"
                             @click="
@@ -347,6 +357,9 @@ const synchronizeTools = () => {
                             "
                         >
                             <Switch
+                                :id="`tool-switch-${tool.id}`"
+                                :name="`tool_switch_${tool.id}`"
+                                :aria-label="`Toggle ${tool.name} active state`"
                                 :checked="tool.is_active"
                                 @update:checked="
                                     (value: boolean | 'indeterminate') =>
@@ -382,7 +395,10 @@ const synchronizeTools = () => {
                             {{ flashMessage }}
                         </p>
                         <div class="flex items-center gap-2">
+                            <Label for="generated-token" class="sr-only">Generated API Token</Label>
                             <Input
+                                id="generated-token"
+                                name="generated_token"
                                 :model-value="flashToken"
                                 readonly
                                 class="bg-background font-mono text-sm"
@@ -406,6 +422,8 @@ const synchronizeTools = () => {
                         <div class="flex items-center gap-3">
                             <Input
                                 id="name"
+                                name="name"
+                                autocomplete="off"
                                 v-model="form.name"
                                 placeholder="e.g., Claude Desktop, Cursor AI"
                                 :disabled="form.processing"

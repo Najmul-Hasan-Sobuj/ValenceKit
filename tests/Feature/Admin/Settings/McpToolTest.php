@@ -89,3 +89,37 @@ it('prevents non-admins from updating mcp tools', function () {
         ])
         ->assertForbidden();
 });
+
+it('can create a passport mcp personal access token', function () {
+    $this->createPersonalAccessClient('admins');
+
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->post(route('admin.mcp.tokens.store'), [
+            'name' => 'Agent CLI Token',
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('flash.token');
+
+    $this->assertDatabaseHas('oauth_access_tokens', [
+        'name' => 'Agent CLI Token',
+        'revoked' => false,
+    ]);
+});
+
+it('can revoke an existing passport mcp token', function () {
+    $this->createPersonalAccessClient('admins');
+
+    $tokenResult = $this->superAdmin->createToken('Token To Revoke', ['mcp:use']);
+    $tokenId = $tokenResult->token->id;
+
+    $response = $this->actingAs($this->superAdmin, 'admin')
+        ->delete(route('admin.mcp.tokens.destroy', ['tokenId' => $tokenId]));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success', 'Token revoked successfully.');
+
+    $this->assertDatabaseMissing('oauth_access_tokens', [
+        'id' => $tokenId,
+    ]);
+});
