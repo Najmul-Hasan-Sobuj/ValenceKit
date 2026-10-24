@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\McpUsageLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class McpUsageController extends Controller
@@ -30,11 +31,24 @@ class McpUsageController extends Controller
             ->withQueryString();
 
         $isMonthly = $startDate->diffInDays($endDate) > 31;
+        $driver = DB::connection()->getDriverName();
+
+        $monthExpr = match ($driver) {
+            'pgsql' => "to_char(created_at, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', created_at)",
+            default => "DATE_FORMAT(created_at, '%Y-%m')",
+        };
+
+        $dateExpr = match ($driver) {
+            'pgsql' => "to_char(created_at, 'YYYY-MM-DD')",
+            'sqlite' => "strftime('%Y-%m-%d', created_at)",
+            default => 'DATE(created_at)',
+        };
 
         if ($isMonthly) {
             $monthlyCounts = McpUsageLog::whereBetween('created_at', [$startDate, $endDate])
-                ->selectRaw('SUBSTR(created_at, 1, 7) as month_key, COUNT(*) as count')
-                ->groupBy('month_key')
+                ->selectRaw("{$monthExpr} as month_key, COUNT(*) as count")
+                ->groupByRaw($monthExpr)
                 ->pluck('count', 'month_key');
 
             $current = $startDate->startOfMonth();
@@ -51,8 +65,8 @@ class McpUsageController extends Controller
             }
         } else {
             $dailyCounts = McpUsageLog::whereBetween('created_at', [$startDate, $endDate])
-                ->selectRaw('DATE(created_at) as log_date, COUNT(*) as count')
-                ->groupBy('log_date')
+                ->selectRaw("{$dateExpr} as log_date, COUNT(*) as count")
+                ->groupByRaw($dateExpr)
                 ->pluck('count', 'log_date');
 
             $current = $startDate->startOfDay();

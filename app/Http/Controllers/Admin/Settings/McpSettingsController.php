@@ -8,6 +8,7 @@ use App\Models\McpUsageLog;
 use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,9 +23,16 @@ class McpSettingsController extends Controller
 
         $admin = $request->user('admin');
 
+        $driver = DB::connection()->getDriverName();
+        $dateExpr = match ($driver) {
+            'pgsql' => "to_char(created_at, 'YYYY-MM-DD')",
+            'sqlite' => "strftime('%Y-%m-%d', created_at)",
+            default => 'DATE(created_at)',
+        };
+
         $dailyCounts = McpUsageLog::where('created_at', '>=', now()->subDays(6)->startOfDay())
-            ->selectRaw('DATE(created_at) as date, count(*) as count')
-            ->groupBy('date')
+            ->selectRaw("{$dateExpr} as date, count(*) as count")
+            ->groupByRaw($dateExpr)
             ->pluck('count', 'date');
 
         $dates = collect(range(6, 0))->map(function ($daysAgo) use ($dailyCounts) {
