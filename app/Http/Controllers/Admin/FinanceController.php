@@ -106,8 +106,10 @@ class FinanceController extends Controller
     /**
      * Provide a live JSON summary of monthly cashflow for the sidebar widget.
      */
-    public function summary()
+    public function summary(Request $request)
     {
+        abort_unless($request->user('admin')->can('finance.view'), 403);
+
         return response()->json($this->financeService->getMonthlySummary());
     }
 

@@ -53,6 +53,22 @@ it('denies access to admins without finance.view permission', function () {
         ->assertForbidden();
 });
 
+it('denies the live finance summary widget to admins without finance.view permission', function () {
+    $supportAdmin = Admin::factory()->create();
+    $supportAdmin->assignRole('Support');
+
+    $this->actingAs($supportAdmin, 'admin')
+        ->get(route('admin.finance.summary'))
+        ->assertForbidden();
+});
+
+it('allows the live finance summary widget for admins with finance.view permission', function () {
+    $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('admin.finance.summary'))
+        ->assertOk()
+        ->assertJsonStructure(['total_income', 'total_expense', 'net_balance', 'currency']);
+});
+
 it('can record a new income and expense transaction', function () {
     $this->actingAs($this->superAdmin, 'admin')
         ->post(route('admin.finance.transactions.store'), [
