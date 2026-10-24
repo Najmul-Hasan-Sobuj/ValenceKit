@@ -24,10 +24,10 @@ use Illuminate\Support\Carbon;
  * @property bool $is_recurring
  * @property string|null $recurring_frequency
  * @property string|null $notes
- * @property int $admin_id
+ * @property int|null $admin_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Admin $admin
+ * @property-read Admin|null $admin
  */
 #[Fillable([
     'type',

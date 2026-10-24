@@ -25,7 +25,7 @@ return new class extends Migration
             $table->boolean('is_recurring')->default(false);
             $table->string('recurring_frequency', 20)->nullable();
             $table->text('notes')->nullable();
-            $table->foreignId('admin_id')->constrained('admins')->cascadeOnDelete();
+            $table->foreignId('admin_id')->nullable()->constrained('admins')->nullOnDelete();
             $table->timestamps();
 
             $table->index(['transaction_date', 'type']);
