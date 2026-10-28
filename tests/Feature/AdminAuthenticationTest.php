@@ -1,13 +1,13 @@
 <?php
 
-use App\Actions\Admin\VerifyAdminPasskey;
-use App\Http\Requests\Admin\AdminPasskeyVerificationRequest;
 use App\Models\Admin;
 use App\Models\User;
 use App\Notifications\AdminResetPassword;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Passkeys\Actions\GenerateVerificationOptions;
+use Laravel\Passkeys\Actions\VerifyPasskey;
+use Laravel\Passkeys\Http\Requests\PasskeyVerificationRequest;
 use Webauthn\PublicKeyCredential;
 
 test('admin logout targets its own route and does not log out the web user', function () {
@@ -96,20 +96,20 @@ test('admin passkey authentication records admin.login audit log', function () {
         'credential' => [],
     ]);
 
-    $mockVerify = Mockery::mock(VerifyAdminPasskey::class);
+    $mockVerify = Mockery::mock(VerifyPasskey::class);
     $mockVerify->shouldReceive('__invoke')
         ->once()
         ->andReturn($passkey);
-    $this->app->instance(VerifyAdminPasskey::class, $mockVerify);
+    $this->app->instance(VerifyPasskey::class, $mockVerify);
 
     $options = app(GenerateVerificationOptions::class)(null);
-    $mockRequest = Mockery::mock(AdminPasskeyVerificationRequest::class);
+    $mockRequest = Mockery::mock(PasskeyVerificationRequest::class);
     $mockRequest->shouldReceive('credential')->andReturn(Mockery::mock(PublicKeyCredential::class));
     $mockRequest->shouldReceive('verificationOptions')->andReturn($options);
     $mockRequest->shouldReceive('remember')->andReturn(false);
     $mockRequest->shouldReceive('ip')->andReturn('127.0.0.1');
     $mockRequest->shouldReceive('session')->andReturn(session()->driver());
-    $this->app->instance(AdminPasskeyVerificationRequest::class, $mockRequest);
+    $this->app->instance(PasskeyVerificationRequest::class, $mockRequest);
 
     $response = $this->postJson(route('admin.passkeys.authenticate'));
 
@@ -126,4 +126,33 @@ test('admin passkey authentication records admin.login audit log', function () {
         'subject_id' => $admin->id,
         'description' => 'An administrator signed in.',
     ]);
+});
+
+test('admin passkey authentication rejects user passkeys', function () {
+    $user = User::factory()->create();
+    $userPasskey = $user->passkeys()->create([
+        'name' => 'User Key',
+        'credential_id' => 'user-credential-xyz',
+        'credential' => [],
+    ]);
+
+    $mockVerify = Mockery::mock(VerifyPasskey::class);
+    $mockVerify->shouldReceive('__invoke')
+        ->once()
+        ->andReturn($userPasskey);
+    $this->app->instance(VerifyPasskey::class, $mockVerify);
+
+    $options = app(GenerateVerificationOptions::class)(null);
+    $mockRequest = Mockery::mock(PasskeyVerificationRequest::class);
+    $mockRequest->shouldReceive('credential')->andReturn(Mockery::mock(PublicKeyCredential::class));
+    $mockRequest->shouldReceive('verificationOptions')->andReturn($options);
+    $mockRequest->shouldReceive('remember')->andReturn(false);
+    $this->app->instance(PasskeyVerificationRequest::class, $mockRequest);
+
+    $response = $this->postJson(route('admin.passkeys.authenticate'));
+
+    $response->assertStatus(422)
+        ->assertJson(['message' => 'Passkey not recognized. It may have been removed from this account.']);
+
+    $this->assertGuest('admin');
 });

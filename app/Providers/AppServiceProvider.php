@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Admin;
+use App\Models\Passkey;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Passkeys\Passkeys;
 use Laravel\Passport\Passport;
 use Spatie\Permission\Models\Permission;
 
@@ -34,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->enforceProductionSecurity();
         $this->configureDefaults();
+
+        Passkeys::usePasskeyModel(Passkey::class);
+        Passkeys::authorizeLoginUsing(function ($request, $user, $passkey) {
+            return $user instanceof User;
+        });
 
         Passport::tokensCan([
             'mcp:use' => 'Connect to the ValenceKit MCP server',

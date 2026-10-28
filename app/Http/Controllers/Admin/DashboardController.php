@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
-use App\Models\AdminPasskey;
 use App\Models\McpUsageLog;
+use App\Models\Passkey;
 use App\Models\User;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
@@ -46,7 +46,7 @@ class DashboardController extends Controller
             'total_users' => User::count(),
             'total_admins' => Admin::count(),
             'verified_users' => User::whereNotNull('email_verified_at')->count(),
-            'passkey_count' => AdminPasskey::count(),
+            'passkey_count' => Passkey::where('user_type', Admin::class)->count(),
         ];
 
         return Inertia::render('admin/Dashboard', [

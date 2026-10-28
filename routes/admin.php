@@ -107,6 +107,6 @@ Route::prefix(config('admin.alias'))
 
             Route::get('passkeys/register/options', [SettingsPasskeyController::class, 'options'])->name('passkeys.register.options');
             Route::post('passkeys/register', [SettingsPasskeyController::class, 'store'])->name('passkeys.register');
-            Route::delete('passkeys/{adminPasskey}', [SettingsPasskeyController::class, 'destroy'])->name('passkeys.destroy');
+            Route::delete('passkeys/{passkey}', [SettingsPasskeyController::class, 'destroy'])->name('passkeys.destroy');
         });
     });

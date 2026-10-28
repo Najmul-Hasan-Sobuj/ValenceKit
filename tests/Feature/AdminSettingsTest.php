@@ -74,6 +74,13 @@ test('admin can remove their passkey but not another admins passkey', function (
         'name' => 'Other key', 'credential_id' => 'credential-other', 'credential' => [],
     ]);
 
+    $user = User::factory()->create(['id' => $admin->id]);
+    $userPasskey = $user->passkeys()->create([
+        'name' => 'User key', 'credential_id' => 'credential-user', 'credential' => [],
+    ]);
+
+    $this->actingAs($admin, 'admin')->deleteJson(route('admin.passkeys.destroy', $userPasskey))
+        ->assertNotFound();
     $this->actingAs($admin, 'admin')->deleteJson(route('admin.passkeys.destroy', $otherPasskey))
         ->assertNotFound();
     $this->from(route('admin.security.edit'))

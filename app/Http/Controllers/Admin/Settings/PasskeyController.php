@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdminPasskey;
+use App\Models\Admin;
+use App\Models\Passkey;
 use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -54,17 +55,17 @@ class PasskeyController extends Controller
         return response()->json(['status' => 'passkey-registered', 'id' => (string) $passkey->id]);
     }
 
-    public function destroy(Request $request, AdminPasskey $adminPasskey, AuditLogService $auditLogService): RedirectResponse
+    public function destroy(Request $request, Passkey $passkey, AuditLogService $auditLogService): RedirectResponse
     {
         abort_unless($request->user('admin')->can('settings.security.edit'), 403);
-        abort_unless($adminPasskey->admin_id === Auth::guard('admin')->id(), 404);
+        abort_unless((string) $passkey->user_id === (string) Auth::guard('admin')->id() && $passkey->user_type === Admin::class, 404);
 
-        $before = $adminPasskey->only(['name', 'authenticator']);
-        $adminPasskey->delete();
+        $before = $passkey->only(['name', 'authenticator']);
+        $passkey->delete();
 
         $auditLogService->record(
             'settings.security.passkey_deleted',
-            $adminPasskey,
+            $passkey,
             beforeValues: $before,
             description: 'A passkey was removed.',
             actor: $request->user('admin'),

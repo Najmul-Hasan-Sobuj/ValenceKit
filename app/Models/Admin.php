@@ -7,6 +7,7 @@ use Database\Factories\AdminFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -54,11 +55,20 @@ class Admin extends Authenticatable implements OAuthenticatable, PasskeyUser
     /**
      * Get the passkeys associated with the admin.
      *
-     * @return HasMany<AdminPasskey, $this>
+     * @return HasMany<Passkey, $this>
      */
     public function passkeys(): HasMany
     {
-        return $this->hasMany(AdminPasskey::class, 'admin_id');
+        $relation = $this->hasMany(Passkey::class, 'user_id')->where('user_type', $this->getMorphClass());
+
+        return new class($relation->getQuery(), $this, $relation->getForeignKeyName(), $relation->getLocalKeyName()) extends HasMany
+        {
+            protected function setForeignAttributesForCreate(Model $instance): void
+            {
+                parent::setForeignAttributesForCreate($instance);
+                $instance->user_type = $this->parent->getMorphClass();
+            }
+        };
     }
 
     public function sendPasswordResetNotification($token): void
