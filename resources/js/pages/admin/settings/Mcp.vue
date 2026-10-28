@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, usePage, router } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { usePermissions } from '@/composables/usePermissions';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -83,6 +84,10 @@ const props = defineProps<{
 
 import { Switch } from '@/components/ui/switch';
 
+const { can } = usePermissions();
+const updatingToolId = ref<number | null>(null);
+const isSyncing = ref(false);
+
 const form = useForm({
     name: '',
 });
@@ -130,18 +135,32 @@ const revokeToken = (id: string | number) => {
 };
 
 const updateToolStatus = (toolId: number, isActive: boolean): void => {
+    updatingToolId.value = toolId;
     router.patch(
         updateTool.url(toolId),
         { is_active: isActive },
         {
             preserveScroll: true,
             onSuccess: () => toast.success('Tool status updated.'),
+            onFinish: () => {
+                updatingToolId.value = null;
+            },
         },
     );
 };
 
 const synchronizeTools = () => {
-    router.post(syncTools.url(), {}, { preserveScroll: true });
+    isSyncing.value = true;
+    router.post(
+        syncTools.url(),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isSyncing.value = false;
+            },
+        },
+    );
 };
 </script>
 
@@ -314,7 +333,11 @@ const synchronizeTools = () => {
                             status.
                         </CardDescription>
                     </div>
-                    <Button variant="secondary" @click="synchronizeTools">
+                    <Button
+                        variant="secondary"
+                        :disabled="!can('settings.mcp.edit') || isSyncing"
+                        @click="synchronizeTools"
+                    >
                         Sync Registry
                     </Button>
                 </div>
@@ -350,25 +373,20 @@ const synchronizeTools = () => {
                             </div>
                         </div>
 
-                        <form
-                            @submit.prevent="
-                                updateToolStatus(tool.id, !tool.is_active)
+                        <Switch
+                            :id="`tool-switch-${tool.id}`"
+                            :name="`tool_switch_${tool.id}`"
+                            :aria-label="`Toggle ${tool.name} active state`"
+                            :model-value="Boolean(tool.is_active)"
+                            :disabled="
+                                !can('settings.mcp.edit') ||
+                                updatingToolId === tool.id
                             "
-                        >
-                            <Switch
-                                :id="`tool-switch-${tool.id}`"
-                                :name="`tool_switch_${tool.id}`"
-                                :aria-label="`Toggle ${tool.name} active state`"
-                                :checked="tool.is_active"
-                                @update:checked="
-                                    (value: boolean | 'indeterminate') =>
-                                        updateToolStatus(
-                                            tool.id,
-                                            value === true,
-                                        )
-                                "
-                            />
-                        </form>
+                            @update:model-value="
+                                (value: boolean) =>
+                                    updateToolStatus(tool.id, value)
+                            "
+                        />
                     </div>
                 </div>
             </CardContent>
