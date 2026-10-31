@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
             'supportEmail' => config('app.support_email', 'support@valencekit.com'),
             'flash' => fn () => $request->session()->get('flash'),
             'success' => fn () => $request->session()->get('success'),
+            'error' => fn () => $request->session()->get('error'),
             'auth' => [
                 'user' => Auth::guard('web')->user(),
                 'admin' => Auth::guard('admin')->check() ? array_merge(

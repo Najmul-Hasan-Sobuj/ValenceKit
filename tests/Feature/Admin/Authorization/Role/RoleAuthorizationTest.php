@@ -169,3 +169,26 @@ it('accurately counts role members using native withCount on index and prevents 
 
     expect(Role::where('id', $customRole->id)->exists())->toBeTrue();
 });
+
+it('shares session error in inertia props when an action returns with error', function () {
+    $superAdmin = Admin::factory()->create();
+    $superAdmin->assignRole('Super Admin');
+
+    $roleWithMember = Role::create(['name' => 'Role With Member', 'guard_name' => 'admin']);
+    $member = Admin::factory()->create();
+    $member->assignRole($roleWithMember);
+
+    $response = $this->actingAs($superAdmin, 'admin')
+        ->from(route('admin.authorization.roles.index'))
+        ->delete(route('admin.authorization.roles.destroy', $roleWithMember));
+
+    $response->assertRedirect(route('admin.authorization.roles.index'))
+        ->assertSessionHas('error', 'Cannot delete role with assigned members.');
+
+    $this->actingAs($superAdmin, 'admin')
+        ->get(route('admin.authorization.roles.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('error', 'Cannot delete role with assigned members.')
+        );
+});

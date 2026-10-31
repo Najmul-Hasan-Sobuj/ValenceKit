@@ -35,14 +35,17 @@ export function initializeFlashToast(): void {
 
     // 2. Inertia success event (catches props returned on page updates/redirects)
     router.on('success', (event: any) => {
-        const page = event.detail?.page;
-        const props = page?.props as any;
-
-        if (!props) return;
+        const page = event.detail?.page ?? event.page;
+        const props = (page?.props ?? {}) as any;
 
         if (props.success) {
             showToast({ type: 'success', message: props.success });
             props.success = null;
+        }
+
+        if (props.error) {
+            showToast({ type: 'error', message: props.error });
+            props.error = null;
         }
 
         const data = (props.flash?.toast || page.flash?.toast) as
