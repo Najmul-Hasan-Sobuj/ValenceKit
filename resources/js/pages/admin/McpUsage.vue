@@ -22,11 +22,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Blobatar } from '@blobatar/vue';
 import RelativeTime from '@/components/RelativeTime.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 import { computed, ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
-import { BarChart3, Activity, Users, Radio } from '@lucide/vue';
+import { BarChart3, Activity, Users, Radio, Search } from '@lucide/vue';
 import DateRangePicker from '@/components/ui/date-range-picker/DateRangePicker.vue';
 import { parseDate } from '@internationalized/date';
 import type { DateRange } from '@/types';
@@ -91,6 +92,7 @@ const props = defineProps<{
     filters?: {
         from?: string;
         to?: string;
+        search?: string;
     };
 }>();
 
@@ -139,9 +141,14 @@ function initDateRange(): DateRange | undefined {
 
 const dateRange = ref<DateRange | undefined>(initDateRange());
 
+const search = ref(props.filters?.search ?? '');
+
 watch(
     () => props.filters,
     (newFilters) => {
+        if (newFilters?.search !== undefined && newFilters.search !== search.value) {
+            search.value = newFilters.search ?? '';
+        }
         if (newFilters?.from && newFilters?.to) {
             try {
                 const s = parseDate(newFilters.from);
@@ -165,34 +172,25 @@ watch(
 );
 
 watchDebounced(
-    dateRange,
-    (newRange) => {
-        if (newRange?.start && !newRange?.end) {
+    [search, dateRange],
+    () => {
+        if (dateRange.value?.start && !dateRange.value?.end) {
             return;
         }
 
-        if (newRange?.start && newRange?.end) {
-            const newFrom = newRange.start.toString();
-            const newTo = newRange.end.toString();
-            if (newFrom !== props.filters?.from || newTo !== props.filters?.to) {
-                router.get(
-                    indexMcpUsage(),
-                    {
-                        from: newFrom,
-                        to: newTo,
-                    },
-                    { preserveState: true, preserveScroll: true, replace: true },
-                );
-            }
-        } else if (!newRange || (!newRange.start && !newRange.end)) {
-            if (props.filters?.from || props.filters?.to) {
-                router.get(
-                    indexMcpUsage(),
-                    {},
-                    { preserveState: true, preserveScroll: true, replace: true },
-                );
-            }
-        }
+        const from = dateRange.value?.start ? dateRange.value.start.toString() : '';
+        const to = dateRange.value?.end ? dateRange.value.end.toString() : '';
+
+        const params: Record<string, string> = {};
+        if (search.value) params.search = search.value;
+        if (from) params.from = from;
+        if (to) params.to = to;
+
+        router.get(
+            indexMcpUsage(),
+            params,
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
     },
     { debounce: 300 },
 );
@@ -303,6 +301,20 @@ defineOptions({
                 </div>
             </CardContent>
         </Card>
+
+        <!-- Search Filter Toolbar -->
+        <div class="flex items-center justify-between gap-4">
+            <div class="relative w-full max-w-sm">
+                <Search
+                    class="absolute top-2.5 left-3 size-4 text-muted-foreground"
+                />
+                <Input
+                    v-model="search"
+                    class="pl-9 bg-background"
+                    placeholder="Search IP, endpoint, token, or user..."
+                />
+            </div>
+        </div>
 
         <div class="overflow-hidden rounded-xl border bg-card shadow-sm">
             <Table>

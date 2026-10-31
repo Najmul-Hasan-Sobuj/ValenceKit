@@ -26,6 +26,17 @@ class McpUsageController extends Controller
 
         $query = McpUsageLog::with(['user', 'admin'])->whereBetween('created_at', [$startDate, $endDate]);
 
+        $query->when($request->filled('search'), function ($q) use ($request) {
+            $search = $request->input('search');
+            $q->where(function ($sub) use ($search) {
+                $sub->where('ip_address', 'like', "%{$search}%")
+                    ->orWhere('endpoint', 'like', "%{$search}%")
+                    ->orWhere('token_used', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                    ->orWhereHas('admin', fn ($a) => $a->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
+            });
+        });
+
         $logs = (clone $query)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
@@ -94,7 +105,11 @@ class McpUsageController extends Controller
                 'uniqueClients' => (clone $query)->distinct('ip_address')->count('ip_address'),
                 'todayRequests' => McpUsageLog::whereDate('created_at', now()->toDateString())->count(),
             ],
-            'filters' => ['from' => $startDate->toDateString(), 'to' => $endDate->toDateString()],
+            'filters' => [
+                'from' => $startDate->toDateString(),
+                'to' => $endDate->toDateString(),
+                'search' => $request->input('search'),
+            ],
         ]);
     }
 }

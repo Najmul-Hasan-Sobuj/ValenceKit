@@ -114,3 +114,52 @@ it('lists all individual mcp request invocations without collapsing same-client 
             ->where('logs.data.1.endpoint', '/mcp/tools/list')
         );
 });
+
+it('can filter mcp usage logs by search query across ip, endpoint, and token', function () {
+    McpUsageLog::create([
+        'token_used' => 'special-alpha-token',
+        'ip_address' => '10.20.30.40',
+        'user_agent' => 'SearchTester',
+        'endpoint' => '/mcp/tools/unique_action',
+        'created_at' => now(),
+    ]);
+
+    McpUsageLog::create([
+        'token_used' => 'other-beta-token',
+        'ip_address' => '192.168.99.1',
+        'user_agent' => 'OtherAgent',
+        'endpoint' => '/mcp/resources/read',
+        'created_at' => now(),
+    ]);
+
+    // Search by endpoint
+    $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('admin.mcp.usage.index', ['search' => 'unique_action']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/McpUsage')
+            ->has('logs.data', 1)
+            ->where('logs.data.0.endpoint', '/mcp/tools/unique_action')
+            ->where('filters.search', 'unique_action')
+        );
+
+    // Search by IP
+    $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('admin.mcp.usage.index', ['search' => '10.20.30.40']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/McpUsage')
+            ->has('logs.data', 1)
+            ->where('logs.data.0.ip_address', '10.20.30.40')
+        );
+
+    // Search by token
+    $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('admin.mcp.usage.index', ['search' => 'special-alpha']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/McpUsage')
+            ->has('logs.data', 1)
+            ->where('logs.data.0.token_used', 'special-alpha-token')
+        );
+});
