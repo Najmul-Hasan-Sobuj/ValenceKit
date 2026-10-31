@@ -9,8 +9,7 @@ import {
     today,
 } from '@internationalized/date';
 import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, X } from '@lucide/vue';
-import { onClickOutside } from '@vueuse/core';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
     DateRangePickerCalendar,
     DateRangePickerCell,
@@ -87,9 +86,24 @@ const isYearOpen = ref(false);
 const selectorContainerRef = ref<HTMLElement | null>(null);
 const activeYearEl = ref<HTMLElement | null>(null);
 
-onClickOutside(selectorContainerRef, () => {
+function handleOutsideClick(event: MouseEvent): void {
+    if (!isMonthOpen.value && !isYearOpen.value) {
+        return;
+    }
+    const target = event.target as Node | null;
+    if (selectorContainerRef.value && target && selectorContainerRef.value.contains(target)) {
+        return;
+    }
     isMonthOpen.value = false;
     isYearOpen.value = false;
+}
+
+onMounted(() => {
+    window.addEventListener('click', handleOutsideClick, true);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('click', handleOutsideClick, true);
 });
 
 watch(open, (isOpen) => {

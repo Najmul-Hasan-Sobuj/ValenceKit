@@ -24,6 +24,7 @@ import RelativeTime from '@/components/RelativeTime.vue';
 import { Button } from '@/components/ui/button';
 
 import { computed, ref, watch } from 'vue';
+import { watchDebounced } from '@vueuse/core';
 import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
 import { BarChart3, Activity, Users, Radio } from '@lucide/vue';
 import DateRangePicker from '@/components/ui/date-range-picker/DateRangePicker.vue';
@@ -124,53 +125,77 @@ const formattedLogs = computed(() => {
     return props.logs.data;
 });
 
-const dateRange = ref<DateRange | undefined>(undefined);
+function initDateRange(): DateRange | undefined {
+    if (!props.filters?.from || !props.filters?.to) return undefined;
+    try {
+        return {
+            start: parseDate(props.filters.from),
+            end: parseDate(props.filters.to),
+        };
+    } catch {
+        return undefined;
+    }
+}
+
+const dateRange = ref<DateRange | undefined>(initDateRange());
 
 watch(
     () => props.filters,
     (newFilters) => {
         if (newFilters?.from && newFilters?.to) {
-            const s = parseDate(newFilters.from);
-            const e = parseDate(newFilters.to);
-            if (
-                !dateRange.value?.start ||
-                dateRange.value.start.toString() !== newFilters.from ||
-                !dateRange.value?.end ||
-                dateRange.value.end.toString() !== newFilters.to
-            ) {
-                dateRange.value = { start: s, end: e };
+            try {
+                const s = parseDate(newFilters.from);
+                const e = parseDate(newFilters.to);
+                if (
+                    !dateRange.value?.start ||
+                    dateRange.value.start.toString() !== newFilters.from ||
+                    !dateRange.value?.end ||
+                    dateRange.value.end.toString() !== newFilters.to
+                ) {
+                    dateRange.value = { start: s, end: e };
+                }
+            } catch {
+                dateRange.value = undefined;
             }
         } else {
             dateRange.value = undefined;
         }
     },
-    { immediate: true, deep: true },
+    { deep: true },
 );
 
-watch(dateRange, (newRange) => {
-    if (newRange?.start && newRange?.end) {
-        const newFrom = newRange.start.toString();
-        const newTo = newRange.end.toString();
-        if (newFrom !== props.filters?.from || newTo !== props.filters?.to) {
-            router.get(
-                indexMcpUsage(),
-                {
-                    from: newFrom,
-                    to: newTo,
-                },
-                { preserveState: true, replace: true },
-            );
+watchDebounced(
+    dateRange,
+    (newRange) => {
+        if (newRange?.start && !newRange?.end) {
+            return;
         }
-    } else if (!newRange || (!newRange.start && !newRange.end)) {
-        if (props.filters?.from || props.filters?.to) {
-            router.get(
-                indexMcpUsage(),
-                {},
-                { preserveState: true, replace: true },
-            );
+
+        if (newRange?.start && newRange?.end) {
+            const newFrom = newRange.start.toString();
+            const newTo = newRange.end.toString();
+            if (newFrom !== props.filters?.from || newTo !== props.filters?.to) {
+                router.get(
+                    indexMcpUsage(),
+                    {
+                        from: newFrom,
+                        to: newTo,
+                    },
+                    { preserveState: true, preserveScroll: true, replace: true },
+                );
+            }
+        } else if (!newRange || (!newRange.start && !newRange.end)) {
+            if (props.filters?.from || props.filters?.to) {
+                router.get(
+                    indexMcpUsage(),
+                    {},
+                    { preserveState: true, preserveScroll: true, replace: true },
+                );
+            }
         }
-    }
-});
+    },
+    { debounce: 300 },
+);
 
 defineOptions({
     layout: {
