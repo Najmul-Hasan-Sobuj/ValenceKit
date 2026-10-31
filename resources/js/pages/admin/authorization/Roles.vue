@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import {
     Copy,
+    Eye,
     KeyRound,
     MoreHorizontal,
     Pencil,
@@ -347,10 +348,13 @@ defineOptions({
                                             :href="rolesRoute.edit.url(role.id)"
                                             class="flex w-full items-center"
                                         >
-                                            <Pencil
+                                            <component
+                                                :is="role.system ? Eye : Pencil"
                                                 class="mr-2 size-4 text-muted-foreground"
                                             />
-                                            <span>Edit</span>
+                                            <span>{{
+                                                role.system ? 'View' : 'Edit'
+                                            }}</span>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
