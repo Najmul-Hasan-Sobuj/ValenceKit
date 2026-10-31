@@ -70,3 +70,14 @@ it('properly filters data and returns correct chart length for all quick ranges'
     'Last month' => [fn () => now()->subMonth()->startOfMonth()->toDateString(), fn () => now()->subMonth()->endOfMonth()->toDateString(), fn () => (int) now()->subMonth()->startOfMonth()->diffInDays(now()->subMonth()->endOfMonth()->startOfDay()) + 1, 'day'],
     'This year' => [fn () => now()->startOfYear()->toDateString(), fn () => now()->toDateString(), fn () => (int) now()->startOfYear()->diffInMonths(now()->startOfMonth()) + 1, 'month'],
 ]);
+
+it('gracefully falls back to default date range when invalid dates are provided', function () {
+    $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('admin.mcp.usage.index', ['from' => 'invalid-date', 'to' => 'malformed-date']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/McpUsage')
+            ->where('filters.from', now()->startOfMonth()->toDateString())
+            ->where('filters.to', now()->toDateString())
+        );
+});

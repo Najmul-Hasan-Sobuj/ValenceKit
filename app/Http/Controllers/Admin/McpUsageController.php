@@ -14,8 +14,11 @@ class McpUsageController extends Controller
     {
         abort_unless($request->user('admin')->can('settings.mcp.usage.view'), 403);
 
-        $startDate = $request->filled('from') ? $request->date('from')->startOfDay() : now()->startOfMonth()->startOfDay();
-        $endDate = $request->filled('to') ? $request->date('to')->endOfDay() : now()->endOfDay();
+        $from = rescue(fn () => $request->filled('from') ? $request->date('from')->startOfDay() : null, null, false);
+        $to = rescue(fn () => $request->filled('to') ? $request->date('to')->endOfDay() : null, null, false);
+
+        $startDate = $from ?? now()->startOfMonth()->startOfDay();
+        $endDate = $to ?? now()->endOfDay();
 
         if ($startDate->gt($endDate)) {
             [$startDate, $endDate] = [$endDate->startOfDay(), $startDate->endOfDay()];
