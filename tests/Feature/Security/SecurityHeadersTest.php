@@ -43,3 +43,13 @@ test('csp nonce matches between response header and rendered script tag', functi
     expect($nonce)->not->toBeNull();
     $response->assertSee('nonce="'.$nonce.'"', false);
 });
+
+test('connect-src allows websocket connections in local and testing environments for vite hmr', function () {
+    $response = $this->get('/');
+    $response->assertOk();
+
+    $csp = $response->headers->get('Content-Security-Policy');
+    expect($csp)->toContain("connect-src 'self'")
+        ->toContain('ws:')
+        ->toContain('wss:');
+});

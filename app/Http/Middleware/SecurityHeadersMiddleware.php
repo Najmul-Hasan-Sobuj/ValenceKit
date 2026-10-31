@@ -27,7 +27,7 @@ class SecurityHeadersMiddleware
 
         if (app()->environment('local', 'testing')) {
             $scriptSrc = "'self' 'unsafe-eval' 'nonce-{$nonce}' http://localhost:5173 http://127.0.0.1:5173 {$trackingScriptSrc}";
-            $connectSrc = "'self' http://localhost:5173 ws://localhost:5173 http://127.0.0.1:5173 ws://127.0.0.1:5173 https:";
+            $connectSrc = "'self' http://localhost:5173 ws://localhost:5173 wss://localhost:5173 http://127.0.0.1:5173 ws://127.0.0.1:5173 ws: wss: https:";
         } else {
             $scriptSrc = "'self' 'nonce-{$nonce}' {$trackingScriptSrc}";
             $connectSrc = "'self' {$trackingConnectSrc}";
