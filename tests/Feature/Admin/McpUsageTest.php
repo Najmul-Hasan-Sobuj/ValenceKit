@@ -81,3 +81,36 @@ it('gracefully falls back to default date range when invalid dates are provided'
             ->where('filters.to', now()->toDateString())
         );
 });
+
+it('lists all individual mcp request invocations without collapsing same-client calls', function () {
+    $ip = '192.168.1.100';
+    $token = 'test-client-token';
+
+    McpUsageLog::create([
+        'token_used' => $token,
+        'ip_address' => $ip,
+        'user_agent' => 'Agent 1',
+        'endpoint' => '/mcp/tools/list',
+        'created_at' => now()->subMinutes(10),
+    ]);
+
+    McpUsageLog::create([
+        'token_used' => $token,
+        'ip_address' => $ip,
+        'user_agent' => 'Agent 1',
+        'endpoint' => '/mcp/tools/call',
+        'created_at' => now()->subMinutes(5),
+    ]);
+
+    $this->actingAs($this->superAdmin, 'admin')
+        ->get(route('admin.mcp.usage.index', ['from' => now()->toDateString(), 'to' => now()->toDateString()]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/McpUsage')
+            ->has('logs.data', 2)
+            ->where('stats.totalRequests', 2)
+            ->where('logs.total', 2)
+            ->where('logs.data.0.endpoint', '/mcp/tools/call')
+            ->where('logs.data.1.endpoint', '/mcp/tools/list')
+        );
+});

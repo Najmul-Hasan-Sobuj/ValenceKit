@@ -26,10 +26,9 @@ class McpUsageController extends Controller
 
         $query = McpUsageLog::with(['user', 'admin'])->whereBetween('created_at', [$startDate, $endDate]);
 
-        $logs = clone $query;
-        $logs = $logs->selectRaw('MAX(id) as id, token_used, user_id, admin_id, ip_address, MAX(user_agent) as user_agent, MAX(endpoint) as endpoint, MAX(created_at) as created_at')
-            ->groupBy('token_used', 'user_id', 'admin_id', 'ip_address')
+        $logs = (clone $query)
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate(20)
             ->withQueryString();
 
