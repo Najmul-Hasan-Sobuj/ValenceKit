@@ -3,8 +3,11 @@
 use App\Mcp\Tools\GetFinancialSummaryTool;
 use App\Mcp\Tools\RecordTransactionTool;
 use App\Models\Admin;
+use App\Models\McpTool;
 use App\Services\McpToolSyncService;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Once;
 use Laravel\Mcp\Request as McpRequest;
 use Laravel\Passport\Passport;
 
@@ -109,3 +112,53 @@ it('denies tool execution when request has no authenticated token', function () 
     expect((string) $response->content())
         ->toContain('required scope');
 });
+
+it('rejects a real token after its admin is deactivated', function () {
+    $admin = Admin::factory()->create();
+    $admin->assignRole('Super Admin');
+    $this->createPersonalAccessClient();
+    $token = $admin->createToken('test', ['mcp:use'])->accessToken;
+    $admin->update(['is_active' => false]);
+
+    $this->withToken($token)->postJson('/mcp/valencekit', [
+        'jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list', 'params' => new stdClass,
+    ])->assertUnauthorized();
+});
+
+it('lists tool schemas and records the client type for a bearer token', function (string $grantType, string $authMethod) {
+    $admin = Admin::factory()->create();
+    $this->createPersonalAccessClient();
+    $result = $admin->createToken('test', ['mcp:use']);
+    $client = $result->token->client;
+    $token = $result->accessToken;
+    $client->update(['grant_types' => [$grantType]]);
+    Once::flush();
+    auth()->forgetGuards();
+    app(McpToolSyncService::class)->sync();
+    McpTool::query()->update(['is_active' => true]);
+    Cache::forget('active_mcp_tools');
+
+    $response = $this->withToken($token)
+        ->withHeader('Accept', 'application/json, text/event-stream')
+        ->postJson('/mcp/valencekit', [
+            'jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list', 'params' => new stdClass,
+        ])
+        ->assertOk();
+
+    $tools = collect($response->json('result.tools'))->keyBy('name');
+    expect($tools)->toHaveCount(4);
+    expect(data_get($tools['get-user-roles'], 'inputSchema.properties.email.maxLength'))->toBe(255)
+        ->and(data_get($tools['get-categories-for-module-tool'], 'inputSchema.properties.module.maxLength'))->toBe(50)
+        ->and(data_get($tools['record-transaction-tool'], 'inputSchema.properties.amount.minimum'))->toBe(0.01)
+        ->and(data_get($tools['record-transaction-tool'], 'inputSchema.properties.description.minLength'))->toBe(1)
+        ->and(data_get($tools['get-financial-summary-tool'], 'inputSchema.properties.month.maximum'))->toBe(12);
+    $this->assertDatabaseHas('mcp_usage_logs', [
+        'admin_id' => $admin->id,
+        'token_used' => $authMethod === 'passport' ? 'passport_token' : 'oauth_token',
+        'auth_method' => $authMethod,
+        'oauth_client_id' => $authMethod === 'passport' ? null : $client->id,
+    ]);
+})->with([
+    'personal access' => ['personal_access', 'passport'],
+    'authorization code' => ['authorization_code', 'oauth'],
+]);

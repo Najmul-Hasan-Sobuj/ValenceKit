@@ -89,35 +89,6 @@ class FinanceService
         ];
     }
 
-    /**
-     * Find a category definition by key.
-     *
-     * @return array{id: string, name: string, icon: string, color: string}|null
-     */
-    public function findCategory(string $key): ?array
-    {
-        $category = Category::forModule('finance')->where('slug', $key)->first();
-        if ($category) {
-            return [
-                'id' => $category->slug,
-                'name' => $category->name,
-                'icon' => $category->icon,
-                'color' => $category->color,
-            ];
-        }
-
-        $categories = config('finance.categories', ['income' => [], 'expense' => []]);
-        foreach (['income', 'expense'] as $type) {
-            foreach ($categories[$type] ?? [] as $cat) {
-                if ($cat['id'] === $key) {
-                    return $cat;
-                }
-            }
-        }
-
-        return null;
-    }
-
     public function findActiveCategory(string $key, ?string $type = null): ?array
     {
         $category = Category::forModule('finance')
@@ -170,8 +141,10 @@ class FinanceService
         $targetDate = $date ?? now();
         $startOfMonth = $targetDate->copy()->startOfMonth();
         $endOfMonth = $targetDate->copy()->endOfMonth();
+        $currency = $this->getActiveCurrency();
 
         $transactions = FinanceTransaction::betweenDates($startOfMonth->toDateString(), $endOfMonth->toDateString())
+            ->where('currency', $currency['code'])
             ->get(['type', 'amount']);
 
         $totalIncome = (float) $transactions->where('type', 'income')->sum('amount');
@@ -195,6 +168,7 @@ class FinanceService
             : ($netBalance > 0 ? 100.0 : 0.0);
 
         $topExpense = FinanceTransaction::betweenDates($startOfMonth->toDateString(), $endOfMonth->toDateString())
+            ->where('currency', $currency['code'])
             ->where('type', 'expense')
             ->selectRaw('category_key, category_name, SUM(amount) as total_amount')
             ->groupBy('category_key', 'category_name')
@@ -208,9 +182,10 @@ class FinanceService
             'percentage' => $totalExpense > 0 ? round(($topExpense->total_amount / $totalExpense) * 100, 1) : 0.0,
         ] : null;
 
-        $transactionCount = FinanceTransaction::betweenDates($startOfMonth->toDateString(), $endOfMonth->toDateString())->count();
+        $transactionCount = FinanceTransaction::betweenDates($startOfMonth->toDateString(), $endOfMonth->toDateString())->where('currency', $currency['code'])->count();
 
         $recentTransactions = FinanceTransaction::latest('transaction_date')
+            ->where('currency', $currency['code'])
             ->latest('id')
             ->limit(5)
             ->get(['id', 'type', 'amount', 'category_name', 'category_key', 'description', 'payment_method', 'transaction_date', 'is_recurring'])
@@ -232,7 +207,7 @@ class FinanceService
             'transaction_count' => $transactionCount,
             'top_expense' => $topExpenseData,
             'recent_transactions' => $recentTransactions,
-            'currency' => $this->getActiveCurrency(),
+            'currency' => $currency,
         ];
     }
 
@@ -266,6 +241,7 @@ class FinanceService
         }
 
         $aggregates = FinanceTransaction::betweenDates($from, $to)
+            ->where('currency', $this->getActiveCurrency()['code'])
             ->selectRaw("{$periodExpr} as period, type, SUM(amount) as total")
             ->groupByRaw("{$periodExpr}, type")
             ->get();
@@ -332,6 +308,7 @@ class FinanceService
     public function getCategoryBreakdown(CarbonInterface $from, CarbonInterface $to): array
     {
         $expenses = FinanceTransaction::expense()
+            ->where('currency', $this->getActiveCurrency()['code'])
             ->betweenDates($from->toDateString(), $to->toDateString())
             ->get(['category_key', 'category_name', 'amount']);
 
@@ -432,8 +409,9 @@ class FinanceService
      */
     public function filteredTransactionQuery(array $filters): Builder
     {
+        $query = FinanceTransaction::query()->where('currency', $this->getActiveCurrency()['code']);
         if (! empty($filters['ids'])) {
-            return FinanceTransaction::query()->whereIn('id', $filters['ids']);
+            return $query->whereIn('id', $filters['ids']);
         }
 
         $from = ! empty($filters['from'])
@@ -448,13 +426,14 @@ class FinanceService
             [$from, $to] = [$to->startOfDay(), $from->endOfDay()];
         }
 
-        return FinanceTransaction::query()
+        return $query
             ->when(! empty($filters['search']), function ($q) use ($filters) {
                 $search = $filters['search'];
                 $q->where(function ($sub) use ($search) {
                     $sub->where('description', 'like', "%{$search}%")
                         ->orWhere('reference', 'like', "%{$search}%")
-                        ->orWhere('category_name', 'like', "%{$search}%");
+                        ->orWhere('category_name', 'like', "%{$search}%")
+                        ->orWhereRaw('CAST(amount AS '.(in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true) ? 'CHAR' : 'TEXT').') LIKE ?', ["%{$search}%"]);
                 });
             })
             ->when(! empty($filters['type']) && in_array($filters['type'], ['income', 'expense']), function ($q) use ($filters) {

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Laravel\Passkeys\Passkey as BasePasskey;
+use Laravel\Passkeys\Passkeys;
 
 /**
  * @property int $id
@@ -22,6 +24,14 @@ use Laravel\Passkeys\Passkey as BasePasskey;
  */
 class Passkey extends BasePasskey
 {
+    /**
+     * @return HasMany<BasePasskey, Model>
+     */
+    public static function forOwner(Model $owner): HasMany
+    {
+        return $owner->hasMany(Passkeys::passkeyModel(), 'user_id')->withAttributes(['user_type' => $owner->getMorphClass()]);
+    }
+
     /**
      * The attributes that are mass assignable.
      *

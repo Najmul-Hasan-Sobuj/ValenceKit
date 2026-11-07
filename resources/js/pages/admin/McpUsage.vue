@@ -146,7 +146,10 @@ const search = ref(props.filters?.search ?? '');
 watch(
     () => props.filters,
     (newFilters) => {
-        if (newFilters?.search !== undefined && newFilters.search !== search.value) {
+        if (
+            newFilters?.search !== undefined &&
+            newFilters.search !== search.value
+        ) {
             search.value = newFilters.search ?? '';
         }
         if (newFilters?.from && newFilters?.to) {
@@ -178,7 +181,9 @@ watchDebounced(
             return;
         }
 
-        const from = dateRange.value?.start ? dateRange.value.start.toString() : '';
+        const from = dateRange.value?.start
+            ? dateRange.value.start.toString()
+            : '';
         const to = dateRange.value?.end ? dateRange.value.end.toString() : '';
 
         const params: Record<string, string> = {};
@@ -186,11 +191,11 @@ watchDebounced(
         if (from) params.from = from;
         if (to) params.to = to;
 
-        router.get(
-            indexMcpUsage(),
-            params,
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
+        router.get(indexMcpUsage(), params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     },
     { debounce: 300 },
 );
@@ -310,7 +315,7 @@ defineOptions({
                 />
                 <Input
                     v-model="search"
-                    class="pl-9 bg-background"
+                    class="bg-background pl-9"
                     placeholder="Search IP, endpoint, token, or user..."
                 />
             </div>

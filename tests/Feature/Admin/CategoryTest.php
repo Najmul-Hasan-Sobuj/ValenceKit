@@ -243,3 +243,30 @@ it('automatically deactivates children when parent category is turned inactive',
         ->and($child1->fresh()->is_active)->toBeFalse()
         ->and($child2->fresh()->is_active)->toBeFalse();
 });
+
+it('keeps children inactive when only their status is updated under an inactive parent', function () {
+    $parent = Category::create(['module' => 'finance', 'type' => 'expense', 'name' => 'Parent', 'is_active' => false]);
+    $child = Category::create(['module' => 'finance', 'type' => 'expense', 'name' => 'Child', 'parent_id' => $parent->id, 'is_active' => false]);
+
+    $this->actingAs($this->superAdmin, 'admin')->patch(route('admin.categories.update', $child), ['is_active' => true])->assertRedirect();
+
+    expect($child->fresh()->is_active)->toBeFalse();
+});
+
+it('accepts long and duplicate finance category slugs in transactions', function () {
+    $name = str_repeat('a', 128);
+    foreach (range(1, 2) as $index) {
+        $this->actingAs($this->superAdmin, 'admin')->post(route('admin.categories.store'), [
+            'module' => 'finance', 'type' => 'expense', 'name' => $name,
+        ])->assertSessionHasNoErrors();
+    }
+    $categories = Category::where('name', $name)->get();
+    expect($categories)->toHaveCount(2)->and($categories->pluck('slug')->unique())->toHaveCount(2);
+    foreach ($categories as $category) {
+        expect(strlen($category->slug))->toBeGreaterThan(50);
+        $this->actingAs($this->superAdmin, 'admin')->post(route('admin.finance.transactions.store'), [
+            'type' => 'expense', 'amount' => 10, 'category_key' => $category->slug,
+            'description' => 'Long category', 'transaction_date' => now()->toDateString(), 'payment_method' => 'cash',
+        ])->assertSessionHasNoErrors();
+    }
+});

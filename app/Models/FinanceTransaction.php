@@ -12,6 +12,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property-read string $period
+ * @property-read string $total
  * @property string $type
  * @property string $amount
  * @property string $currency
@@ -123,17 +125,5 @@ class FinanceTransaction extends Model
 
         return $query->whereDate('transaction_date', '>=', $fromDate)
             ->whereDate('transaction_date', '<=', $toDate);
-    }
-
-    /**
-     * Scope a query to transactions within a given month.
-     *
-     * @param  Builder<$this>  $query
-     * @return Builder<$this>
-     */
-    public function scopeInMonth(Builder $query, int $year, int $month): Builder
-    {
-        return $query->whereYear('transaction_date', $year)
-            ->whereMonth('transaction_date', $month);
     }
 }

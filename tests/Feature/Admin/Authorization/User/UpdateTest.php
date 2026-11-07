@@ -82,3 +82,16 @@ it('prevents demoting or deactivating the only remaining super admin', function 
         ])
         ->assertSessionHasErrors(['is_active']);
 });
+
+it('does not count inactive super admins when protecting the last active super admin', function () {
+    $active = Admin::factory()->create(['is_active' => true]);
+    $active->assignRole('Super Admin');
+    $inactive = Admin::factory()->create(['is_active' => false]);
+    $inactive->assignRole('Super Admin');
+
+    $this->actingAs($active, 'admin')->put(route('admin.users.update', $active), [
+        'name' => $active->name, 'email' => $active->email, 'role' => 'Staff', 'is_active' => true,
+    ])->assertSessionHasErrors('role');
+
+    expect($active->fresh()->hasRole('Super Admin'))->toBeTrue();
+});

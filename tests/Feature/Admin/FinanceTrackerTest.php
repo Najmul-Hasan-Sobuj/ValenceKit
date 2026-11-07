@@ -6,6 +6,7 @@ use App\Models\Admin;
 use App\Models\Category;
 use App\Models\FinanceTransaction;
 use App\Services\FinanceService;
+use Carbon\Carbon;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Mcp\Request as McpRequest;
@@ -366,4 +367,64 @@ it('loads dynamic database categories with custom colors and icons in category b
                 ->etc()
             )
         );
+});
+
+it('keeps each currency separate throughout finance reports and exports', function () {
+    $service = app(FinanceService::class);
+    foreach (['USD' => 100, 'BDT' => 200] as $currency => $amount) {
+        FinanceTransaction::create([
+            'type' => 'expense', 'amount' => $amount, 'currency' => $currency,
+            'category_key' => 'meals', 'category_name' => 'Meals', 'description' => $currency.' expense',
+            'transaction_date' => now()->toDateString(), 'payment_method' => 'cash', 'admin_id' => $this->superAdmin->id,
+        ]);
+    }
+    $service->setActiveCurrency('BDT');
+    $summary = $service->getMonthlySummary();
+    expect($summary['total_expense'])->toBe(200.0)->and($summary['transaction_count'])->toBe(1)
+        ->and($summary['recent_transactions'])->toHaveCount(1);
+    expect(array_sum($service->getAnalyticsTimeline(now()->startOfMonth(), now())['expense']))->toBe(200.0);
+    expect(array_sum($service->getCategoryBreakdown(now()->startOfMonth(), now())['data']))->toBe(200.0);
+
+    $this->actingAs($this->superAdmin, 'admin')->get(route('admin.finance.index'))
+        ->assertInertia(fn (Assert $page) => $page->has('transactions.data', 1)->where('periodMetrics.expense', 200));
+    $csv = $this->actingAs($this->superAdmin, 'admin')->get(route('admin.finance.export'))->streamedContent();
+    expect($csv)->toContain('BDT expense')->not->toContain('USD expense');
+});
+
+it('rejects changing only a transaction type to one incompatible with its category', function () {
+    $transaction = FinanceTransaction::create([
+        'type' => 'expense', 'amount' => 10, 'category_key' => 'meals', 'category_name' => 'Meals',
+        'description' => 'Lunch', 'transaction_date' => now()->toDateString(), 'payment_method' => 'cash', 'admin_id' => $this->superAdmin->id,
+    ]);
+    $this->actingAs($this->superAdmin, 'admin')->put(route('admin.finance.transactions.update', $transaction), ['type' => 'income'])
+        ->assertSessionHasErrors('category_key');
+    expect($transaction->fresh()->type)->toBe('expense');
+});
+
+it('exports the same amount search results shown on the ledger', function () {
+    FinanceTransaction::create([
+        'type' => 'expense', 'amount' => 123.45, 'category_key' => 'meals', 'category_name' => 'Meals',
+        'description' => 'Lunch match', 'transaction_date' => now()->toDateString(), 'payment_method' => 'cash', 'admin_id' => $this->superAdmin->id,
+    ]);
+    $this->actingAs($this->superAdmin, 'admin')->get(route('admin.finance.index', ['search' => '123.45']))
+        ->assertInertia(fn (Assert $page) => $page->has('transactions.data', 1));
+    expect($this->actingAs($this->superAdmin, 'admin')->get(route('admin.finance.export', ['search' => '123.45']))->streamedContent())
+        ->toContain('Lunch match');
+});
+
+it('validates finance report and export dates', function ($route) {
+    $this->actingAs($this->superAdmin, 'admin')->getJson(route($route, ['from' => 'invalid-date']))
+        ->assertUnprocessable()->assertJsonValidationErrors('from');
+})->with(['admin.finance.index', 'admin.finance.export']);
+
+it('uses the current day and completed month for MCP burn rates', function () {
+    $this->travelTo(Carbon::parse('2026-11-15 12:00:00'));
+    FinanceTransaction::create([
+        'type' => 'expense', 'amount' => 150, 'category_key' => 'meals', 'category_name' => 'Meals',
+        'description' => 'Lunch', 'transaction_date' => '2026-11-05', 'payment_method' => 'cash', 'admin_id' => $this->superAdmin->id,
+    ]);
+    Passport::actingAs($this->superAdmin, ['mcp:access'], 'mcp');
+    $tool = new GetFinancialSummaryTool;
+    expect((string) $tool->handle(new McpRequest)->content())->toContain('$10.00 / day')->toContain('Days Remaining in Month: 15');
+    expect((string) $tool->handle(new McpRequest(['year' => 2026, 'month' => 10]))->content())->toContain('Days Remaining in Month: 0');
 });

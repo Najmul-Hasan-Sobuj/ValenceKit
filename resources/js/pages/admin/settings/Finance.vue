@@ -68,7 +68,8 @@ defineOptions({
                 </Label>
                 <p class="text-xs text-muted-foreground">
                     Select the currency used across the sidebar widget,
-                    transactions ledger, KPI metrics, and exports.
+                    transactions ledger, KPI metrics, and exports. Records in
+                    other currencies remain available when you switch back.
                 </p>
 
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">

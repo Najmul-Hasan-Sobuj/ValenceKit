@@ -32,33 +32,6 @@ export function usePermissions() {
     }
 
     /**
-     * Check if the current admin has ANY of the given permissions.
-     */
-    function canAny(perms: string[]): boolean {
-        if (isSuperAdmin.value) {
-            return true;
-        }
-        return perms.some((p) => permissions.value.includes(p));
-    }
-
-    /**
-     * Check if the current admin has ALL of the given permissions.
-     */
-    function canAll(perms: string[]): boolean {
-        if (isSuperAdmin.value) {
-            return true;
-        }
-        return perms.every((p) => permissions.value.includes(p));
-    }
-
-    /**
-     * Check if the current admin has a specific role.
-     */
-    function hasRole(roleName: string): boolean {
-        return roles.value.includes(roleName);
-    }
-
-    /**
      * Check if the current admin can edit a target user account.
      * Non-super admins cannot edit Super Admin accounts.
      */
@@ -90,17 +63,6 @@ export function usePermissions() {
             (r: any) => r.name === 'Super Admin' || r === 'Super Admin',
         );
         if (targetIsSuperAdmin && !isSuperAdmin.value) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Check if the current admin can assign a specific role.
-     * Only Super Admins can assign the 'Super Admin' role.
-     */
-    function canAssignRole(roleName: string): boolean {
-        if (roleName === 'Super Admin' && !isSuperAdmin.value) {
             return false;
         }
         return true;
@@ -190,12 +152,8 @@ export function usePermissions() {
         permissions,
         isSuperAdmin,
         can,
-        canAny,
-        canAll,
-        hasRole,
         canEditUser,
         canDeleteUser,
-        canAssignRole,
         filterAssignableRoles,
         canEditRole,
         canDeleteRole,

@@ -26,6 +26,8 @@ class FinanceController extends Controller
     {
         abort_unless($request->user('admin')->can('finance.view'), 403);
 
+        $request->validate(['from' => ['nullable', 'date'], 'to' => ['nullable', 'date']]);
+
         $from = $request->filled('from')
             ? $request->date('from')->startOfDay()
             : now()->startOfMonth()->startOfDay();
@@ -38,26 +40,10 @@ class FinanceController extends Controller
             [$from, $to] = [$to->startOfDay(), $from->endOfDay()];
         }
 
-        $baseQuery = FinanceTransaction::query()
-            ->when($request->filled('search'), function ($q) use ($request) {
-                $search = $request->input('search');
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('description', 'like', "%{$search}%")
-                        ->orWhere('reference', 'like', "%{$search}%")
-                        ->orWhere('category_name', 'like', "%{$search}%")
-                        ->orWhere('amount', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->filled('type') && in_array($request->input('type'), ['income', 'expense']), function ($q) use ($request) {
-                $q->where('type', $request->input('type'));
-            })
-            ->when($request->filled('category'), function ($q) use ($request) {
-                $q->where('category_key', $request->input('category'));
-            })
-            ->when($request->filled('payment_method'), function ($q) use ($request) {
-                $q->where('payment_method', $request->input('payment_method'));
-            })
-            ->betweenDates($from->toDateString(), $to->toDateString());
+        $baseQuery = $this->financeService->filteredTransactionQuery($request->only(['search', 'type', 'category', 'payment_method']) + [
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+        ]);
 
         $transactions = (clone $baseQuery)
             ->with('admin:id,name,email')
@@ -204,6 +190,8 @@ class FinanceController extends Controller
     public function export(Request $request): StreamedResponse
     {
         abort_unless($request->user('admin')->can('finance.export'), 403);
+
+        $request->validate(['from' => ['nullable', 'date'], 'to' => ['nullable', 'date']]);
 
         $filters = $request->only(['search', 'type', 'category', 'payment_method', 'from', 'to']);
 

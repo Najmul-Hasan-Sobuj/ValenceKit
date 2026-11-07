@@ -283,72 +283,6 @@ parameters:
 			path: app/Http/Resources/Admin/CategoryResource.php
 
 		-
-			message: '#^Parameter \#1 \$array of function array_slice expects array, list\<string\>\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mcp/Resources/SystemLogs.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: app/Mcp/Tools/BaseDbTool.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\JsonSchema\\Types\\StringType\:\:maxLength\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Mcp/Tools/GetCategoriesForModuleTool.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\JsonSchema\\Types\\IntegerType\:\:minimum\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Mcp/Tools/GetFinancialSummaryTool.php
-
-		-
-			message: '#^Method Illuminate\\Contracts\\JsonSchema\\JsonSchema\:\:integer\(\) invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 2
-			path: app/Mcp/Tools/GetFinancialSummaryTool.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\JsonSchema\\Types\\StringType\:\:maxLength\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Mcp/Tools/GetUserRoles.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\JsonSchema\\Types\\NumberType\:\:minimum\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Mcp/Tools/RecordTransactionTool.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\JsonSchema\\Types\\StringType\:\:maxLength\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Mcp/Tools/RecordTransactionTool.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\JsonSchema\\Types\\StringType\:\:minLength\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Mcp/Tools/RecordTransactionTool.php
-
-		-
-			message: '#^Return type \(Illuminate\\Database\\Eloquent\\Relations\\HasMany\<App\\Models\\AdminPasskey, \$this\(App\\Models\\Admin\)\>\) of method App\\Models\\Admin\:\:passkeys\(\) should be compatible with return type \(Illuminate\\Database\\Eloquent\\Relations\\HasMany\<Laravel\\Passkeys\\Passkey, Illuminate\\Database\\Eloquent\\Model\>\) of method Laravel\\Passkeys\\Contracts\\PasskeyUser\:\:passkeys\(\)$#'
-			identifier: method.childReturnType
-			count: 2
-			path: app/Models/Admin.php
-
-		-
-			message: '#^Return type \(Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<App\\Models\\Admin, \$this\(App\\Models\\AdminPasskey\)\>\) of method App\\Models\\AdminPasskey\:\:user\(\) should be compatible with return type \(Illuminate\\Database\\Eloquent\\Relations\\BelongsTo\<Illuminate\\Database\\Eloquent\\Model, \$this\(Laravel\\Passkeys\\Passkey\)\>\) of method Laravel\\Passkeys\\Passkey\:\:user\(\)$#'
-			identifier: method.childReturnType
-			count: 1
-			path: app/Models/AdminPasskey.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
 			identifier: property.notFound
 			count: 1
@@ -453,17 +387,5 @@ parameters:
 		-
 			message: '#^Offset ''type'' might not exist on array\{search\?\: string, type\?\: string, category\?\: string, payment_method\?\: string, from\?\: string, to\?\: string, ids\?\: array\{\}\}\.$#'
 			identifier: offsetAccess.notFound
-			count: 1
-			path: app/Services/FinanceService.php
-
-		-
-			message: '#^Unable to resolve the template type TKey in call to function collect$#'
-			identifier: argument.templateType
-			count: 1
-			path: app/Services/FinanceService.php
-
-		-
-			message: '#^Unable to resolve the template type TValue in call to function collect$#'
-			identifier: argument.templateType
 			count: 1
 			path: app/Services/FinanceService.php

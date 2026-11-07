@@ -86,7 +86,7 @@ class McpSettingsController extends Controller
 
         $auditLogService->record(
             'mcp.token.created',
-            afterValues: ['name' => $tokenResult->token->name, 'abilities' => ['mcp:use', 'mcp:access']],
+            afterValues: ['name' => $request->name, 'abilities' => ['mcp:use', 'mcp:access']],
             description: 'An MCP personal access token was created.',
             actor: $admin,
         );

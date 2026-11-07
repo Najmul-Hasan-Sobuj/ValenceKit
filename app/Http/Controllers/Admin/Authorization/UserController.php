@@ -97,7 +97,7 @@ class UserController extends Controller
             return back()->with('error', 'You cannot deactivate your own account.');
         }
 
-        if ($user->hasRole('Super Admin') && Admin::role('Super Admin')->count() <= 1) {
+        if ($user->is_active && $user->hasRole('Super Admin') && Admin::role('Super Admin')->where('is_active', true)->count() <= 1) {
             if ($request->validated('role') !== 'Super Admin' || ! $request->validated('is_active', true)) {
                 return back()->with('error', 'Cannot demote or deactivate the only remaining Super Admin.');
             }
@@ -136,7 +136,7 @@ class UserController extends Controller
         }
 
         if ($user->hasRole('Super Admin')) {
-            if (Admin::role('Super Admin')->count() <= 1) {
+            if ($user->is_active && Admin::role('Super Admin')->where('is_active', true)->count() <= 1) {
                 return back()->with('error', 'Cannot delete the last Super Admin.');
             }
 

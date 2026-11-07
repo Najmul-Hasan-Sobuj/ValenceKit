@@ -88,8 +88,9 @@ class CategoryController extends Controller
     {
         $before = $category->auditLogValues();
         $data = $request->validated();
-        if (! empty($data['parent_id'])) {
-            $parent = Category::find($data['parent_id']);
+        $parentId = array_key_exists('parent_id', $data) ? $data['parent_id'] : $category->parent_id;
+        if ($parentId) {
+            $parent = Category::find($parentId);
             if ($parent && ! $parent->is_active) {
                 $data['is_active'] = false;
             }

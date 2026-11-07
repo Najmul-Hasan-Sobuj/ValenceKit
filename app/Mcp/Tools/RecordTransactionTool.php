@@ -27,7 +27,7 @@ class RecordTransactionTool extends BaseDbTool
             'type' => ['required', 'string', 'in:income,expense'],
             'amount' => ['required', 'numeric', 'min:0.01', 'max:999999999.99'],
             'description' => ['required', 'string', 'min:1', 'max:255'],
-            'category' => ['nullable', 'string', 'max:64', 'regex:/^[a-zA-Z0-9_\-]+$/'],
+            'category' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9_\-]+$/'],
             'payment_method' => ['nullable', 'string', 'in:card,bank_transfer,cash,bkash_nagad,other'],
         ]);
 
@@ -90,9 +90,9 @@ class RecordTransactionTool extends BaseDbTool
     {
         return [
             'type' => $schema->string()->description("Transaction type: 'income' or 'expense'")->enum(['income', 'expense'])->required(),
-            'amount' => $schema->number()->description('The monetary amount of the transaction')->minimum(0.01)->maximum(999999999.99)->required(),
-            'description' => $schema->string()->description('Brief description or reason for the transaction')->minLength(1)->maxLength(255)->required(),
-            'category' => $schema->string()->description("Category identifier (e.g. 'software_saas', 'cloud_infra', 'client_retainer', 'marketing')")->maxLength(64),
+            'amount' => $schema->number()->description('The monetary amount of the transaction')->min(0.01)->max(999999999.99)->required(),
+            'description' => $schema->string()->description('Brief description or reason for the transaction')->min(1)->max(255)->required(),
+            'category' => $schema->string()->description("Category identifier (e.g. 'software_saas', 'cloud_infra', 'client_retainer', 'marketing')")->max(255),
             'payment_method' => $schema->string()->description("Payment method ('card', 'bank_transfer', 'cash', 'bkash_nagad', 'other')")->enum(['card', 'bank_transfer', 'cash', 'bkash_nagad', 'other']),
         ];
     }

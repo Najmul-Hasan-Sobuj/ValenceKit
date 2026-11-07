@@ -28,7 +28,7 @@ class UpdateFinanceTransactionRequest extends FormRequest
         return [
             'type' => ['sometimes', 'required', Rule::in(['income', 'expense'])],
             'amount' => ['sometimes', 'required', 'numeric', 'min:0.01'],
-            'category_key' => ['sometimes', 'required', 'string', 'max:50'],
+            'category_key' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'required', 'string', 'max:255'],
             'reference' => ['nullable', 'string', 'max:100'],
             'transaction_date' => ['sometimes', 'required', 'date'],
@@ -51,12 +51,12 @@ class UpdateFinanceTransactionRequest extends FormRequest
                 }
 
                 $transaction = $this->route('transaction');
-                if (! $transaction instanceof FinanceTransaction || ! $this->filled('category_key')) {
+                if (! $transaction instanceof FinanceTransaction || (! $this->filled('category_key') && ! $this->filled('type'))) {
                     return;
                 }
 
                 $category = app(FinanceService::class)->findActiveCategory(
-                    (string) $this->input('category_key'),
+                    (string) $this->input('category_key', $transaction->category_key),
                     (string) $this->input('type', $transaction->type),
                 );
 

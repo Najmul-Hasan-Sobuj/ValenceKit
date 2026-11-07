@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
+import { getLocalTimeZone, today } from '@internationalized/date';
 import type { Component } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import {
@@ -98,7 +99,7 @@ const form = useForm({
     category_name: '',
     description: '',
     reference: generateReference(),
-    transaction_date: new Date().toISOString().split('T')[0],
+    transaction_date: today(getLocalTimeZone()).toString(),
     payment_method: 'card',
     is_recurring: false,
     recurring_frequency: 'monthly',
@@ -152,7 +153,7 @@ watch(
                     props.transaction.reference || generateReference();
                 form.transaction_date = props.transaction.transaction_date
                     ? String(props.transaction.transaction_date).split('T')[0]
-                    : new Date().toISOString().split('T')[0];
+                    : today(getLocalTimeZone()).toString();
                 form.payment_method =
                     props.transaction.payment_method || 'card';
                 form.is_recurring = Boolean(props.transaction.is_recurring);
@@ -164,7 +165,7 @@ watch(
                 form.type = 'expense';
                 form.currency = currency.value.code;
                 form.reference = generateReference();
-                form.transaction_date = new Date().toISOString().split('T')[0];
+                form.transaction_date = today(getLocalTimeZone()).toString();
                 form.payment_method = 'card';
                 form.is_recurring = false;
                 form.recurring_frequency = 'monthly';

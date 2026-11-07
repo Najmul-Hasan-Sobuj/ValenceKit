@@ -32,6 +32,7 @@ export default defineConfig({
         }),
     ]),
     server: {
+        allowedHosts: ['valencekit.test'],
         watch: {
             ignored: [
                 '**/.agents/**',

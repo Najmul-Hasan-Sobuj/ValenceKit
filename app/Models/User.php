@@ -41,20 +41,11 @@ class User extends Authenticatable implements MustVerifyEmail, OAuthenticatable,
     /**
      * Get the passkeys associated with the user.
      *
-     * @return HasMany<Passkey, $this>
+     * @return HasMany<\Laravel\Passkeys\Passkey, Model>
      */
     public function passkeys(): HasMany
     {
-        $relation = $this->hasMany(Passkey::class, 'user_id')->where('user_type', $this->getMorphClass());
-
-        return new class($relation->getQuery(), $this, $relation->getForeignKeyName(), $relation->getLocalKeyName()) extends HasMany
-        {
-            protected function setForeignAttributesForCreate(Model $instance): void
-            {
-                parent::setForeignAttributesForCreate($instance);
-                $instance->user_type = $this->parent->getMorphClass();
-            }
-        };
+        return Passkey::forOwner($this);
     }
 
     /**

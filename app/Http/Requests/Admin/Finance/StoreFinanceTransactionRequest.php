@@ -27,7 +27,7 @@ class StoreFinanceTransactionRequest extends FormRequest
         return [
             'type' => ['required', Rule::in(['income', 'expense'])],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'category_key' => ['required', 'string', 'max:50'],
+            'category_key' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:255'],
             'reference' => ['nullable', 'string', 'max:100'],
             'transaction_date' => ['required', 'date'],

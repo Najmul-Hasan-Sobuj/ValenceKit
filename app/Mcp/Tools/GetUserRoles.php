@@ -49,7 +49,7 @@ class GetUserRoles extends BaseDbTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'email' => $schema->string()->description('The admin email address to look up')->format('email')->maxLength(255)->required(),
+            'email' => $schema->string()->description('The admin email address to look up')->format('email')->max(255)->required(),
         ];
     }
 }

@@ -24,7 +24,7 @@ test('web responses include production security response headers', function () {
 
 test('https and production traffic enforces strict-transport-security', function () {
     // Insecure local request should not emit HSTS in non-production
-    $insecureResponse = $this->get('/');
+    $insecureResponse = $this->get('http://localhost/');
     expect($insecureResponse->headers->has('Strict-Transport-Security'))->toBeFalse();
 
     // Secure HTTPS request emits HSTS
@@ -52,4 +52,14 @@ test('connect-src allows websocket connections in local and testing environments
     expect($csp)->toContain("connect-src 'self'")
         ->toContain('ws:')
         ->toContain('wss:');
+});
+
+test('allows the Herd development script only outside production', function () {
+    $hash = "'sha256-e9EdJBA/M3o5ruBrc1LqUrOz1yuPiJZlX/SG34Efiwg='";
+
+    expect($this->get('/')->headers->get('Content-Security-Policy'))->toContain($hash);
+
+    app()->instance('env', 'production');
+
+    expect($this->get('/')->headers->get('Content-Security-Policy'))->not->toContain($hash);
 });

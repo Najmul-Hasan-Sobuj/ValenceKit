@@ -26,7 +26,10 @@ import {
     store as storeToken,
     destroy as destroyToken,
 } from '@/routes/admin/mcp/tokens';
-import { sync as syncTools, update as updateTool } from '@/routes/admin/mcp/tools';
+import {
+    sync as syncTools,
+    update as updateTool,
+} from '@/routes/admin/mcp/tools';
 import { useClipboard } from '@vueuse/core';
 import { toast } from 'vue-sonner';
 import RelativeTime from '@/components/RelativeTime.vue';
@@ -231,7 +234,9 @@ const synchronizeTools = () => {
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="oauth-discovery-url">Protected Resource Metadata</Label>
+                    <Label for="oauth-discovery-url"
+                        >Protected Resource Metadata</Label
+                    >
                     <div class="flex items-center gap-2">
                         <Input
                             id="oauth-discovery-url"
@@ -412,7 +417,9 @@ const synchronizeTools = () => {
                             {{ flashMessage }}
                         </p>
                         <div class="flex items-center gap-2">
-                            <Label for="generated-token" class="sr-only">Generated API Token</Label>
+                            <Label for="generated-token" class="sr-only"
+                                >Generated API Token</Label
+                            >
                             <Input
                                 id="generated-token"
                                 name="generated_token"

@@ -14,7 +14,7 @@ class GetCategoriesForModuleTool extends BaseDbTool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'module' => $schema->string()->description('Module slug')->maxLength(50)->required(),
+            'module' => $schema->string()->description('Module slug')->max(50)->required(),
             'type' => $schema->string()->description('Filter by type: income, expense')->enum(['income', 'expense']),
         ];
     }

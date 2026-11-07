@@ -38,7 +38,7 @@ class Category extends Model
      */
     public function generateUniqueSlug(?string $source = null): string
     {
-        $base = Str::slug($source ?: $this->name ?: Str::random(8));
+        $base = Str::limit(Str::slug($source ?: $this->name ?: Str::random(8)), 255, '');
         $slug = $base;
         $count = 1;
 
@@ -46,7 +46,8 @@ class Category extends Model
             ->where('slug', $slug)
             ->when($this->exists, fn ($q) => $q->where('id', '!=', $this->id))
             ->exists()) {
-            $slug = "{$base}-{$count}";
+            $suffix = "-{$count}";
+            $slug = Str::limit($base, 255 - strlen($suffix), '').$suffix;
             $count++;
         }
 
