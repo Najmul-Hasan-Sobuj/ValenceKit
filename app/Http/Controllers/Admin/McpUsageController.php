@@ -7,10 +7,11 @@ use App\Models\McpUsageLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class McpUsageController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         abort_unless($request->user('admin')->can('settings.mcp.usage.view'), 403);
 

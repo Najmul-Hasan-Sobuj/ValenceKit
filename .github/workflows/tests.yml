@@ -54,3 +54,8 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+      - name: Audit dependencies
+        run: |
+          composer audit --locked --no-interaction
+          npm audit

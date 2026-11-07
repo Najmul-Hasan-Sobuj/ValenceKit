@@ -11,7 +11,6 @@ import {
     FileSpreadsheet,
     MoreHorizontal,
     Pencil,
-    PieChart,
     Plus,
     Search,
     Trash2,
@@ -68,28 +67,7 @@ import {
 import TransactionDrawer from './TransactionDrawer.vue';
 import { usePermissions } from '@/composables/usePermissions';
 
-// Chart.js imports
-import { Bar, Doughnut } from 'vue-chartjs';
-import {
-    ArcElement,
-    BarElement,
-    CategoryScale,
-    Chart as ChartJS,
-    Legend,
-    LinearScale,
-    Title as ChartTitle,
-    Tooltip as ChartTooltip,
-} from 'chart.js';
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    ArcElement,
-    ChartTitle,
-    ChartTooltip,
-    Legend,
-);
+import FinanceCharts from './FinanceCharts.vue';
 
 const props = defineProps<{
     transactions: {
@@ -397,81 +375,6 @@ function formatCurrency(amount: number | string): string {
     }).format(num);
 }
 
-// Charts options
-const timelineChartData = computed(() => {
-    return {
-        labels: props.timelineChart.labels,
-        datasets: [
-            {
-                label: 'Income',
-                backgroundColor: '#10b981',
-                borderRadius: 6,
-                data: props.timelineChart.income,
-            },
-            {
-                label: 'Expense',
-                backgroundColor: '#ef4444',
-                borderRadius: 6,
-                data: props.timelineChart.expense,
-            },
-        ],
-    };
-});
-
-const timelineChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            position: 'top' as const,
-            labels: {
-                boxWidth: 12,
-                font: { size: 12 },
-            },
-        },
-    },
-    scales: {
-        x: {
-            grid: { display: false },
-        },
-        y: {
-            grid: { color: 'rgba(156, 163, 175, 0.1)' },
-            ticks: {
-                callback: (val: any) => `${props.currency.symbol}${val}`,
-            },
-        },
-    },
-};
-
-const categoryChartData = computed(() => {
-    return {
-        labels: props.categoryChart.labels,
-        datasets: [
-            {
-                data: props.categoryChart.data,
-                backgroundColor: props.categoryChart.colors,
-                borderWidth: 2,
-                borderColor: 'transparent',
-            },
-        ],
-    };
-});
-
-const categoryChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            position: 'right' as const,
-            labels: {
-                boxWidth: 10,
-                font: { size: 11 },
-            },
-        },
-    },
-    cutout: '70%',
-};
-
 defineOptions({
     layout: {
         breadcrumbs: [{ title: 'Finance Tracker', href: financeIndex.url() }],
@@ -643,70 +546,11 @@ defineOptions({
             </div>
         </div>
 
-        <!-- Charts Section -->
-        <div class="grid gap-4 lg:grid-cols-3">
-            <!-- Cash Flow Timeline Bar Chart (2 cols) -->
-            <div class="rounded-xl border bg-card p-5 shadow-xs lg:col-span-2">
-                <div
-                    class="flex items-center justify-between border-b border-border/50 pb-3"
-                >
-                    <div>
-                        <h3 class="text-sm font-semibold text-foreground">
-                            Cash Flow Timeline
-                        </h3>
-                        <p class="text-xs text-muted-foreground">
-                            Income vs Expenses over the selected period
-                        </p>
-                    </div>
-                    <Badge variant="outline" class="text-xs capitalize">
-                        By {{ timelineChart.interval }}
-                    </Badge>
-                </div>
-                <div class="mt-4 h-64 w-full">
-                    <Bar
-                        v-if="timelineChart.labels.length > 0"
-                        :data="timelineChartData"
-                        :options="timelineChartOptions"
-                    />
-                    <div
-                        v-else
-                        class="flex h-full items-center justify-center text-xs text-muted-foreground"
-                    >
-                        No transactions recorded for this period.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Expense Category Breakdown Donut Chart (1 col) -->
-            <div class="rounded-xl border bg-card p-5 shadow-xs">
-                <div
-                    class="flex items-center justify-between border-b border-border/50 pb-3"
-                >
-                    <div>
-                        <h3 class="text-sm font-semibold text-foreground">
-                            Expense Distribution
-                        </h3>
-                        <p class="text-xs text-muted-foreground">
-                            Spending share by category
-                        </p>
-                    </div>
-                    <PieChart class="size-4 text-muted-foreground" />
-                </div>
-                <div class="mt-4 h-64 w-full">
-                    <Doughnut
-                        v-if="categoryChart.data.length > 0"
-                        :data="categoryChartData"
-                        :options="categoryChartOptions"
-                    />
-                    <div
-                        v-else
-                        class="flex h-full items-center justify-center text-xs text-muted-foreground"
-                    >
-                        No expense records in this timeframe.
-                    </div>
-                </div>
-            </div>
-        </div>
+        <FinanceCharts
+            :timeline-chart="timelineChart"
+            :category-chart="categoryChart"
+            :currency-symbol="currency.symbol"
+        />
 
         <!-- Filter Toolbar -->
         <div
