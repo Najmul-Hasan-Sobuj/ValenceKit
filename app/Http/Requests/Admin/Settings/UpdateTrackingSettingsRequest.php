@@ -12,7 +12,7 @@ class UpdateTrackingSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user('admin')?->can('settings.tracking.edit') ?? false;
+        return $this->user('admin')?->hasRole('Super Admin') ?? false;
     }
 
     /**

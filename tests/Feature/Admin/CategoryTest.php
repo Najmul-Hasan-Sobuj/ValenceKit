@@ -23,6 +23,18 @@ it('can render categories index page with correct props', function () {
         );
 });
 
+it('does not allow a category viewer to change its status', function () {
+    $admin = Admin::factory()->create();
+    $admin->givePermissionTo('categories.view');
+    $category = Category::create(['module' => 'finance', 'name' => 'Test category', 'is_active' => true]);
+
+    $this->actingAs($admin, 'admin')->patch(route('admin.categories.update', $category), [
+        'is_active' => false,
+    ])->assertForbidden();
+
+    expect($category->fresh()->is_active)->toBeTrue();
+});
+
 it('can create a category with null type (general category)', function () {
     $this->actingAs($this->superAdmin, 'admin')
         ->post(route('admin.categories.store'), [

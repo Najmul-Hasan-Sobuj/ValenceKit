@@ -39,7 +39,7 @@ const props = defineProps<{
     settings: TrackingSettingsProps;
 }>();
 
-const { can } = usePermissions();
+const { isSuperAdmin } = usePermissions();
 
 const form = useForm({
     clarity_enabled: Boolean(props.settings.clarity_enabled),
@@ -119,7 +119,7 @@ defineOptions({
                         <Switch
                             id="exclude_admins"
                             v-model="form.exclude_admins"
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         />
                     </div>
                     <p class="text-xs leading-relaxed text-muted-foreground">
@@ -178,7 +178,7 @@ defineOptions({
                             @update:model-value="
                                 handleSwitchToggle('clarity', $event)
                             "
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         />
                         <button
                             type="button"
@@ -210,7 +210,7 @@ defineOptions({
                         type="text"
                         placeholder="e.g. yyvng93thl"
                         class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!can('settings.tracking.edit')"
+                        :disabled="!isSuperAdmin"
                     />
                     <p
                         class="flex items-center gap-1.5 text-xs text-muted-foreground"
@@ -273,7 +273,7 @@ defineOptions({
                             @update:model-value="
                                 handleSwitchToggle('ga4', $event)
                             "
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         />
                         <button
                             type="button"
@@ -305,7 +305,7 @@ defineOptions({
                         type="text"
                         placeholder="e.g. G-XXXXXXXXXX"
                         class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!can('settings.tracking.edit')"
+                        :disabled="!isSuperAdmin"
                     />
                     <p class="text-xs text-muted-foreground">
                         Found in your Google Analytics Admin &gt; Data Streams
@@ -362,7 +362,7 @@ defineOptions({
                             @update:model-value="
                                 handleSwitchToggle('gtm', $event)
                             "
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         />
                         <button
                             type="button"
@@ -394,7 +394,7 @@ defineOptions({
                         type="text"
                         placeholder="e.g. GTM-XXXXXXX"
                         class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!can('settings.tracking.edit')"
+                        :disabled="!isSuperAdmin"
                     />
                     <p class="text-xs text-muted-foreground">
                         Both the header script and noscript body iframe are
@@ -451,7 +451,7 @@ defineOptions({
                             @update:model-value="
                                 handleSwitchToggle('pixel', $event)
                             "
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         />
                         <button
                             type="button"
@@ -483,7 +483,7 @@ defineOptions({
                         type="text"
                         placeholder="e.g. 123456789012345"
                         class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!can('settings.tracking.edit')"
+                        :disabled="!isSuperAdmin"
                     />
                     <p class="text-xs text-muted-foreground">
                         Standard PageView event tracking is automatically
@@ -541,7 +541,7 @@ defineOptions({
                             @update:model-value="
                                 handleSwitchToggle('custom', $event)
                             "
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         />
                         <button
                             type="button"
@@ -575,7 +575,7 @@ defineOptions({
                             rows="4"
                             placeholder="<!-- Paste any tracking script tags for the <head> section -->&#10;<script>&#10;  // custom analytics code&#10;<\/script>"
                             class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         ></textarea>
                         <p class="text-xs text-muted-foreground">
                             Injected right before <code>&lt;/head&gt;</code>.
@@ -602,7 +602,7 @@ defineOptions({
                             rows="3"
                             placeholder="<!-- Paste any fallback tracking pixels or body tags -->&#10;<noscript><img src='...' /></noscript>"
                             class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-                            :disabled="!can('settings.tracking.edit')"
+                            :disabled="!isSuperAdmin"
                         ></textarea>
                         <p class="text-xs text-muted-foreground">
                             Injected immediately after the opening
@@ -619,9 +619,7 @@ defineOptions({
             <div class="flex items-center justify-between pt-2">
                 <Button
                     type="submit"
-                    :disabled="
-                        form.processing || !can('settings.tracking.edit')
-                    "
+                    :disabled="form.processing || !isSuperAdmin"
                     class="rounded-xl px-6 py-2.5 font-semibold"
                 >
                     {{

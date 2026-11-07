@@ -23,6 +23,22 @@ it('does not include mcpStats if admin lacks permission', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/Dashboard')
             ->where('mcpStats', null)
+            ->where('platformStats', null)
+        );
+});
+
+it('shares platform statistics only with admins allowed to view users', function () {
+    $admin = Admin::factory()->create();
+    $admin->givePermissionTo('users.view');
+
+    $this->actingAs($admin, 'admin')->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('platformStats', fn (Assert $stats) => $stats
+                ->where('total_admins', 1)
+                ->etc()
+            )
+            ->where('mcpStats', null)
         );
 });
 

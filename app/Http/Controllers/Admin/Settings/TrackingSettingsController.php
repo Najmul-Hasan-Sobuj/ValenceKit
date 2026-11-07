@@ -32,8 +32,6 @@ class TrackingSettingsController extends Controller
      */
     public function update(UpdateTrackingSettingsRequest $request, AuditLogService $auditLogService): RedirectResponse
     {
-        abort_unless($request->user('admin')->can('settings.tracking.edit'), 403);
-
         $settings = TrackingSetting::first() ?? TrackingSetting::create([]);
 
         $attributes = [

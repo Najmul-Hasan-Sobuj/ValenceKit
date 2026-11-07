@@ -86,6 +86,8 @@ class RoleController extends Controller
             'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
+        abort_unless($request->user('admin')->canDelegatePermissions($validated['permissions']), 403);
+
         $role = Role::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
@@ -131,6 +133,8 @@ class RoleController extends Controller
             abort(403, 'Only Super Admins can manage system roles.');
         }
 
+        abort_unless($request->user('admin')->canDelegateRole($role), 403);
+
         $before = $role->only(['name', 'description', 'is_system', 'guard_name']) + ['permissions' => $role->permissions->pluck('name')->all()];
 
         $validated = $request->validate([
@@ -139,6 +143,8 @@ class RoleController extends Controller
             'permissions' => ['required', 'array'],
             'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
+
+        abort_unless($request->user('admin')->canDelegatePermissions($validated['permissions']), 403);
 
         if ($role->is_system && $validated['name'] !== $role->name) {
             return back()->with('error', 'System role names cannot be changed.');
@@ -172,6 +178,8 @@ class RoleController extends Controller
         if ($role->is_system) {
             return back()->with('error', 'System roles cannot be deleted.');
         }
+
+        abort_unless($request->user('admin')->canDelegateRole($role), 403);
 
         $assignedMembersCount = $role->users()->count();
 

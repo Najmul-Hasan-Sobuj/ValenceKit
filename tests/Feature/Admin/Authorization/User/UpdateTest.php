@@ -37,6 +37,38 @@ it('can update an existing user', function () {
     expect($targetUser->fresh()->hasRole('Manager'))->toBeTrue();
 });
 
+it('prevents an editor from assigning a more privileged role to themselves', function () {
+    $role = Role::create(['name' => 'Privileged', 'guard_name' => 'admin']);
+    $role->givePermissionTo('roles.edit');
+
+    $this->actingAs($this->admin, 'admin')->put(route('admin.users.update', $this->admin), [
+        'name' => $this->admin->name, 'email' => $this->admin->email,
+        'role' => $role->name, 'is_active' => true,
+    ])->assertSessionHasErrors('role');
+
+    expect($this->admin->fresh()->hasRole($role))->toBeFalse();
+});
+
+it('rejects invalid role values when updating an administrator', function ($role) {
+    $target = Admin::factory()->create();
+
+    $this->actingAs($this->admin, 'admin')->put(route('admin.users.update', $target), [
+        'name' => $target->name, 'email' => $target->email, 'role' => $role, 'is_active' => true,
+    ])->assertSessionHasErrors('role');
+})->with(['unknown role' => 'Not a role', 'invalid type' => [['invalid']]]);
+
+it('prevents changing an administrator with higher permissions', function () {
+    $target = Admin::factory()->create();
+    $target->givePermissionTo('roles.edit');
+
+    $this->actingAs($this->admin, 'admin')->put(route('admin.users.update', $target), [
+        'name' => $target->name, 'email' => 'changed@example.com',
+        'role' => $this->admin->roles->first()->name, 'is_active' => true,
+    ])->assertSessionHasErrors('role');
+
+    expect($target->fresh()->email)->not->toBe('changed@example.com');
+});
+
 it('prevents an admin from deactivating their own account', function () {
     $this->actingAs($this->admin, 'admin')
         ->put(route('admin.users.update', $this->admin), [

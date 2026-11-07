@@ -325,12 +325,6 @@ parameters:
 			path: app/Models/TrackingSetting.php
 
 		-
-			message: '#^Access to an undefined property object\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Notifications/AdminInviteNotification.php
-
-		-
 			message: '#^Method App\\Services\\ExportService\:\:exportCsv\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1

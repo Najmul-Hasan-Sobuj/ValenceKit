@@ -11,6 +11,7 @@ use App\Notifications\AdminInviteNotification;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
@@ -72,7 +73,7 @@ class UserController extends Controller
 
         $admin->assignRole($request->validated('role'));
 
-        $admin->notify(new AdminInviteNotification($temporaryPassword));
+        $admin->notify(new AdminInviteNotification(Password::broker('admins')->createToken($admin)));
 
         $auditLogService->created(
             'user.invited',
@@ -81,7 +82,7 @@ class UserController extends Controller
             actor: $request->user('admin'),
         );
 
-        return back()->with('success', 'User invited successfully. The temporary password was sent by email.');
+        return back()->with('success', 'User invited successfully. An invitation link was sent by email.');
     }
 
     /**
@@ -144,6 +145,8 @@ class UserController extends Controller
                 return back()->with('error', 'Only Super Admins can delete a Super Admin account.');
             }
         }
+
+        abort_unless($request->user('admin')->canDelegatePermissions($user->getAllPermissions()->pluck('name')->all()), 403);
 
         $before = $user->auditLogValues();
         $userName = $user->name;

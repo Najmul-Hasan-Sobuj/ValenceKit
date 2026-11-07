@@ -16,6 +16,7 @@ use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -42,6 +43,18 @@ class Admin extends Authenticatable implements OAuthenticatable, PasskeyUser
     use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable;
 
     protected string $guard_name = 'admin';
+
+    public function canDelegateRole(Role $role): bool
+    {
+        return ($role->name !== 'Super Admin' || $this->hasRole('Super Admin'))
+            && $this->canDelegatePermissions($role->permissions->pluck('name')->all());
+    }
+
+    /** @param array<string> $permissions */
+    public function canDelegatePermissions(array $permissions): bool
+    {
+        return collect($permissions)->every(fn (string $permission): bool => $this->can($permission));
+    }
 
     /**
      * @return array<string, mixed>

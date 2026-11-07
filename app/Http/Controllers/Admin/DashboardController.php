@@ -42,12 +42,12 @@ class DashboardController extends Controller
             ];
         }
 
-        $platformStats = [
+        $platformStats = $admin && $admin->can('users.view') ? [
             'total_users' => User::count(),
             'total_admins' => Admin::count(),
             'verified_users' => User::whereNotNull('email_verified_at')->count(),
             'passkey_count' => Passkey::where('user_type', Admin::class)->count(),
-        ];
+        ] : null;
 
         return Inertia::render('admin/Dashboard', [
             'financeSummary' => $financeSummary,

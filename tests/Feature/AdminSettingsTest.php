@@ -127,6 +127,9 @@ test('unauthorized admin without settings permissions is forbidden from accessin
     $this->actingAs($restrictedAdmin, 'admin')->get(route('admin.appearance.edit'))
         ->assertForbidden();
 
+    $this->actingAs($restrictedAdmin, 'admin')->get(route('admin.security.edit'))
+        ->assertForbidden();
+
     $this->actingAs($restrictedAdmin, 'admin')->getJson(route('admin.passkeys.register.options'))
         ->assertForbidden();
 });
@@ -147,7 +150,7 @@ test('admin with only profile view permission can access profile tab but not upd
         ->assertForbidden();
 });
 
-test('admin without settings.security.edit permission can update their own password with correct current password', function () {
+test('admin without settings.security.edit permission cannot update their password', function () {
     $admin = Admin::factory()->create();
 
     $response = $this->actingAs($admin, 'admin')->put(route('admin.security.update'), [
@@ -156,6 +159,18 @@ test('admin without settings.security.edit permission can update their own passw
         'password_confirmation' => 'new-secret-password',
     ]);
 
-    $response->assertSessionHasNoErrors();
-    expect(password_verify('new-secret-password', $admin->refresh()->password))->toBeTrue();
+    $response->assertForbidden();
+    expect(password_verify('password', $admin->refresh()->password))->toBeTrue();
+});
+
+test('admin required to change their password can do so without settings permissions', function () {
+    $admin = Admin::factory()->create(['must_change_password' => true]);
+
+    $this->actingAs($admin, 'admin')->get(route('admin.security.edit'))->assertOk();
+    $this->put(route('admin.security.update'), [
+        'current_password' => 'password', 'password' => 'new-secret-password',
+        'password_confirmation' => 'new-secret-password',
+    ])->assertSessionHasNoErrors();
+
+    expect($admin->fresh()->must_change_password)->toBeFalsy();
 });

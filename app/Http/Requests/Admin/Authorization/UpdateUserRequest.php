@@ -6,6 +6,7 @@ use App\Models\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use Spatie\Permission\Models\Role;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -28,12 +29,13 @@ class UpdateUserRequest extends FormRequest
                 Rule::unique('admins')->ignore($adminId),
             ],
             'role' => [
+                'bail',
                 'required',
                 'string',
-                'exists:roles,name',
                 function ($attribute, $value, $fail) {
-                    if ($value === 'Super Admin' && ! $this->user('admin')->hasRole('Super Admin')) {
-                        $fail('Only Super Admins can assign the Super Admin role.');
+                    $role = Role::where('guard_name', 'admin')->where('name', $value)->first();
+                    if (! $role || ! $this->user('admin')->canDelegateRole($role)) {
+                        $fail('You cannot assign this role.');
                     }
                 },
             ],
@@ -53,6 +55,10 @@ class UpdateUserRequest extends FormRequest
 
                 if (! $targetAdmin instanceof Admin || ! $currentAdmin instanceof Admin) {
                     return;
+                }
+
+                if (! $currentAdmin->canDelegatePermissions($targetAdmin->getAllPermissions()->pluck('name')->all())) {
+                    $validator->errors()->add('role', 'You cannot manage an administrator with permissions you do not have.');
                 }
 
                 if ($currentAdmin->is($targetAdmin) && $this->boolean('is_active') === false) {

@@ -133,19 +133,16 @@ function confirmDeleteRole(event?: Event): void {
     event?.preventDefault();
     if (roleToDelete.value && !isDeleting.value) {
         isDeleting.value = true;
-        router.delete(
-            rolesRoute.destroy.url(roleToDelete.value.id.toString()),
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    deleteDialogOpen.value = false;
-                    roleToDelete.value = null;
-                },
-                onFinish: () => {
-                    isDeleting.value = false;
-                },
+        router.delete(rolesRoute.destroy.url(roleToDelete.value.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                deleteDialogOpen.value = false;
+                roleToDelete.value = null;
             },
-        );
+            onFinish: () => {
+                isDeleting.value = false;
+            },
+        });
     }
 }
 
@@ -348,11 +345,7 @@ defineOptions({
                                         as-child
                                     >
                                         <Link
-                                            :href="
-                                                rolesRoute.edit.url(
-                                                    role.id.toString(),
-                                                )
-                                            "
+                                            :href="rolesRoute.edit.url(role.id)"
                                             class="flex w-full items-center"
                                         >
                                             <component

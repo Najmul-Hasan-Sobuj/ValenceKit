@@ -73,6 +73,7 @@ function formatNumber(num: number): string {
 
             <!-- Card 2: MCP Tool Calls (1 big number + 2 simple metrics) -->
             <div
+                v-if="mcpStats"
                 class="flex flex-col justify-between rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors hover:border-border"
             >
                 <div>
@@ -90,7 +91,7 @@ function formatNumber(num: number): string {
                     <div
                         class="mt-3 text-3xl font-bold tracking-tight text-foreground"
                     >
-                        {{ formatNumber(mcpStats?.total_calls ?? 0) }}
+                        {{ formatNumber(mcpStats.total_calls) }}
                     </div>
 
                     <div
@@ -106,7 +107,7 @@ function formatNumber(num: number): string {
                         </span>
                         <span>•</span>
                         <span
-                            >{{ mcpStats?.calls_today ?? 0 }} calls today</span
+                            >{{ mcpStats.calls_today }} calls today</span
                         >
                     </div>
                 </div>
@@ -126,6 +127,7 @@ function formatNumber(num: number): string {
 
             <!-- Card 3: Registered Users (1 big number + 2 simple metrics) -->
             <div
+                v-if="platformStats"
                 class="flex flex-col justify-between rounded-xl border border-border/80 bg-card p-6 shadow-xs transition-colors hover:border-border"
             >
                 <div>
@@ -143,19 +145,19 @@ function formatNumber(num: number): string {
                     <div
                         class="mt-3 text-3xl font-bold tracking-tight text-foreground"
                     >
-                        {{ formatNumber(platformStats?.total_users ?? 0) }}
+                        {{ formatNumber(platformStats.total_users) }}
                     </div>
 
                     <div
                         class="mt-2 flex items-center gap-2 text-xs text-muted-foreground"
                     >
                         <span class="font-medium text-foreground">
-                            {{ platformStats?.total_admins ?? 0 }} admin
+                            {{ platformStats.total_admins }} admin
                         </span>
                         <span>•</span>
                         <span
                             >{{
-                                platformStats?.verified_users ?? 0
+                                platformStats.verified_users
                             }}
                             verified</span
                         >

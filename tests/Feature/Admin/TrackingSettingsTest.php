@@ -41,6 +41,16 @@ test('admin without settings.tracking.view permission is forbidden', function ()
         ->assertForbidden();
 });
 
+test('tracking editors cannot change script settings without the super admin role', function () {
+    $staff = Admin::factory()->create();
+    $staff->givePermissionTo('settings.tracking.edit');
+
+    $this->actingAs($staff, 'admin')->patch(route('admin.tracking.settings.update'), [
+        'custom_scripts_enabled' => true,
+        'custom_head_scripts' => '<script>alert(1)</script>',
+    ])->assertForbidden();
+});
+
 test('admin can update tracking configuration and auto-extracts project ID from snippet', function () {
     $claritySnippet = <<<'HTML'
 <script type="text/javascript">

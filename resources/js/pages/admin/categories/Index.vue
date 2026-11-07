@@ -467,6 +467,7 @@ const toggleStatus = (category: any, newStatus: boolean) => {
                                 <Switch
                                     :model-value="Boolean(category.is_active)"
                                     :disabled="
+                                        !can('categories.edit') ||
                                         isParentInactive(category) ||
                                         updatingStatusId === category.id
                                     "

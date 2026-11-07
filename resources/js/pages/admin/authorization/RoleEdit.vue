@@ -38,7 +38,7 @@ function saveRole(): void {
         return;
     }
 
-    form.put(rolesRoute.update.url(props.role.data.id.toString()));
+    form.put(rolesRoute.update.url(props.role.data.id));
 }
 
 defineOptions({

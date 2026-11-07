@@ -14,7 +14,11 @@ import { usePermissions } from '@/composables/usePermissions';
 
 const { can } = usePermissions();
 
-defineProps<{ passwordRules: string; passkeys: Passkey[] }>();
+defineProps<{
+    passwordRules: string;
+    passkeys: Passkey[];
+    canUpdatePassword: boolean;
+}>();
 
 defineOptions({
     layout: { breadcrumbs: [{ title: 'Security settings', href: edit() }] },
@@ -67,7 +71,7 @@ defineOptions({
                 />
                 <InputError :message="errors.password_confirmation" />
             </div>
-            <Button :disabled="processing">Save</Button>
+            <Button :disabled="processing || !canUpdatePassword">Save</Button>
         </Form>
     </div>
 

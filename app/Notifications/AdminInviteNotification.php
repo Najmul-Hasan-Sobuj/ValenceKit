@@ -2,12 +2,14 @@
 
 namespace App\Notifications;
 
+use App\Models\Admin;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class AdminInviteNotification extends Notification implements ShouldQueue
+class AdminInviteNotification extends Notification implements ShouldBeEncrypted, ShouldQueue
 {
     use Queueable;
 
@@ -15,7 +17,7 @@ class AdminInviteNotification extends Notification implements ShouldQueue
      * Create a new notification instance.
      */
     public function __construct(
-        public string $temporaryPassword
+        public string $token
     ) {}
 
     /**
@@ -31,15 +33,14 @@ class AdminInviteNotification extends Notification implements ShouldQueue
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(Admin $notifiable): MailMessage
     {
         return (new MailMessage)
             ->subject('You have been invited to '.config('app.name'))
             ->greeting('Hello '.$notifiable->name.'!')
             ->line('You have been invited to join the '.config('app.name').' administration panel.')
-            ->line('Your temporary password is: **'.$this->temporaryPassword.'**')
-            ->line('You will be required to change this password upon your first login.')
-            ->action('Log in', route('admin.login'))
+            ->line('Set your password using this invitation link. The link expires in 60 minutes.')
+            ->action('Set password', route('admin.password.reset', ['token' => $this->token, 'email' => $notifiable->getEmailForPasswordReset()]))
             ->line('If you did not expect this invitation, you can ignore this email.');
     }
 

@@ -46,6 +46,28 @@ it('prevents non-super-admin from assigning super admin role to another user', f
         ->assertSessionHasErrors(['role']);
 });
 
+it('prevents role managers from granting or editing higher permissions', function () {
+    $manager = Admin::factory()->create();
+    $manager->givePermissionTo(['roles.create', 'roles.edit']);
+    $role = Role::create(['name' => 'Privileged', 'guard_name' => 'admin']);
+    $role->givePermissionTo('finance.delete');
+
+    $this->actingAs($manager, 'admin')->post(route('admin.authorization.roles.store'), [
+        'name' => 'Escalated', 'permissions' => ['finance.delete'],
+    ])->assertForbidden();
+
+    $manageableRole = Role::create(['name' => 'Manageable', 'guard_name' => 'admin']);
+    $this->put(route('admin.authorization.roles.update', $manageableRole), [
+        'name' => $manageableRole->name, 'permissions' => ['finance.delete'],
+    ])->assertForbidden();
+    expect($manageableRole->fresh()->hasPermissionTo('finance.delete'))->toBeFalse();
+
+    $this->put(route('admin.authorization.roles.update', $role), [
+        'name' => $role->name, 'permissions' => ['roles.edit'],
+    ])->assertForbidden();
+    expect($role->fresh()->hasPermissionTo('finance.delete'))->toBeTrue();
+});
+
 it('allows admin with roles.view to view roles index but not create', function () {
     $roleViewer = Admin::factory()->create();
     $role = Role::create(['name' => 'Role Viewer', 'guard_name' => 'admin']);

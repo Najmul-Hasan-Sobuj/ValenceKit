@@ -110,7 +110,6 @@ class RoleAndPermissionSeeder extends Seeder
                 'settings.finance.view',
                 'settings.finance.edit',
                 'settings.tracking.view',
-                'settings.tracking.edit',
                 'categories.view',
                 'categories.create',
                 'categories.edit',

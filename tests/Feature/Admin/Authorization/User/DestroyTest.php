@@ -50,3 +50,11 @@ it('cannot delete yourself', function () {
         'id' => $this->admin->id,
     ]);
 });
+
+it('cannot delete an administrator with higher permissions', function () {
+    $target = Admin::factory()->create();
+    $target->givePermissionTo('roles.edit');
+
+    $this->actingAs($this->admin, 'admin')->delete(route('admin.users.destroy', $target))->assertForbidden();
+    $this->assertModelExists($target);
+});
