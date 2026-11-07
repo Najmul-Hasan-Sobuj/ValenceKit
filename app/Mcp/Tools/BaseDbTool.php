@@ -28,13 +28,8 @@ abstract class BaseDbTool extends Tool
             return false;
         }
 
-        if ($token->can($scope)) {
-            return true;
-        }
-
-        return $token->can('mcp:use') || $token->can('mcp:access')
-            ? $admin->can($this->permissionFor($scope))
-            : false;
+        return ($token->can($scope) || $token->can('mcp:use') || $token->can('mcp:access'))
+            && $admin->can($this->permissionFor($scope));
     }
 
     protected function denyUnlessAllowed(Request $request, string $scope): ?Response

@@ -106,9 +106,7 @@ function formatNumber(num: number): string {
                             Server online
                         </span>
                         <span>•</span>
-                        <span
-                            >{{ mcpStats.calls_today }} calls today</span
-                        >
+                        <span>{{ mcpStats.calls_today }} calls today</span>
                     </div>
                 </div>
 
@@ -155,12 +153,7 @@ function formatNumber(num: number): string {
                             {{ platformStats.total_admins }} admin
                         </span>
                         <span>•</span>
-                        <span
-                            >{{
-                                platformStats.verified_users
-                            }}
-                            verified</span
-                        >
+                        <span>{{ platformStats.verified_users }} verified</span>
                     </div>
                 </div>
 

@@ -39,15 +39,16 @@ test('ensures .env.example contains only blank placeholders for sensitive secret
     expect($content)->toMatch('/^USER_BOOTSTRAP_PASSWORD=$/m');
 });
 
-test('ensures gitleaks configuration exists and defines necessary allowlists', function () {
+test('keeps sensitive source files covered by gitleaks', function () {
     $configPath = base_path('.gitleaks.toml');
     expect(file_exists($configPath))->toBeTrue();
 
     $config = file_get_contents($configPath);
     expect($config)
-        ->toContain('[allowlist]')
-        ->toContain('\.env\.example')
-        ->toContain('AdminSeeder');
+        ->toContain('useDefault = true')
+        ->not->toContain('\.env\.example')
+        ->not->toContain('AdminSeeder')
+        ->not->toContain('^tests/.*');
 });
 
 test('ensures ci workflow includes gitleaks secret scanning before ci execution', function () {

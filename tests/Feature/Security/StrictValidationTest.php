@@ -78,6 +78,7 @@ test('get user roles mcp tool validates email strictly', function () {
 });
 
 test('get categories for module mcp tool validates module and type strictly', function () {
+    $this->admin->givePermissionTo('settings.mcp.view');
     Passport::actingAs($this->admin, ['mcp:tools.read'], 'mcp');
     $tool = new GetCategoriesForModuleTool;
 
@@ -91,6 +92,7 @@ test('get categories for module mcp tool validates module and type strictly', fu
 });
 
 test('get financial summary mcp tool validates year and month strictly', function () {
+    $this->admin->givePermissionTo('finance.view');
     Passport::actingAs($this->admin, ['mcp:finance.read'], 'mcp');
     $tool = new GetFinancialSummaryTool;
 
@@ -102,6 +104,7 @@ test('get financial summary mcp tool validates year and month strictly', functio
 });
 
 test('record transaction mcp tool validates amount and type strictly', function () {
+    $this->admin->givePermissionTo('finance.create');
     Passport::actingAs($this->admin, ['mcp:finance.write'], 'mcp');
     $tool = new RecordTransactionTool;
 

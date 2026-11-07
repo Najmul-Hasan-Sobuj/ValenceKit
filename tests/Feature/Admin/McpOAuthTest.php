@@ -92,7 +92,7 @@ it('allows an admin with finance permission to use finance tools', function () {
         ->toContain('recorded successfully');
 });
 
-it('allows tool execution when token has direct scope without relying on role permissions', function () {
+it('denies a directly scoped token when the admin lacks permission', function () {
     $admin = Admin::factory()->create();
     // Admin has no roles or permissions
     Passport::actingAs($admin, ['mcp:finance.read'], 'mcp');
@@ -103,7 +103,21 @@ it('allows tool execution when token has direct scope without relying on role pe
     ]));
 
     expect((string) $response->content())
+        ->toContain('required scope');
+});
+
+it('enforces current permissions for directly scoped tokens', function () {
+    $admin = Admin::factory()->create();
+    $admin->givePermissionTo('finance.view');
+    Passport::actingAs($admin, ['mcp:finance.read'], 'mcp');
+
+    expect((string) (new GetFinancialSummaryTool)->handle(new McpRequest)->content())
         ->toContain('Financial Summary for');
+
+    $admin->revokePermissionTo('finance.view');
+
+    expect((string) (new GetFinancialSummaryTool)->handle(new McpRequest)->content())
+        ->toContain('required scope');
 });
 
 it('denies tool execution when request has no authenticated token', function () {
