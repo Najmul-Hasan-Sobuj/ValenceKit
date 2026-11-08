@@ -88,8 +88,12 @@
                                 .join(' · ')
                                 .slice(0, 500),
                         )
-                        .filter(Boolean)
-                        .slice(0, 14),
+                        .filter((entry) =>
+                            /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sun|Mon|Tue|Wed|Thu|Fri|Sat)\b/i.test(
+                                entry,
+                            ),
+                        )
+                        .slice(0, 7),
                     ...(coords
                         ? {
                               latitude: Number(coords[1]),
