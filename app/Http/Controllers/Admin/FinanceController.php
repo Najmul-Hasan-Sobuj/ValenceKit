@@ -83,8 +83,8 @@ class FinanceController extends Controller
                 'type' => $request->input('type', ''),
                 'category' => $request->input('category', ''),
                 'payment_method' => $request->input('payment_method', ''),
-                'from' => $from->toDateString(),
-                'to' => $to->toDateString(),
+                'from' => $request->filled('from') ? $from->toDateString() : null,
+                'to' => $request->filled('to') ? $to->toDateString() : null,
             ],
         ]);
     }

@@ -56,7 +56,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { parseDate } from '@internationalized/date';
+import { getLocalTimeZone, parseDate, startOfMonth, today } from '@internationalized/date';
 import type { DateRange } from '@/types';
 import {
     index as financeIndex,
@@ -183,15 +183,18 @@ const selectedCategory = ref(
 
 const selectedPaymentMethod = ref(props.filters?.payment_method ?? '');
 
-function initDateRange(): DateRange | undefined {
-    if (!props.filters?.from) return undefined;
-    try {
-        const start = parseDate(props.filters.from);
-        const end = props.filters.to ? parseDate(props.filters.to) : start;
-        return { start, end };
-    } catch {
-        return undefined;
+function initDateRange(): DateRange {
+    if (props.filters?.from) {
+        try {
+            const start = parseDate(props.filters.from);
+            const end = props.filters.to ? parseDate(props.filters.to) : start;
+            return { start, end };
+        } catch {
+            // fall through to default
+        }
     }
+    const localToday = today(getLocalTimeZone());
+    return { start: startOfMonth(localToday), end: localToday };
 }
 
 const dateRange = ref<DateRange | undefined>(initDateRange());

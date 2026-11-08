@@ -57,7 +57,7 @@ const timelineChartData = computed(() => {
     };
 });
 
-const timelineChartOptions = {
+const timelineChartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -66,21 +66,34 @@ const timelineChartOptions = {
             labels: {
                 boxWidth: 12,
                 font: { size: 12 },
+                color: '#9ca3af',
+            },
+        },
+        tooltip: {
+            callbacks: {
+                label: (context: any) => {
+                    const label = context.dataset.label || '';
+                    const value = Number(context.raw ?? 0);
+                    return ` ${label}: ${props.currencySymbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                },
             },
         },
     },
     scales: {
         x: {
             grid: { display: false },
+            ticks: { color: '#9ca3af', font: { size: 11 } },
         },
         y: {
             grid: { color: 'rgba(156, 163, 175, 0.1)' },
             ticks: {
+                color: '#9ca3af',
+                font: { size: 11 },
                 callback: (val: any) => `${props.currencySymbol}${val}`,
             },
         },
     },
-};
+}));
 
 const categoryChartData = computed(() => {
     return {
@@ -96,7 +109,7 @@ const categoryChartData = computed(() => {
     };
 });
 
-const categoryChartOptions = {
+const categoryChartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -105,11 +118,26 @@ const categoryChartOptions = {
             labels: {
                 boxWidth: 10,
                 font: { size: 11 },
+                color: '#9ca3af',
+            },
+        },
+        tooltip: {
+            callbacks: {
+                label: (context: any) => {
+                    const label = context.label || '';
+                    const value = Number(context.raw ?? 0);
+                    const total = (context.dataset.data as number[]).reduce(
+                        (a, b) => a + Number(b),
+                        0,
+                    );
+                    const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                    return ` ${label}: ${props.currencySymbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct}%)`;
+                },
             },
         },
     },
     cutout: '70%',
-};
+}));
 </script>
 
 <template>
