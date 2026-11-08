@@ -28,6 +28,12 @@ class RoleAndPermissionSeeder extends Seeder
      * @var array<string, array<string, string>>
      */
     private const GROUPS = [
+        'Lead Management' => [
+            'leads.view' => 'Browse collected business leads',
+            'leads.import' => 'Manage personal webhook tokens and import leads',
+            'leads.export' => 'Export business leads',
+            'leads.delete' => 'Remove collected business leads',
+        ],
         'User Management' => [
             'users.view' => 'Browse directory and inspect admin accounts',
             'users.invite' => 'Send email invitations to new teammates',

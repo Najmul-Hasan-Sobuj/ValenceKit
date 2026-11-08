@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Valence Scout</title>
+        <link rel="stylesheet" href="panel.css" />
+    </head>
+    <body>
+        <header>
+            <a class="brand" href="#"
+                ><span class="mark">V↗</span>Valence <strong>Scout</strong></a
+            ><button id="connect" class="quiet">Connect</button>
+        </header>
+        <main>
+            <div class="eyebrow">YOUR NEXT CUSTOMER STARTS HERE</div>
+            <h1>Find local.<br /><span>Build connections.</span></h1>
+            <p class="muted">
+                Discover businesses, review the details, then send them to your
+                workspace.
+            </p>
+            <form id="search-form" class="card">
+                <label for="query">What are you looking for?</label
+                ><input
+                    id="query"
+                    placeholder="e.g. Dental clinics"
+                    maxlength="120"
+                    required
+                />
+                <div class="columns">
+                    <div>
+                        <label for="location">Location</label
+                        ><input
+                            id="location"
+                            placeholder="Dhaka, Bangladesh"
+                            maxlength="120"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label for="limit">Lead limit</label
+                        ><input
+                            id="limit"
+                            type="number"
+                            min="1"
+                            max="100"
+                            value="10"
+                            required
+                        />
+                    </div>
+                </div>
+                <button type="submit" id="start" class="primary">
+                    Search Google Maps ↗
+                </button>
+                <p class="hint">
+                    Keep this panel open during collection. Only visible
+                    business information is collected.
+                </p>
+            </form>
+            <div class="status">
+                <span class="dot"></span
+                ><span id="status" role="status" aria-live="polite"
+                    >Ready for your first search.</span
+                ><button id="stop" class="quiet" disabled>Stop</button>
+            </div>
+            <section aria-label="Collected leads">
+                <div class="section-heading">
+                    <h2>Your leads <span id="count">0</span></h2>
+                    <button id="export" class="quiet">Export CSV</button>
+                </div>
+                <div id="leads"></div>
+                <div id="empty" class="empty">
+                    A little research. A new opportunity.<br /><span
+                        >Your collected businesses will appear here.</span
+                    >
+                </div>
+            </section>
+            <footer>
+                <button id="send" class="primary">Send pending leads</button
+                ><button id="clear" class="quiet">Clear</button>
+            </footer>
+        </main>
+        <dialog id="settings">
+            <form id="settings-form">
+                <p id="settings-status" class="error" role="alert"></p>
+                <div class="section-heading">
+                    <h2>Connect your workspace</h2>
+                    <button
+                        type="button"
+                        id="close-settings"
+                        class="quiet"
+                        aria-label="Close"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <p class="muted">
+                    In ValenceKit → Leads → Connect Scout, generate a token and
+                    paste it here. Other projects can implement the same JSON
+                    webhook contract.
+                </p>
+                <label for="endpoint">Webhook URL</label
+                ><input
+                    id="endpoint"
+                    type="url"
+                    placeholder="https://your-app.test/api/v1/leads/webhook"
+                    required
+                /><label for="token">Webhook token</label
+                ><input
+                    id="token"
+                    type="password"
+                    autocomplete="off"
+                    placeholder="Paste a new token"
+                    required
+                />
+                <p class="hint">
+                    The token stays in this browser session. Paste it again
+                    after restarting Chrome. Changing the URL requires a new
+                    token.
+                </p>
+                <button class="primary" type="submit">Save connection</button
+                ><button type="button" id="disconnect" class="quiet">
+                    Disconnect
+                </button>
+            </form>
+        </dialog>
+        <dialog id="social">
+            <div class="section-heading">
+                <h2>Verify a business page</h2>
+                <button id="close-social" class="quiet" aria-label="Close">
+                    ✕
+                </button>
+            </div>
+            <p id="social-description"></p>
+            <p class="muted">
+                In the search tab, open the correct company/page. Sign in there
+                if needed. Then return here to read its visible business contact
+                details. Private messages and personal profiles are not read.
+            </p>
+            <button id="read-social" class="primary">
+                Read the selected business page
+            </button>
+            <p id="social-status" class="error" role="alert"></p>
+        </dialog>
+        <script type="module" src="panel.js"></script>
+    </body>
+</html>

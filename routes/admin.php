@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\LeadController;
+use App\Http\Controllers\Admin\LeadTokenController;
 use App\Http\Controllers\Admin\McpUsageController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
@@ -59,6 +61,11 @@ Route::prefix(config('admin.alias'))
 
         // Authenticated admin routes
         Route::middleware(['auth:admin', EnsureAdminIsActive::class])->group(function () {
+            Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
+            Route::get('leads/export', [LeadController::class, 'export'])->name('leads.export');
+            Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
+            Route::post('leads/tokens', [LeadTokenController::class, 'store'])->middleware('throttle:6,1')->name('leads.tokens.store');
+            Route::delete('leads/tokens/{token}', [LeadTokenController::class, 'destroy'])->name('leads.tokens.destroy');
             Route::delete('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 

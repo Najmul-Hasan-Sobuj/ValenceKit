@@ -49,6 +49,7 @@ import { index as indexMcpUsage } from '@/routes/admin/mcp/usage';
 import { index as indexAuditLogs } from '@/routes/admin/audit-logs';
 import { index as indexFinance } from '@/routes/admin/finance';
 import { index as indexCategories } from '@/routes/admin/categories';
+import { index as indexLeads } from '@/routes/admin/leads';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -91,6 +92,10 @@ const mainNavItems = computed<NavItem[]>(() => {
             icon: LayoutGrid,
         },
     ];
+
+    if (can('leads.view')) {
+        items.push({ title: 'Leads', href: indexLeads(), icon: Users });
+    }
 
     if (children.length > 0) {
         items.push({

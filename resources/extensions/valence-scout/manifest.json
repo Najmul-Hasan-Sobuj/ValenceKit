@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "Valence Scout",
+    "version": "1.0.0",
+    "description": "Collect business listings, review their public contact details, and send leads to your own webhook.",
+    "minimum_chrome_version": "116",
+    "permissions": ["storage", "sidePanel", "scripting", "activeTab"],
+    "host_permissions": ["https://www.google.com/maps/*"],
+    "optional_host_permissions": [
+        "https://*/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+    ],
+    "background": { "service_worker": "worker.js" },
+    "action": { "default_title": "Open Valence Scout" },
+    "side_panel": { "default_path": "panel.html" }
+}

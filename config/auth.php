@@ -54,6 +54,11 @@ return [
             'provider' => 'admins',
         ],
 
+        'leads' => [
+            'driver' => 'passport',
+            'provider' => 'admins',
+        ],
+
         'api' => [
             'driver' => 'passport',
             'provider' => 'users',

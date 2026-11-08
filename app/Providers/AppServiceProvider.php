@@ -44,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Passport::tokensCan([
+            'leads:import' => 'Import business leads from Valence Scout',
             'mcp:use' => 'Connect to the ValenceKit MCP server',
             'mcp:access' => 'Legacy MCP token access',
             ...config('mcp.scopes', []),
