@@ -23,6 +23,15 @@
             if (feed) feed.scrollBy(0, feed.clientHeight * 2);
             return { urls, name: text('h1'), url: location.href };
         },
+        center() {
+            const match = location.href.match(/@(-?[\d.]+),(-?[\d.]+),/);
+            if (!match) {
+                throw new Error(
+                    'Could not locate that area. Choose a more specific location and try again.',
+                );
+            }
+            return { latitude: Number(match[1]), longitude: Number(match[2]) };
+        },
         read() {
             const name = text('h1');
             if (!name || !location.pathname.includes('/maps/place/'))

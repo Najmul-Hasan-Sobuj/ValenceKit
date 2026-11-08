@@ -12,6 +12,7 @@ let rows = [];
 let busy = false;
 let stopped = false;
 let socialTarget = null;
+let gridCells = [];
 const status = (message) => {
     $('status').textContent = message;
     for (const id of ['settings', 'social']) {
@@ -22,11 +23,40 @@ const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const save = () => browser.storage.local.set({ rows });
 const setBusy = (value) => {
     busy = value;
-    for (const id of ['start', 'send', 'clear', 'connect'])
+    for (const id of [
+        'start',
+        'send',
+        'clear',
+        'connect',
+        'grid-mode',
+        'grid-size',
+    ])
         $(id).disabled = value;
     $('stop').disabled = !value;
     render();
 };
+
+function renderGrid() {
+    const enabled = $('grid-mode').checked;
+    $('grid-options').hidden = !enabled;
+    $('grid-status').hidden = !enabled || gridCells.length === 0;
+    $('grid-progress').textContent = `${gridCells.filter((cell) => cell.state === 'done').length} / ${gridCells.length || 9}`;
+    $('grid-cells').replaceChildren(
+        ...gridCells.map((cell) => {
+            const element = document.createElement('div');
+            element.className = `grid-cell ${cell.state}`;
+            element.textContent =
+                cell.state === 'active'
+                    ? 'Collecting…'
+                    : cell.state === 'done'
+                      ? `${cell.leads} found`
+                      : cell.state === 'failed'
+                        ? 'Failed'
+                        : cell.label;
+            return element;
+        }),
+    );
+}
 
 function button(label, action) {
     const element = document.createElement('button');
@@ -40,6 +70,7 @@ function button(label, action) {
 }
 
 function render() {
+    renderGrid();
     $('count').textContent = String(rows.length);
     $('empty').hidden = rows.length > 0;
     $('leads').replaceChildren(
@@ -60,6 +91,27 @@ function render() {
                 line.textContent = value;
                 card.append(line);
             }
+
+            async function collectUrls(tabId, query, limit) {
+                const urls = new Set();
+                let unchanged = 0;
+                for (
+                    let attempt = 0;
+                    attempt < 40 && urls.size < limit && unchanged < 4;
+                    attempt++
+                ) {
+                    if (stopped) break;
+                    const before = urls.size;
+                    const page = await mapsCall(tabId, 'collect');
+                    for (const url of page.urls) urls.add(url);
+                    if (page.url.includes('/maps/place/') && page.name)
+                        urls.add(page.url);
+                    unchanged = before === urls.size ? unchanged + 1 : 0;
+                    status(`Found ${urls.size} business links for ${query}…`);
+                    await pause(1500);
+                }
+                return [...urls].slice(0, limit);
+            }
             const badge = document.createElement('span');
             badge.className = `badge ${row.state === 'failed' ? 'error' : ''}`;
             badge.textContent =
@@ -73,7 +125,7 @@ function render() {
                 button('Maps ↗', () =>
                     browser.tabs.create({ url: row.lead.maps_url }),
                 ),
-                button('Website details', () => enrichWebsite(row)),
+                button('Find email & details', () => enrichWebsite(row)),
                 button('LinkedIn', () => openSocial(row, 'linkedin')),
                 button('Facebook', () => openSocial(row, 'facebook')),
             );
@@ -121,7 +173,7 @@ $('search-form').addEventListener('submit', async (event) => {
     try {
         const query = `${$('query').value.trim()} in ${$('location').value.trim()}`;
         const limit = Math.min(
-            100,
+            120,
             Math.max(1, Number($('limit').value) || 10),
         );
         const tab = await browser.tabs.create({
@@ -129,35 +181,70 @@ $('search-form').addEventListener('submit', async (event) => {
             active: true,
         });
         status('Opening Google Maps…');
-        await openLoaded(
-            tab.id,
-            `https://www.google.com/maps/search/${encodeURIComponent(query)}?hl=en`,
-        );
-        const urls = new Set();
-        let unchanged = 0;
-        for (
-            let attempt = 0;
-            attempt < 40 && urls.size < limit && unchanged < 4;
-            attempt++
-        ) {
-            if (stopped) break;
-            const before = urls.size;
-            const page = await mapsCall(tab.id, 'collect');
-            for (const url of page.urls) urls.add(url);
-            if (page.url.includes('/maps/place/') && page.name)
-                urls.add(page.url);
-            unchanged = before === urls.size ? unchanged + 1 : 0;
-            status(`Found ${urls.size} business links…`);
-            await pause(1500);
+        const useGrid = $('grid-mode').checked;
+        const cellSize = Number($('grid-size').value);
+        const cells = [];
+        if (useGrid) {
+            status('Locating the centre of your search area…');
+            await openLoaded(
+                tab.id,
+                `https://www.google.com/maps/search/${encodeURIComponent($('location').value.trim())}?hl=en`,
+            );
+            const center = await mapsCall(tab.id, 'center');
+            const latitudeStep = cellSize / 111;
+            const longitudeStep =
+                cellSize / (111 * Math.max(0.2, Math.cos((center.latitude * Math.PI) / 180)));
+            for (const row of [-1, 0, 1]) {
+                for (const column of [-1, 0, 1]) {
+                    cells.push({
+                        latitude: center.latitude + row * latitudeStep,
+                        longitude: center.longitude + column * longitudeStep,
+                        label: `${row + 2},${column + 2}`,
+                        state: 'pending',
+                        leads: 0,
+                    });
+                }
+            }
+            gridCells = cells;
+            render();
         }
-        if (!urls.size)
+        const queries = useGrid
+            ? cells
+            : [{ latitude: null, longitude: null, state: 'pending', leads: 0 }];
+        const allUrls = new Set();
+        for (const [index, cell] of queries.entries()) {
+            if (stopped) break;
+            if (useGrid) {
+                cell.state = 'active';
+                renderGrid();
+                status(`Collecting grid ${index + 1} of 9…`);
+            } else {
+                status('Opening Google Maps…');
+            }
+            const mapsUrl = useGrid
+                ? `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${cell.latitude},${cell.longitude},${cellSize <= 1 ? 14 : cellSize <= 5 ? 12 : 11}z?hl=en`
+                : `https://www.google.com/maps/search/${encodeURIComponent(query)}?hl=en`;
+            try {
+                await openLoaded(tab.id, mapsUrl);
+                const urls = await collectUrls(tab.id, query, limit);
+                cell.leads = urls.length;
+                urls.forEach((url) => allUrls.add(url));
+                cell.state = 'done';
+            } catch (error) {
+                cell.state = 'failed';
+                if (!useGrid) throw error;
+            }
+            renderGrid();
+        }
+        if (!allUrls.size)
             throw new Error(
                 'No listings found. Check the Maps tab for consent, verification, or an empty search.',
             );
-        for (const [index, url] of [...urls].slice(0, limit).entries()) {
+        const urls = [...allUrls];
+        for (const [index, url] of urls.entries()) {
             if (stopped) break;
             status(
-                `Reading business ${index + 1} of ${Math.min(urls.size, limit)}…`,
+                `Reading business ${index + 1} of ${urls.length}…`,
             );
             try {
                 await openLoaded(tab.id, url);
@@ -192,6 +279,8 @@ $('stop').addEventListener('click', () => {
     stopped = true;
     status('Stopping after the current operation…');
 });
+$('grid-mode').addEventListener('change', renderGrid);
+renderGrid();
 $('connect').addEventListener('click', async () => {
     const { endpoint = '' } = await browser.storage.local.get('endpoint');
     $('endpoint').value = endpoint;
@@ -309,74 +398,152 @@ async function enrichWebsite(row) {
     setBusy(true);
     try {
         status(`Reading ${url.hostname}…`);
-        const response = await fetch(url, {
-            credentials: 'omit',
-            redirect: 'error',
-            signal: AbortSignal.timeout(15000),
-        });
-        if (
-            !response.ok ||
-            !response.headers.get('content-type')?.includes('text/html')
-        )
-            throw new Error('Website did not return an HTML page.');
-        if (Number(response.headers.get('content-length')) > 2_000_000)
-            throw new Error('Website page is too large.');
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let html = '';
-        let size = 0;
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            size += value.length;
-            if (size > 2_000_000) {
-                await reader.cancel();
+        const readHtml = async (target) => {
+            const response = await fetch(target, {
+                credentials: 'omit',
+                redirect: 'error',
+                signal: AbortSignal.timeout(15000),
+            });
+            if (
+                !response.ok ||
+                !response.headers.get('content-type')?.includes('text/html')
+            )
+                throw new Error('Website did not return an HTML page.');
+            if (Number(response.headers.get('content-length')) > 2_000_000)
                 throw new Error('Website page is too large.');
-            }
-            html += decoder.decode(value, { stream: true });
-        }
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const socials = { ...row.lead.details?.socials };
-        for (const link of doc.querySelectorAll('a[href]')) {
-            const raw = link.getAttribute('href');
-            if (raw.startsWith('mailto:') && !row.lead.email) {
-                const email = raw.slice(7).split('?')[0];
-                if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-                    row.lead.email = email.slice(0, 254);
-            }
-            try {
-                const target = publicWebsite(new URL(raw, url).href);
-                for (const [name, domain] of Object.entries({
-                    facebook: 'facebook.com',
-                    linkedin: 'linkedin.com',
-                    instagram: 'instagram.com',
-                    twitter: 'x.com',
-                    youtube: 'youtube.com',
-                    tiktok: 'tiktok.com',
-                })) {
-                    if (
-                        target.hostname === domain ||
-                        target.hostname.endsWith(`.${domain}`)
-                    )
-                        socials[name] = target.href.slice(0, 2048);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let html = '';
+            let size = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                size += value.length;
+                if (size > 2_000_000) {
+                    await reader.cancel();
+                    throw new Error('Website page is too large.');
                 }
+                html += decoder.decode(value, { stream: true });
+            }
+            return html;
+        };
+        const homepage = await readHtml(url);
+        const homepageDoc = new DOMParser().parseFromString(
+            homepage,
+            'text/html',
+        );
+        const pages = new Map([[url.href, homepageDoc]]);
+        for (const link of homepageDoc.querySelectorAll('a[href]')) {
+            if (pages.size >= 4) break;
+            try {
+                const target = publicWebsite(new URL(link.href, url).href);
+                if (
+                    target.origin === url.origin &&
+                    /(?:^|[-_/])(contact|about|team|connect)(?:[-_/]|$)/i.test(
+                        target.pathname,
+                    )
+                )
+                    pages.set(target.href, null);
             } catch {
-                /* Skip non-public and non-HTTPS links. */
+                /* Skip non-public, external, and non-HTTPS links. */
             }
         }
+        const contactPages = [...pages.keys()].slice(1);
+        await Promise.all(
+            contactPages.map(async (pageUrl) => {
+                try {
+                    pages.set(
+                        pageUrl,
+                        new DOMParser().parseFromString(
+                            await readHtml(pageUrl),
+                            'text/html',
+                        ),
+                    );
+                } catch {
+                    pages.delete(pageUrl);
+                }
+            }),
+        );
+        const socials = { ...row.lead.details?.socials };
+        const emails = new Set(
+            row.lead.email ? [row.lead.email.toLowerCase()] : [],
+        );
+        const phonePattern = /(?:\+?\d[\d\s().-]{7,}\d)/g;
+        for (const doc of pages.values()) {
+            if (!doc) continue;
+            const visibleText = doc.body?.innerText || '';
+            for (const match of visibleText.matchAll(
+                /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+            )) {
+                emails.add(match[0].toLowerCase().replace(/[),.;:]+$/, ''));
+            }
+            for (const link of doc.querySelectorAll('a[href]')) {
+                const raw = link.getAttribute('href') || '';
+                if (raw.toLowerCase().startsWith('mailto:')) {
+                    const email = raw
+                        .slice(7)
+                        .split('?')[0]
+                        .trim()
+                        .toLowerCase();
+                    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+                        emails.add(email);
+                }
+                if (
+                    !row.lead.phone &&
+                    raw.toLowerCase().startsWith('tel:')
+                ) {
+                    row.lead.phone = raw
+                        .slice(4)
+                        .replace(/[^\d+().\s-]/g, '')
+                        .trim()
+                        .slice(0, 100);
+                }
+                try {
+                    const target = publicWebsite(new URL(raw, url).href);
+                    for (const [name, domain] of Object.entries({
+                        facebook: 'facebook.com',
+                        linkedin: 'linkedin.com',
+                        instagram: 'instagram.com',
+                        twitter: 'x.com',
+                        youtube: 'youtube.com',
+                        tiktok: 'tiktok.com',
+                    })) {
+                        if (
+                            target.hostname === domain ||
+                            target.hostname.endsWith(`.${domain}`)
+                        )
+                            socials[name] = target.href.slice(0, 2048);
+                    }
+                } catch {
+                    /* Skip non-public and non-HTTPS links. */
+                }
+            }
+            if (!row.lead.phone)
+                row.lead.phone = visibleText.match(phonePattern)?.[0]
+                    ?.trim()
+                    .slice(0, 100);
+        }
+        row.lead.email = [...emails]
+            .find((email) => email.endsWith(`@${url.hostname}`) || email.endsWith(`.${url.hostname}`)) ||
+            [...emails][0] ||
+            row.lead.email ||
+            null;
         row.lead.details = {
             ...row.lead.details,
             socials,
             description: (
-                doc
+                homepageDoc
                     .querySelector('meta[name="description"]')
                     ?.getAttribute('content') || ''
             ).slice(0, 5000),
+            contact_pages: [...pages.keys()].slice(1),
         };
         row.state = 'pending';
         delete row.error;
         await save();
-        status('Website details added. Review before sending.');
+        status(
+            `Website details added from ${pages.size} page${pages.size === 1 ? '' : 's'}. Review before sending.`,
+        );
     } finally {
         setBusy(false);
     }

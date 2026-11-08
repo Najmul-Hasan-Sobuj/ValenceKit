@@ -4,12 +4,14 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Valence Scout</title>
+        <link rel="icon" href="logo.svg" type="image/svg+xml" />
         <link rel="stylesheet" href="panel.css" />
     </head>
     <body>
         <header>
-            <a class="brand" href="#"
-                ><span class="mark">V↗</span>Valence <strong>Scout</strong></a
+            <a class="brand" href="#" aria-label="Valence Scout home"
+                ><img class="logo" src="logo.svg" alt="" />Valence
+                <strong>Scout</strong></a
             ><button id="connect" class="quiet">Connect</button>
         </header>
         <main>
@@ -43,11 +45,27 @@
                             id="limit"
                             type="number"
                             min="1"
-                            max="100"
+                            max="120"
                             value="10"
                             required
                         />
                     </div>
+                </div>
+                <label class="toggle">
+                    <input id="grid-mode" type="checkbox" />
+                    <span>Collect across a 3 × 3 location grid</span>
+                </label>
+                <div id="grid-options" class="grid-options" hidden>
+                    <label for="grid-size">Grid cell size</label>
+                    <select id="grid-size">
+                        <option value="1">1 km</option>
+                        <option value="5" selected>5 km</option>
+                        <option value="10">10 km</option>
+                    </select>
+                    <p class="hint">
+                        The location is used as the centre. Each cell can
+                        collect up to 120 listings.
+                    </p>
                 </div>
                 <button type="submit" id="start" class="primary">
                     Search Google Maps ↗
@@ -63,6 +81,13 @@
                     >Ready for your first search.</span
                 ><button id="stop" class="quiet" disabled>Stop</button>
             </div>
+            <section id="grid-status" class="grid-status" hidden aria-label="Grid collection status">
+                <div class="section-heading">
+                    <h2>Collection grid</h2>
+                    <span id="grid-progress">0 / 9</span>
+                </div>
+                <div id="grid-cells" class="grid-cells"></div>
+            </section>
             <section aria-label="Collected leads">
                 <div class="section-heading">
                     <h2>Your leads <span id="count">0</span></h2>

@@ -22,18 +22,25 @@ header {
 .brand {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     color: inherit;
     text-decoration: none;
     font-size: 16px;
 }
-.mark {
-    background: #164a3a;
-    color: #dfff94;
-    padding: 8px;
-    border-radius: 12px;
-    margin-right: 3px;
-    font-weight: 800;
+.brand strong {
+    color: #648975;
+    font-weight: 750;
+}
+.logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    box-shadow: 0 5px 12px #164a3a24;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.brand:hover .logo {
+    transform: rotate(-5deg) translateY(-1px);
+    box-shadow: 0 7px 16px #164a3a32;
 }
 main {
     padding: 26px 20px 90px;
@@ -94,6 +101,37 @@ input:focus {
     outline: 2px solid #649c7b;
     outline-offset: 2px;
 }
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 14px;
+    cursor: pointer;
+}
+.toggle input {
+    width: auto;
+    margin: 0;
+    accent-color: #204f3d;
+}
+.grid-options {
+    border: 1px solid #dce6dc;
+    border-radius: 12px;
+    padding: 12px;
+    margin: -2px 0 16px;
+    background: #f8fbf6;
+}
+.grid-options select {
+    width: 100%;
+    border: 1px solid #ccd9ce;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+    color: inherit;
+    font: inherit;
+}
+.grid-options .hint {
+    margin: 8px 0 0;
+}
 .columns {
     display: grid;
     grid-template-columns: 1fr 85px;
@@ -150,6 +188,50 @@ dialog .primary {
     border-radius: 50%;
     background: #91b576;
     flex-shrink: 0;
+}
+.grid-status {
+    border: 1px solid #dce6dc;
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 0 18px;
+    background: #fff;
+}
+.grid-status .section-heading {
+    margin-bottom: 10px;
+}
+#grid-progress {
+    color: #61746b;
+    font-size: 11px;
+}
+.grid-cells {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+}
+.grid-cell {
+    min-height: 42px;
+    padding: 7px 4px;
+    border: 1px solid #c6d5c5;
+    border-radius: 7px;
+    background: #f8fbf6;
+    color: #61746b;
+    text-align: center;
+    font-size: 10px;
+}
+.grid-cell.active {
+    border-color: #d88735;
+    background: #fff8ee;
+    color: #9a5c1c;
+}
+.grid-cell.done {
+    border-color: #79a979;
+    background: #edf7ec;
+    color: #367344;
+}
+.grid-cell.failed {
+    border-color: #c97b6f;
+    background: #fff1ef;
+    color: #a74130;
 }
 .section-heading {
     display: flex;
