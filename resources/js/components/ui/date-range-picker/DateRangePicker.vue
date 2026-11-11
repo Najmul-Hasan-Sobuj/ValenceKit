@@ -31,6 +31,7 @@ import type { DateRange } from '@/types';
 const props = withDefaults(defineProps<{
     placeholder?: string;
     class?: string;
+    allowFuture?: boolean;
 }>(), {
     placeholder: 'Filter by date range',
 });
@@ -164,13 +165,14 @@ const currentMonthLabel = computed(() => {
 const yearOptions = computed(() => {
     const list: number[] = [];
     const minYear = 2018;
-    for (let yr = currentDate.year; yr >= minYear; yr--) {
+    for (let yr = currentDate.year + (props.allowFuture ? 5 : 0); yr >= minYear; yr--) {
         list.push(yr);
     }
     return list;
 });
 
 function isMonthFuture(month: number, year?: number): boolean {
+    if (props.allowFuture) return false;
     const yr = year ?? displayedYear.value;
     if (yr > currentDate.year) return true;
     if (yr === currentDate.year && month > currentDate.month) return true;
@@ -181,7 +183,7 @@ function selectMonth(month: number, currentMonthValue?: DateValue): void {
     const year = currentMonthValue?.year ?? displayedYear.value;
     if (isMonthFuture(month, year)) return;
     let targetMonth = month;
-    if (year === currentDate.year && targetMonth === currentDate.month) {
+    if (!props.allowFuture && year === currentDate.year && targetMonth === currentDate.month) {
         targetMonth = Math.max(1, targetMonth - 1);
     }
     placeholder.value = new CalendarDate(year, targetMonth, 1);
@@ -190,7 +192,7 @@ function selectMonth(month: number, currentMonthValue?: DateValue): void {
 
 function selectYear(year: number, currentMonthValue?: DateValue): void {
     let targetMonth = currentMonthValue?.month ?? displayedMonth.value;
-    if (year === currentDate.year && targetMonth >= currentDate.month) {
+    if (!props.allowFuture && year === currentDate.year && targetMonth >= currentDate.month) {
         targetMonth = Math.max(1, currentDate.month - 1);
     }
     placeholder.value = new CalendarDate(year, targetMonth, 1);
@@ -319,7 +321,7 @@ function clearRange(): void {
         v-model:open="open"
         v-model:placeholder="pickerPlaceholder"
         :number-of-months="2"
-        :max-value="currentDate"
+        :max-value="allowFuture ? undefined : currentDate"
         :close-on-select="false"
         locale="en-US"
     >

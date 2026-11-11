@@ -28,6 +28,19 @@ class RoleAndPermissionSeeder extends Seeder
      * @var array<string, array<string, string>>
      */
     private const GROUPS = [
+        'People & HR' => [
+            'employees.view' => 'Browse all employee HR records',
+            'employees.create' => 'Create employees and link existing accounts',
+            'employees.edit' => 'Update and deactivate employees',
+            'hr.self' => 'Access own attendance and leave workspace',
+            'hr.team' => 'View direct reports HR records',
+            'leave.manage' => 'Submit and cancel leave on behalf of employees',
+            'leave.approve' => 'Review leave for all employees except self',
+            'leave.approve-team' => 'Review leave for direct reports',
+            'attendance.manage' => 'Record attendance and review corrections',
+            'hr.settings.edit' => 'Configure HR policies and leave allocations',
+            'hr.export' => 'Export scoped attendance reports',
+        ],
         'Lead Management' => [
             'leads.view' => 'Browse collected business leads',
             'leads.import' => 'Manage personal webhook tokens and import leads',
@@ -132,6 +145,11 @@ class RoleAndPermissionSeeder extends Seeder
             ],
         ],
     ];
+
+    public static function hrPermissions(): array
+    {
+        return self::GROUPS['People & HR'];
+    }
 
     public function run(): void
     {

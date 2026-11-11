@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\EmployeeFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+#[Fillable(['employee_code', 'name', 'email', 'phone', 'department_id', 'designation', 'manager_id', 'admin_id', 'joined_on', 'ended_on', 'is_active', 'emergency_contact', 'notes'])]
+class Employee extends Model
+{
+    /** @use HasFactory<EmployeeFactory> */
+    use HasFactory;
+
+    protected function casts(): array
+    {
+        return ['is_active' => 'boolean'];
+    }
+
+    public function auditLogValues(): array
+    {
+        return $this->only(['employee_code', 'name', 'email', 'phone', 'department_id', 'designation', 'manager_id', 'admin_id', 'joined_on', 'ended_on', 'is_active']);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
+    }
+
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class);
+    }
+}

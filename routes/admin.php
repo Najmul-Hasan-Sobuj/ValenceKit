@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\HrController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\LeadTokenController;
 use App\Http\Controllers\Admin\McpUsageController;
@@ -61,6 +62,17 @@ Route::prefix(config('admin.alias'))
 
         // Authenticated admin routes
         Route::middleware(['auth:admin', EnsureAdminIsActive::class])->group(function () {
+            Route::get('hr', [HrController::class, 'index'])->name('hr.index');
+            Route::post('hr/employees', [HrController::class, 'employee'])->name('hr.employees.store');
+            Route::put('hr/employees/{employee}', [HrController::class, 'employee'])->name('hr.employees.update');
+            Route::post('hr/settings', [HrController::class, 'settings'])->name('hr.settings.store');
+            Route::delete('hr/settings/{kind}/{id}', [HrController::class, 'deleteSetting'])->name('hr.settings.destroy');
+            Route::post('hr/leave', [HrController::class, 'leave'])->name('hr.leave.store');
+            Route::post('hr/leave/{leave}/review', [HrController::class, 'review'])->name('hr.leave.review');
+            Route::post('hr/clock', [HrController::class, 'clock'])->name('hr.clock');
+            Route::post('hr/attendance', [HrController::class, 'attendance'])->name('hr.attendance.store');
+            Route::post('hr/corrections/{correction}', [HrController::class, 'correction'])->name('hr.corrections.review');
+            Route::get('hr/export', [HrController::class, 'export'])->name('hr.export');
             Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
             Route::get('leads/export', [LeadController::class, 'export'])->name('leads.export');
             Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');

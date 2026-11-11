@@ -50,6 +50,7 @@ import { index as indexAuditLogs } from '@/routes/admin/audit-logs';
 import { index as indexFinance } from '@/routes/admin/finance';
 import { index as indexCategories } from '@/routes/admin/categories';
 import { index as indexLeads } from '@/routes/admin/leads';
+import { index as indexHr } from '@/routes/admin/hr';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -95,6 +96,14 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     if (can('leads.view')) {
         items.push({ title: 'Leads', href: indexLeads(), icon: Users });
+    }
+    if (
+        can('employees.view') ||
+        can('hr.self') ||
+        can('hr.team') ||
+        can('hr.settings.edit')
+    ) {
+        items.push({ title: 'People & HR', href: indexHr(), icon: Users });
     }
 
     if (children.length > 0) {
