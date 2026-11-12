@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { ChevronRight } from '@lucide/vue';
 import {
     Collapsible,
@@ -17,6 +17,7 @@ import {
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { toUrl } from '@/lib/utils';
 import type { NavItem } from '@/types';
 
 defineProps<{
@@ -24,6 +25,22 @@ defineProps<{
 }>();
 
 const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
+const page = usePage();
+function isCurrentChild(href: NavItem['href']): boolean {
+    const origin =
+        typeof window === 'undefined'
+            ? 'http://localhost'
+            : window.location.origin;
+    const target = new URL(toUrl(href), origin);
+    if (!target.searchParams.size) return isCurrentOrParentUrl(href);
+    const current = new URL(page.url, origin);
+    if (current.pathname !== target.pathname) return false;
+    return [...target.searchParams].every(
+        ([key, value]) =>
+            (current.searchParams.get(key) ??
+                (key === 'section' ? page.props.section : null)) === value,
+    );
+}
 </script>
 
 <template>
@@ -36,7 +53,7 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                     as-child
                     :default-open="
                         item.children?.some((child) =>
-                            isCurrentOrParentUrl(child.href),
+                            isCurrentChild(child.href),
                         )
                     "
                     class="group/collapsible"
@@ -59,9 +76,7 @@ const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
                                 >
                                     <SidebarMenuSubButton
                                         as-child
-                                        :is-active="
-                                            isCurrentOrParentUrl(child.href)
-                                        "
+                                        :is-active="isCurrentChild(child.href)"
                                     >
                                         <Link :href="child.href">
                                             <component :is="child.icon" />

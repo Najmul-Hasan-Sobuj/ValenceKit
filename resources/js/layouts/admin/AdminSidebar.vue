@@ -12,6 +12,11 @@ import {
     Users,
     Wallet,
     FolderOpen,
+    CalendarDays,
+    CalendarCheck,
+    ChartColumn,
+    Contact,
+    UserRound,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -97,13 +102,57 @@ const mainNavItems = computed<NavItem[]>(() => {
     if (can('leads.view')) {
         items.push({ title: 'Leads', href: indexLeads(), icon: Users });
     }
-    if (
-        can('employees.view') ||
-        can('hr.self') ||
-        can('hr.team') ||
-        can('hr.settings.edit')
-    ) {
-        items.push({ title: 'People & HR', href: indexHr(), icon: Users });
+    const hrChildren: NavItem[] = [];
+    if (can('employees.view') || can('hr.team')) {
+        hrChildren.push(
+            {
+                title: 'Overview',
+                href: indexHr.url({ query: { section: 'overview' } }),
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Employees',
+                href: indexHr.url({ query: { section: 'employees' } }),
+                icon: Contact,
+            },
+            {
+                title: 'Attendance',
+                href: indexHr.url({ query: { section: 'attendance' } }),
+                icon: CalendarCheck,
+            },
+            {
+                title: 'Leave',
+                href: indexHr.url({ query: { section: 'leave' } }),
+                icon: CalendarDays,
+            },
+            {
+                title: 'Reports',
+                href: indexHr.url({ query: { section: 'reports' } }),
+                icon: ChartColumn,
+            },
+        );
+    }
+    if (can('hr.self')) {
+        hrChildren.push({
+            title: 'My workspace',
+            href: indexHr.url({ query: { section: 'workspace' } }),
+            icon: UserRound,
+        });
+    }
+    if (can('hr.settings.edit')) {
+        hrChildren.push({
+            title: 'Settings',
+            href: indexHr.url({ query: { section: 'settings' } }),
+            icon: Settings,
+        });
+    }
+    if (hrChildren.length) {
+        items.push({
+            title: 'People & HR',
+            href: hrChildren[0].href,
+            icon: Users,
+            children: hrChildren,
+        });
     }
 
     if (children.length > 0) {

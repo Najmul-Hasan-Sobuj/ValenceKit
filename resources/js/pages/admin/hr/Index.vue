@@ -186,22 +186,6 @@ defineOptions({
     layout: { breadcrumbs: [{ title: 'People & HR', href: index.url() }] },
 });
 const { can, admin } = usePermissions();
-const tabs = computed(() => [
-    ...(can('employees.view') || can('hr.team')
-        ? ['overview', 'employees', 'attendance', 'leave', 'reports']
-        : []),
-    ...(can('hr.self') ? ['workspace'] : []),
-    ...(can('hr.settings.edit') ? ['settings'] : []),
-]);
-const labels: Record<string, string> = {
-    overview: 'Overview',
-    employees: 'Employees',
-    attendance: 'Attendance',
-    leave: 'Leave',
-    reports: 'Reports',
-    workspace: 'My workspace',
-    settings: 'Settings',
-};
 const filters = ref({
     search: props.filters.search || '',
     department_id: props.filters.department_id || '',
@@ -773,20 +757,6 @@ function editSetting(kind: string, row: Option) {
                 ><Plus class="size-4" /> Add employee</Button
             >
         </div>
-        <nav
-            class="flex gap-1 overflow-x-auto border-b pb-2"
-            aria-label="HR sections"
-        >
-            <Button
-                v-for="tab in tabs"
-                :key="tab"
-                :variant="tab === section ? 'secondary' : 'ghost'"
-                :aria-current="tab === section ? 'page' : undefined"
-                class="shrink-0"
-                @click="navigate(tab)"
-                >{{ labels[tab] }}</Button
-            >
-        </nav>
         <div v-if="section !== 'settings'" class="flex flex-wrap gap-3">
             <Input
                 v-model="filters.search"
