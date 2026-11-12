@@ -149,6 +149,18 @@ defineOptions({
                 :permissions="props.permissions"
                 :error="form.errors.permissions"
             />
+            <div class="flex justify-end gap-3">
+                <Button variant="outline" as-child
+                    ><Link :href="rolesRoute.index.url()">Cancel</Link></Button
+                >
+                <Button
+                    :disabled="!form.name.trim() || form.processing"
+                    @click="saveRole"
+                >
+                    <Check class="mr-1.5 size-4" />
+                    {{ isDuplicating ? 'Duplicate role' : 'Create role' }}
+                </Button>
+            </div>
         </div>
     </div>
 </template>

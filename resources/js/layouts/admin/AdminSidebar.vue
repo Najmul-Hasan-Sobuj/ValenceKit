@@ -56,6 +56,8 @@ import { index as indexFinance } from '@/routes/admin/finance';
 import { index as indexCategories } from '@/routes/admin/categories';
 import { index as indexLeads } from '@/routes/admin/leads';
 import { index as indexHr } from '@/routes/admin/hr';
+import { index as indexInvoices } from '@/routes/admin/invoices';
+import { index as indexPayroll } from '@/routes/admin/payroll';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -139,6 +141,13 @@ const mainNavItems = computed<NavItem[]>(() => {
             icon: UserRound,
         });
     }
+    if (can('payroll.view')) {
+        hrChildren.push({
+            title: 'Payroll',
+            href: indexPayroll(),
+            icon: Wallet,
+        });
+    }
     if (can('hr.settings.edit')) {
         hrChildren.push({
             title: 'Settings',
@@ -178,6 +187,10 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: indexAuditLogs(),
             icon: ClipboardCheck,
         });
+    }
+
+    if (can('invoices.view')) {
+        items.push({ title: 'Invoices', href: indexInvoices(), icon: Wallet });
     }
 
     if (can('finance.view')) {

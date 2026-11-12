@@ -38,7 +38,7 @@ function saveRole(): void {
         return;
     }
 
-    form.put(rolesRoute.update.url(props.role.data.id));
+    form.put(rolesRoute.update.url(String(props.role.data.id)));
 }
 
 defineOptions({
@@ -190,6 +190,21 @@ defineOptions({
                 :error="form.errors.permissions"
                 :disabled="props.role.data.system"
             />
+            <div class="flex justify-end gap-3">
+                <Button variant="outline" as-child
+                    ><Link :href="rolesRoute.index.url()">Cancel</Link></Button
+                >
+                <Button
+                    :disabled="
+                        props.role.data.system ||
+                        !form.name.trim() ||
+                        form.processing
+                    "
+                    @click="saveRole"
+                >
+                    <Check class="mr-1.5 size-4" /> Save changes
+                </Button>
+            </div>
         </div>
     </div>
 </template>

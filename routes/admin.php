@@ -11,9 +11,11 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\HrController;
+use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\LeadTokenController;
 use App\Http\Controllers\Admin\McpUsageController;
+use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
@@ -62,6 +64,11 @@ Route::prefix(config('admin.alias'))
 
         // Authenticated admin routes
         Route::middleware(['auth:admin', EnsureAdminIsActive::class])->group(function () {
+            Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
+            Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+            Route::post('payroll', [PayrollController::class, 'store'])->name('payroll.store');
+            Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+            Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'payment'])->name('invoices.payments.store');
             Route::get('hr', [HrController::class, 'index'])->name('hr.index');
             Route::post('hr/employees', [HrController::class, 'employee'])->name('hr.employees.store');
             Route::put('hr/employees/{employee}', [HrController::class, 'employee'])->name('hr.employees.update');

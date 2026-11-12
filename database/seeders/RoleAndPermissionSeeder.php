@@ -28,6 +28,15 @@ class RoleAndPermissionSeeder extends Seeder
      * @var array<string, array<string, string>>
      */
     private const GROUPS = [
+        'Invoices' => [
+            'invoices.view' => 'View invoices and payments',
+            'invoices.create' => 'Create invoices',
+            'invoices.payments.create' => 'Record invoice payments',
+        ],
+        'Payroll' => [
+            'payroll.view' => 'View payroll records and payslips',
+            'payroll.create' => 'Create payroll records',
+        ],
         'People & HR' => [
             'employees.view' => 'Browse all employee HR records',
             'employees.create' => 'Create employees and link existing accounts',
