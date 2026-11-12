@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Services\AuditLogService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,16 @@ class InvoiceController extends Controller
 
         return Inertia::render('admin/billing/Invoices', [
             'invoices' => Invoice::query()->when($search !== '', fn ($query) => $query->where(fn ($query) => $query->where('number', 'like', '%'.$search.'%')->orWhere('customer_name', 'like', '%'.$search.'%')))
-                ->withSum('payments', 'amount_minor')->latest('id')->paginate(15)->withQueryString(),
+                ->withSum('payments', 'amount_minor')->latest('id')->paginate(15)->withQueryString()
+                ->through(function (Invoice $invoice): Invoice {
+                    $outstanding = $invoice->amount_minor - (int) $invoice->payments_sum_amount_minor;
+                    $today = CarbonImmutable::today();
+                    $due = CarbonImmutable::parse($invoice->due_on)->startOfDay();
+                    $invoice->setAttribute('overdue_days', $outstanding > 0 && $due->lt($today) ? (int) $due->diffInDays($today) : 0);
+                    $invoice->setAttribute('payment_status', $outstanding <= 0 ? 'paid' : ($due->lt($today) ? 'overdue' : ($due->equalTo($today) ? 'due_today' : 'unpaid')));
+
+                    return $invoice;
+                }),
             'filters' => ['search' => $search],
         ]);
     }

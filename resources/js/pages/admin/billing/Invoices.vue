@@ -2,7 +2,14 @@
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { nextTick, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
-import { Printer, FileText, MoreHorizontal, Plus, Wallet } from '@lucide/vue';
+import {
+    Printer,
+    FileText,
+    MoreHorizontal,
+    Plus,
+    Wallet,
+    Mail,
+} from '@lucide/vue';
 import {
     Drawer,
     DrawerContent,
@@ -35,6 +42,8 @@ type Invoice = {
     currency: string;
     issued_on: string;
     due_on: string;
+    payment_status: 'paid' | 'overdue' | 'due_today' | 'unpaid';
+    overdue_days: number;
 };
 const props = defineProps<{
     filters: { search: string };
@@ -94,6 +103,15 @@ function minor(value: string): number | null {
     const [whole, fraction = ''] = value.split('.');
     const amount = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
     return Number.isSafeInteger(amount) ? amount : null;
+}
+function reminderLink(row: Invoice): string {
+    const due = money(
+        row.amount_minor - Number(row.payments_sum_amount_minor ?? 0),
+        row.currency,
+    );
+    const subject = `Payment reminder: invoice ${row.number}`;
+    const body = `Hello ${row.customer_name},\n\nThis is a reminder that invoice ${row.number}, due ${row.due_on}, has an outstanding balance of ${due}.\n\nThank you.`;
+    return `mailto:${encodeURIComponent(row.customer_email ?? '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 function createInvoice() {
     const amount = minor(invoice.amount_minor);
@@ -269,6 +287,7 @@ function recordPayment() {
                         <th class="p-3">Due</th>
                         <th class="p-3">Total</th>
                         <th class="p-3">Outstanding</th>
+                        <th class="p-3">Status</th>
                         <th class="p-3">Actions</th>
                     </tr>
                 </thead>
@@ -295,6 +314,28 @@ function recordPayment() {
                                 )
                             }}
                         </td>
+                        <td class="p-3">
+                            <span
+                                v-if="row.payment_status === 'paid'"
+                                class="font-medium text-emerald-700 dark:text-emerald-400"
+                                >Paid</span
+                            >
+                            <span
+                                v-else-if="row.payment_status === 'overdue'"
+                                class="font-medium text-destructive"
+                                >{{ row.overdue_days }}
+                                {{ row.overdue_days === 1 ? 'day' : 'days' }}
+                                overdue</span
+                            >
+                            <span
+                                v-else-if="row.payment_status === 'due_today'"
+                                class="font-medium text-amber-700 dark:text-amber-400"
+                                >Due today</span
+                            >
+                            <span v-else class="text-muted-foreground"
+                                >Unpaid</span
+                            >
+                        </td>
                         <td class="p-3 text-right">
                             <DropdownMenu
                                 ><DropdownMenuTrigger as-child
@@ -310,6 +351,17 @@ function recordPayment() {
                                         @select="printInvoice(row)"
                                         ><Printer class="size-4" /> Print
                                         invoice</DropdownMenuItem
+                                    ><DropdownMenuItem
+                                        v-if="
+                                            row.customer_email &&
+                                            row.payment_status !== 'paid'
+                                        "
+                                        as-child
+                                    >
+                                        <a :href="reminderLink(row)"
+                                            ><Mail class="size-4" /> Draft email
+                                            reminder</a
+                                        > </DropdownMenuItem
                                     ><DropdownMenuItem
                                         v-if="
                                             can('invoices.payments.create') &&
@@ -332,7 +384,7 @@ function recordPayment() {
                         </td>
                     </tr>
                     <tr v-if="!props.invoices.data.length">
-                        <td colspan="6" class="p-5 text-muted-foreground">
+                        <td colspan="7" class="p-5 text-muted-foreground">
                             {{
                                 search
                                     ? 'No invoices match your search.'

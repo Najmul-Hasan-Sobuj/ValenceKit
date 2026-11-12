@@ -2,6 +2,7 @@
 
 use App\Models\Admin;
 use App\Models\Invoice;
+use Carbon\CarbonImmutable;
 use Database\Seeders\RoleAndPermissionSeeder;
 
 beforeEach(function () {
@@ -50,4 +51,20 @@ it('searches invoice numbers and customer names and keeps the search in paginati
         ->assertOk()->assertInertia(fn ($page) => $page->where('invoices.total', 16)->has('invoices.data', 1)->where('filters.search', 'Acme'));
     $this->get(route('admin.invoices.index', ['search' => 'OTHER-1']))
         ->assertOk()->assertInertia(fn ($page) => $page->where('invoices.total', 1)->where('invoices.data.0.customer_name', 'Other'));
+});
+
+it('shows overdue age only for unpaid invoices', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-20 12:00:00'));
+    $admin = Admin::factory()->create();
+    $admin->givePermissionTo('invoices.view');
+    $data = ['customer_name' => 'Client', 'description' => 'Services', 'amount_minor' => 10000, 'currency' => 'USD', 'issued_on' => '2026-11-01'];
+    $overdue = Invoice::create([...$data, 'number' => 'OVERDUE', 'due_on' => '2026-11-10']);
+    $overdue->payments()->create(['amount_minor' => 3000, 'paid_on' => '2026-11-15']);
+    $today = Invoice::create([...$data, 'number' => 'TODAY', 'due_on' => '2026-11-20']);
+    $paid = Invoice::create([...$data, 'number' => 'PAID', 'due_on' => '2026-11-10']);
+    $paid->payments()->create(['amount_minor' => 10000, 'paid_on' => '2026-11-11']);
+    $this->actingAs($admin, 'admin')->get(route('admin.invoices.index'))->assertOk()->assertInertia(fn ($page) => $page
+        ->where('invoices.data.0.payment_status', 'paid')->where('invoices.data.0.overdue_days', 0)
+        ->where('invoices.data.1.payment_status', 'due_today')->where('invoices.data.1.overdue_days', 0)
+        ->where('invoices.data.2.payment_status', 'overdue')->where('invoices.data.2.overdue_days', 10));
 });
