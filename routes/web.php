@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
@@ -8,6 +9,7 @@ Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('llms.txt', [SeoController::class, 'llms'])->name('llms');
 
 Route::inertia('/', 'Welcome')->name('home');
+Route::post('contact', [ContactMessageController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 Route::inertia('services', 'Services')->name('services');
 Route::inertia('privacy-policy', 'PrivacyPolicy')->name('privacy-policy');
 Route::inertia('terms', 'Terms')->name('terms');

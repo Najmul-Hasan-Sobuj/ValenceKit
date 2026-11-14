@@ -183,7 +183,7 @@ const handleServicesClick = (e: MouseEvent) => {
                         </NavigationMenuContent>
                     </NavigationMenuItem>
 
-                    <!-- Contact Link -->
+                    <!-- Home Link -->
                     <NavigationMenuItem>
                         <NavigationMenuLink as-child>
                             <Link
@@ -191,7 +191,7 @@ const handleServicesClick = (e: MouseEvent) => {
                                 :class="navigationMenuTriggerStyle()"
                                 class="bg-transparent font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground focus:bg-accent/50"
                             >
-                                Contact
+                                Home
                             </Link>
                         </NavigationMenuLink>
                     </NavigationMenuItem>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { computed, ref, reactive } from 'vue';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
+import { store as storeContact } from '@/routes/contact';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
@@ -90,21 +91,13 @@ const toggleTheme = () => {
     updateAppearance(resolvedAppearance.value === 'dark' ? 'light' : 'dark');
 };
 
-const form = reactive({
+const form = useForm({
     name: '',
     email: '',
-    phoneNumber: '',
+    phone: '',
     message: '',
-    referralSource: '',
+    referral_source: '',
 });
-
-const errors = reactive({
-    name: '',
-    email: '',
-    message: '',
-});
-
-const isSubmitting = ref(false);
 const isSubmitted = ref(false);
 
 const isTelemetryLoading = ref(false);
@@ -126,54 +119,18 @@ const refreshTelemetry = () => {
     }
 };
 
-const validateForm = () => {
-    errors.name = '';
-    errors.email = '';
-    errors.message = '';
-
-    let isValid = true;
-
-    if (!form.name.trim()) {
-        errors.name = 'Please provide your name.';
-        isValid = false;
-    }
-
-    if (!form.email.trim()) {
-        errors.email = 'Please provide your work email.';
-        isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        errors.email = 'Please enter a valid email address.';
-        isValid = false;
-    }
-
-    if (!form.message.trim()) {
-        errors.message = 'Please tell us about your project or inquiry.';
-        isValid = false;
-    }
-
-    return isValid;
-};
-
 const handleSubmit = () => {
-    if (!validateForm()) {
-        return;
-    }
-
-    isSubmitting.value = true;
-
-    // Smooth client submission feedback
-    setTimeout(() => {
-        isSubmitting.value = false;
-        isSubmitted.value = true;
-    }, 600);
+    form.post(storeContact.url(), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isSubmitted.value = true;
+        },
+    });
 };
 
 const resetForm = () => {
-    form.name = '';
-    form.email = '';
-    form.phoneNumber = '';
-    form.message = '';
-    form.referralSource = '';
+    form.reset();
+    form.clearErrors();
     isSubmitted.value = false;
 };
 </script>
@@ -358,9 +315,11 @@ const resetForm = () => {
                                             required
                                             autocomplete="name"
                                             class="w-full"
-                                            :aria-invalid="!!errors.name"
+                                            :aria-invalid="!!form.errors.name"
                                         />
-                                        <InputError :message="errors.name" />
+                                        <InputError
+                                            :message="form.errors.name"
+                                        />
                                     </div>
 
                                     <!-- Work Email Field -->
@@ -380,9 +339,11 @@ const resetForm = () => {
                                             required
                                             autocomplete="email"
                                             class="w-full"
-                                            :aria-invalid="!!errors.email"
+                                            :aria-invalid="!!form.errors.email"
                                         />
-                                        <InputError :message="errors.email" />
+                                        <InputError
+                                            :message="form.errors.email"
+                                        />
                                     </div>
 
                                     <!-- Phone Number Field (Optional) -->
@@ -403,11 +364,14 @@ const resetForm = () => {
                                         </div>
                                         <Input
                                             id="phone-number"
-                                            v-model="form.phoneNumber"
+                                            v-model="form.phone"
                                             type="tel"
                                             placeholder="Include your country code"
                                             autocomplete="tel"
                                             class="w-full"
+                                        />
+                                        <InputError
+                                            :message="form.errors.phone"
                                         />
                                     </div>
 
@@ -427,9 +391,13 @@ const resetForm = () => {
                                             required
                                             placeholder="What are you looking to migrate or improve?"
                                             class="w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
-                                            :aria-invalid="!!errors.message"
+                                            :aria-invalid="
+                                                !!form.errors.message
+                                            "
                                         ></textarea>
-                                        <InputError :message="errors.message" />
+                                        <InputError
+                                            :message="form.errors.message"
+                                        />
                                     </div>
 
                                     <!-- Referral Source Field (Optional) -->
@@ -450,9 +418,14 @@ const resetForm = () => {
                                         </div>
                                         <Input
                                             id="referral-source"
-                                            v-model="form.referralSource"
+                                            v-model="form.referral_source"
                                             placeholder="Google, LinkedIn, a recommendation…"
                                             class="w-full"
+                                        />
+                                        <InputError
+                                            :message="
+                                                form.errors.referral_source
+                                            "
                                         />
                                     </div>
 
@@ -463,11 +436,11 @@ const resetForm = () => {
                                         <Button
                                             type="submit"
                                             size="lg"
-                                            :disabled="isSubmitting"
+                                            :disabled="form.processing"
                                             class="w-full gap-2 font-medium sm:w-auto sm:min-w-44"
                                         >
                                             <span
-                                                v-if="isSubmitting"
+                                                v-if="form.processing"
                                                 class="flex items-center gap-2"
                                             >
                                                 <svg

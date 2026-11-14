@@ -8,8 +8,10 @@ use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\Authorization\RoleController;
 use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\GmailConnectionController;
 use App\Http\Controllers\Admin\HrController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\LeadController;
@@ -64,6 +66,18 @@ Route::prefix(config('admin.alias'))
 
         // Authenticated admin routes
         Route::middleware(['auth:admin', EnsureAdminIsActive::class])->group(function () {
+            Route::get('contact', [ContactMessageController::class, 'index'])->name('contact.index');
+            Route::get('contact/more', [ContactMessageController::class, 'more'])->name('contact.more');
+            Route::get('contact/{contactMessage}/messages', [ContactMessageController::class, 'messages'])->name('contact.messages');
+            Route::get('contact/gmail/connect', [GmailConnectionController::class, 'connect'])->middleware('throttle:6,1,contact-connect')->name('contact.gmail.connect');
+            Route::delete('contact/gmail/disconnect', [GmailConnectionController::class, 'disconnect'])->middleware('throttle:6,1,contact-disconnect')->name('contact.gmail.disconnect');
+            Route::get('contact/gmail/callback', [GmailConnectionController::class, 'callback'])->name('contact.gmail.callback');
+            Route::post('contact/start', [ContactMessageController::class, 'start'])->middleware('throttle:10,1,contact-send')->name('contact.start');
+            Route::post('contact/sync', [ContactMessageController::class, 'sync'])->middleware('throttle:6,1,contact-sync')->name('contact.sync');
+            Route::post('contact/gmail/search', [ContactMessageController::class, 'searchGmail'])->middleware('throttle:30,1,contact-search')->name('contact.gmail.search');
+            Route::post('contact/gmail/import', [ContactMessageController::class, 'importGmail'])->middleware('throttle:6,1,contact-import')->name('contact.gmail.import');
+            Route::get('contact/gmail/import/{batch}', [ContactMessageController::class, 'gmailImportStatus'])->name('contact.gmail.import-status');
+            Route::post('contact/{contactMessage}/reply', [ContactMessageController::class, 'reply'])->middleware('throttle:10,1,contact-send')->name('contact.reply');
             Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
             Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
             Route::post('payroll', [PayrollController::class, 'store'])->name('payroll.store');

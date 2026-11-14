@@ -28,6 +28,11 @@ class RoleAndPermissionSeeder extends Seeder
      * @var array<string, array<string, string>>
      */
     private const GROUPS = [
+        'Contact' => [
+            'contact.view' => 'View website contact messages',
+            'contact.reply' => 'Reply to website contact messages',
+            'contact.manage' => 'Connect the Gmail mailbox',
+        ],
         'Invoices' => [
             'invoices.view' => 'View invoices and payments',
             'invoices.create' => 'Create invoices',

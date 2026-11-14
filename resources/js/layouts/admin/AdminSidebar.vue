@@ -16,6 +16,7 @@ import {
     CalendarCheck,
     ChartColumn,
     Contact,
+    Mail,
     UserRound,
 } from '@lucide/vue';
 import { computed } from 'vue';
@@ -55,6 +56,7 @@ import { index as indexAuditLogs } from '@/routes/admin/audit-logs';
 import { index as indexFinance } from '@/routes/admin/finance';
 import { index as indexCategories } from '@/routes/admin/categories';
 import { index as indexLeads } from '@/routes/admin/leads';
+import { index as indexContact } from '@/routes/admin/contact';
 import { index as indexHr } from '@/routes/admin/hr';
 import { index as indexInvoices } from '@/routes/admin/invoices';
 import { index as indexPayroll } from '@/routes/admin/payroll';
@@ -103,6 +105,10 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     if (can('leads.view')) {
         items.push({ title: 'Leads', href: indexLeads(), icon: Users });
+    }
+
+    if (can('contact.view')) {
+        items.push({ title: 'Contact', href: indexContact(), icon: Mail });
     }
     const hrChildren: NavItem[] = [];
     if (can('employees.view') || can('hr.team')) {
