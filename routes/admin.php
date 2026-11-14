@@ -66,87 +66,140 @@ Route::prefix(config('admin.alias'))
 
         // Authenticated admin routes
         Route::middleware(['auth:admin', EnsureAdminIsActive::class])->group(function () {
-            Route::get('contact', [ContactMessageController::class, 'index'])->name('contact.index');
-            Route::get('contact/more', [ContactMessageController::class, 'more'])->name('contact.more');
-            Route::get('contact/{contactMessage}/messages', [ContactMessageController::class, 'messages'])->name('contact.messages');
-            Route::get('contact/gmail/connect', [GmailConnectionController::class, 'connect'])->middleware('throttle:6,1,contact-connect')->name('contact.gmail.connect');
-            Route::delete('contact/gmail/disconnect', [GmailConnectionController::class, 'disconnect'])->middleware('throttle:6,1,contact-disconnect')->name('contact.gmail.disconnect');
-            Route::get('contact/gmail/callback', [GmailConnectionController::class, 'callback'])->name('contact.gmail.callback');
-            Route::post('contact/start', [ContactMessageController::class, 'start'])->middleware('throttle:10,1,contact-send')->name('contact.start');
-            Route::post('contact/sync', [ContactMessageController::class, 'sync'])->middleware('throttle:6,1,contact-sync')->name('contact.sync');
-            Route::post('contact/gmail/search', [ContactMessageController::class, 'searchGmail'])->middleware('throttle:30,1,contact-search')->name('contact.gmail.search');
-            Route::post('contact/gmail/import', [ContactMessageController::class, 'importGmail'])->middleware('throttle:6,1,contact-import')->name('contact.gmail.import');
-            Route::get('contact/gmail/import/{batch}', [ContactMessageController::class, 'gmailImportStatus'])->name('contact.gmail.import-status');
-            Route::post('contact/{contactMessage}/reply', [ContactMessageController::class, 'reply'])->middleware('throttle:10,1,contact-send')->name('contact.reply');
-            Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
-            Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
-            Route::post('payroll', [PayrollController::class, 'store'])->name('payroll.store');
-            Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store');
-            Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'payment'])->name('invoices.payments.store');
-            Route::get('hr', [HrController::class, 'index'])->name('hr.index');
-            Route::post('hr/employees', [HrController::class, 'employee'])->name('hr.employees.store');
-            Route::put('hr/employees/{employee}', [HrController::class, 'employee'])->name('hr.employees.update');
-            Route::post('hr/settings', [HrController::class, 'settings'])->name('hr.settings.store');
-            Route::delete('hr/settings/{kind}/{id}', [HrController::class, 'deleteSetting'])->name('hr.settings.destroy');
-            Route::post('hr/leave', [HrController::class, 'leave'])->name('hr.leave.store');
-            Route::post('hr/leave/{leave}/review', [HrController::class, 'review'])->name('hr.leave.review');
-            Route::post('hr/clock', [HrController::class, 'clock'])->name('hr.clock');
-            Route::post('hr/attendance', [HrController::class, 'attendance'])->name('hr.attendance.store');
-            Route::post('hr/corrections/{correction}', [HrController::class, 'correction'])->name('hr.corrections.review');
-            Route::get('hr/export', [HrController::class, 'export'])->name('hr.export');
-            Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
-            Route::get('leads/export', [LeadController::class, 'export'])->name('leads.export');
-            Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
-            Route::post('leads/tokens', [LeadTokenController::class, 'store'])->middleware('throttle:6,1')->name('leads.tokens.store');
-            Route::delete('leads/tokens/{token}', [LeadTokenController::class, 'destroy'])->name('leads.tokens.destroy');
-            Route::delete('logout', [AuthenticatedSessionController::class, 'destroy'])
-                ->name('logout');
-
             Route::get('dashboard', DashboardController::class)
                 ->name('dashboard');
 
-            Route::apiResource('authorization/users', UserController::class)->except(['show']);
-            Route::resource('authorization/roles', RoleController::class)->names('authorization.roles')->except(['show']);
+            Route::prefix('authorization')->group(function () {
+                Route::apiResource('users', UserController::class)->except(['show']);
+                Route::resource('roles', RoleController::class)->names('authorization.roles')->except(['show']);
+            });
+
+            Route::prefix('leads')->name('leads.')->group(function () {
+                Route::controller(LeadController::class)->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('export', 'export')->name('export');
+                    Route::delete('{lead}', 'destroy')->name('destroy');
+                });
+
+                Route::prefix('tokens')->name('tokens.')->controller(LeadTokenController::class)->group(function () {
+                    Route::post('/', 'store')->middleware('throttle:6,1')->name('store');
+                    Route::delete('{token}', 'destroy')->name('destroy');
+                });
+            });
+
+            Route::prefix('contact')->name('contact.')->group(function () {
+                Route::controller(ContactMessageController::class)->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('more', 'more')->name('more');
+                    Route::post('start', 'start')->middleware('throttle:10,1,contact-send')->name('start');
+                    Route::post('sync', 'sync')->middleware('throttle:6,1,contact-sync')->name('sync');
+                    Route::get('{contactMessage}/messages', 'messages')->name('messages');
+                    Route::post('{contactMessage}/reply', 'reply')->middleware('throttle:10,1,contact-send')->name('reply');
+                });
+
+                Route::prefix('gmail')->name('gmail.')->group(function () {
+                    Route::controller(GmailConnectionController::class)->group(function () {
+                        Route::get('connect', 'connect')->middleware('throttle:6,1,contact-connect')->name('connect');
+                        Route::get('callback', 'callback')->name('callback');
+                        Route::delete('disconnect', 'disconnect')->middleware('throttle:6,1,contact-disconnect')->name('disconnect');
+                    });
+
+                    Route::controller(ContactMessageController::class)->group(function () {
+                        Route::post('search', 'searchGmail')->middleware('throttle:30,1,contact-search')->name('search');
+                        Route::post('import', 'importGmail')->middleware('throttle:6,1,contact-import')->name('import');
+                        Route::get('import/{batch}', 'gmailImportStatus')->name('import-status');
+                    });
+                });
+            });
+
+            Route::prefix('hr')->name('hr.')->controller(HrController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('export', 'export')->name('export');
+                Route::post('employees', 'employee')->name('employees.store');
+                Route::put('employees/{employee}', 'employee')->name('employees.update');
+                Route::post('settings', 'settings')->name('settings.store');
+                Route::delete('settings/{kind}/{id}', 'deleteSetting')->name('settings.destroy');
+                Route::post('leave', 'leave')->name('leave.store');
+                Route::post('leave/{leave}/review', 'review')->name('leave.review');
+                Route::post('clock', 'clock')->name('clock');
+                Route::post('attendance', 'attendance')->name('attendance.store');
+                Route::post('corrections/{correction}', 'correction')->name('corrections.review');
+            });
+
+            Route::prefix('payroll')->name('payroll.')->controller(PayrollController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->name('store');
+            });
+
+            Route::prefix('invoices')->name('invoices.')->controller(InvoiceController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->name('store');
+                Route::post('{invoice}/payments', 'payment')->name('payments.store');
+            });
+
+            Route::prefix('finance')->name('finance.')->controller(FinanceController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('summary', 'summary')->name('summary');
+                Route::get('export', 'export')->name('export');
+                Route::post('transactions', 'store')->name('transactions.store');
+                Route::post('transactions/bulk-destroy', 'bulkDestroy')->name('transactions.bulk-destroy');
+                Route::put('transactions/{transaction}', 'update')->name('transactions.update');
+                Route::delete('transactions/{transaction}', 'destroy')->name('transactions.destroy');
+            });
 
             Route::apiResource('categories', CategoryController::class)
                 ->except(['show'])
                 ->names('categories');
 
-            Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-            Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
-            Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');
-            Route::put('settings/password', [SecurityController::class, 'update'])->name('security.update');
-            Route::get('settings/appearance', function (Request $request) {
-                abort_unless($request->user('admin')->can('settings.appearance.view'), 403);
-
-                return Inertia::render('admin/settings/Appearance');
-            })->name('appearance.edit');
-
             Route::get('mcp/usage', [McpUsageController::class, 'index'])->name('mcp.usage.index');
-            Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
-            Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
-            Route::get('settings/mcp', [McpSettingsController::class, 'edit'])->name('mcp.edit');
-            Route::patch('settings/mcp/tools/{mcpTool}', [McpSettingsController::class, 'update'])->name('mcp.tools.update');
-            Route::post('settings/mcp/tools/sync', [McpSettingsController::class, 'sync'])->name('mcp.tools.sync');
-            Route::post('settings/mcp/tokens', [McpSettingsController::class, 'store'])->name('mcp.tokens.store');
-            Route::delete('settings/mcp/tokens/{tokenId}', [McpSettingsController::class, 'destroy'])->name('mcp.tokens.destroy');
 
-            Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
-            Route::get('finance/summary', [FinanceController::class, 'summary'])->name('finance.summary');
-            Route::post('finance/transactions', [FinanceController::class, 'store'])->name('finance.transactions.store');
-            Route::put('finance/transactions/{transaction}', [FinanceController::class, 'update'])->name('finance.transactions.update');
-            Route::delete('finance/transactions/{transaction}', [FinanceController::class, 'destroy'])->name('finance.transactions.destroy');
-            Route::post('finance/transactions/bulk-destroy', [FinanceController::class, 'bulkDestroy'])->name('finance.transactions.bulk-destroy');
-            Route::get('finance/export', [FinanceController::class, 'export'])->name('finance.export');
+            Route::prefix('audit-logs')->name('audit-logs.')->controller(AuditLogController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('export', 'export')->name('export');
+            });
 
-            Route::get('settings/finance', [FinanceSettingsController::class, 'edit'])->name('finance.settings.edit');
-            Route::patch('settings/finance', [FinanceSettingsController::class, 'update'])->name('finance.settings.update');
+            Route::prefix('settings')->group(function () {
+                Route::controller(ProfileController::class)->group(function () {
+                    Route::get('profile', 'edit')->name('profile.edit');
+                    Route::patch('profile', 'update')->name('profile.update');
+                });
 
-            Route::get('settings/tracking', [TrackingSettingsController::class, 'edit'])->name('tracking.settings.edit');
-            Route::patch('settings/tracking', [TrackingSettingsController::class, 'update'])->name('tracking.settings.update');
+                Route::controller(SecurityController::class)->group(function () {
+                    Route::get('security', 'edit')->name('security.edit');
+                    Route::put('password', 'update')->name('security.update');
+                });
 
-            Route::get('passkeys/register/options', [SettingsPasskeyController::class, 'options'])->name('passkeys.register.options');
-            Route::post('passkeys/register', [SettingsPasskeyController::class, 'store'])->name('passkeys.register');
-            Route::delete('passkeys/{passkey}', [SettingsPasskeyController::class, 'destroy'])->name('passkeys.destroy');
+                Route::get('appearance', function (Request $request) {
+                    abort_unless($request->user('admin')->can('settings.appearance.view'), 403);
+
+                    return Inertia::render('admin/settings/Appearance');
+                })->name('appearance.edit');
+
+                Route::prefix('mcp')->name('mcp.')->controller(McpSettingsController::class)->group(function () {
+                    Route::get('/', 'edit')->name('edit');
+                    Route::post('tools/sync', 'sync')->name('tools.sync');
+                    Route::patch('tools/{mcpTool}', 'update')->name('tools.update');
+                    Route::post('tokens', 'store')->name('tokens.store');
+                    Route::delete('tokens/{tokenId}', 'destroy')->name('tokens.destroy');
+                });
+
+                Route::controller(FinanceSettingsController::class)->group(function () {
+                    Route::get('finance', 'edit')->name('finance.settings.edit');
+                    Route::patch('finance', 'update')->name('finance.settings.update');
+                });
+
+                Route::controller(TrackingSettingsController::class)->group(function () {
+                    Route::get('tracking', 'edit')->name('tracking.settings.edit');
+                    Route::patch('tracking', 'update')->name('tracking.settings.update');
+                });
+            });
+
+            Route::prefix('passkeys')->name('passkeys.')->controller(SettingsPasskeyController::class)->group(function () {
+                Route::get('register/options', 'options')->name('register.options');
+                Route::post('register', 'store')->name('register');
+                Route::delete('{passkey}', 'destroy')->name('destroy');
+            });
+
+            Route::delete('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
         });
     });
