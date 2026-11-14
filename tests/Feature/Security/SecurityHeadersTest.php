@@ -63,3 +63,20 @@ test('allows the Herd development script only outside production', function () {
 
     expect($this->get('/')->headers->get('Content-Security-Policy'))->not->toContain($hash);
 });
+
+test('allows Vite blob workers only in development environments', function (string $environment, string $expectedWorkerSrc) {
+    app()->instance('env', $environment);
+
+    $response = $this->get('/');
+    $response->assertOk();
+    $directives = explode('; ', $response->headers->get('Content-Security-Policy'));
+
+    expect($directives)->toContain($expectedWorkerSrc);
+    if ($environment === 'production') {
+        expect($directives)->not->toContain("worker-src 'self' blob:");
+    }
+})->with([
+    ['local', "worker-src 'self' blob:"],
+    ['testing', "worker-src 'self' blob:"],
+    ['production', "worker-src 'self'"],
+]);

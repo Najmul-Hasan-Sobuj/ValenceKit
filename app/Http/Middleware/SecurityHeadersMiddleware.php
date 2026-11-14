@@ -26,9 +26,11 @@ class SecurityHeadersMiddleware
         $trackingConnectSrc = 'https://*.clarity.ms https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.facebook.com';
 
         if (app()->environment('local', 'testing')) {
+            $workerSrc = "'self' blob:";
             $scriptSrc = "'self' 'unsafe-eval' 'nonce-{$nonce}' 'sha256-e9EdJBA/M3o5ruBrc1LqUrOz1yuPiJZlX/SG34Efiwg=' http://localhost:5173 http://127.0.0.1:5173 {$trackingScriptSrc}";
             $connectSrc = "'self' http://localhost:5173 ws://localhost:5173 wss://localhost:5173 http://127.0.0.1:5173 ws://127.0.0.1:5173 ws: wss: https:";
         } else {
+            $workerSrc = "'self'";
             $scriptSrc = "'self' 'nonce-{$nonce}' {$trackingScriptSrc}";
             $connectSrc = "'self' {$trackingConnectSrc}";
         }
@@ -37,6 +39,7 @@ class SecurityHeadersMiddleware
             'Content-Security-Policy' => implode('; ', [
                 "default-src 'self'",
                 "script-src {$scriptSrc}",
+                "worker-src {$workerSrc}",
                 "style-src 'self' 'unsafe-inline' https: http:",
                 "img-src 'self' data: blob: https:",
                 "font-src 'self' data: https:",
