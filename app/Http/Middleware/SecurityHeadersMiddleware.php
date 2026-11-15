@@ -35,6 +35,13 @@ class SecurityHeadersMiddleware
             $connectSrc = "'self' {$trackingConnectSrc}";
         }
 
+        $reverbHost = config('broadcasting.connections.reverb.options.host');
+        if ($reverbHost && config('broadcasting.default') === 'reverb') {
+            $scheme = config('broadcasting.connections.reverb.options.scheme') === 'https' ? 'wss' : 'ws';
+            $port = config('broadcasting.connections.reverb.options.port');
+            $connectSrc .= " {$scheme}://{$reverbHost}:{$port}";
+        }
+
         $headers = [
             'Content-Security-Policy' => implode('; ', [
                 "default-src 'self'",

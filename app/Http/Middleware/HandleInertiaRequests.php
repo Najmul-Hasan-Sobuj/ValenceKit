@@ -42,6 +42,12 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'reverb' => fn () => (Auth::guard('admin')->check() || Auth::guard('web')->check()) ? [
+                'key' => config('broadcasting.connections.reverb.key'),
+                'host' => config('broadcasting.connections.reverb.options.host'),
+                'port' => config('broadcasting.connections.reverb.options.port'),
+                'scheme' => config('broadcasting.connections.reverb.options.scheme'),
+            ] : null,
             'appUrl' => config('app.url'),
             'supportEmail' => config('app.support_email', 'support@valencekit.com'),
             'flash' => fn () => $request->session()->get('flash'),

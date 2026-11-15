@@ -3,8 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Admin;
+use App\Models\ContactMessage;
+use App\Models\ContactReply;
 use App\Models\Passkey;
 use App\Models\User;
+use App\Observers\ContactMessageObserver;
+use App\Observers\ContactReplyObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->enforceProductionSecurity();
         $this->configureDefaults();
+        require base_path('routes/channels.php');
+        ContactMessage::observe(ContactMessageObserver::class);
+        ContactReply::observe(ContactReplyObserver::class);
 
         Passkeys::usePasskeyModel(Passkey::class);
         Passkeys::authorizeLoginUsing(function ($request, $user, $passkey) {

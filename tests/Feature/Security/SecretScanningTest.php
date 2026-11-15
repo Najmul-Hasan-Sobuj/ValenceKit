@@ -39,6 +39,7 @@ test('ensures .env.example contains only blank placeholders for sensitive secret
     expect($content)->toMatch('/^USER_BOOTSTRAP_PASSWORD=$/m');
     expect($content)->toMatch('/^GMAIL_CLIENT_ID=$/m');
     expect($content)->toMatch('/^GMAIL_CLIENT_SECRET=$/m');
+    expect($content)->toMatch('/^REVERB_APP_SECRET=$/m');
 });
 
 test('keeps sensitive source files covered by gitleaks', function () {

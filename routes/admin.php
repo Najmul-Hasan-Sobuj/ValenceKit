@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\LeadTokenController;
 use App\Http\Controllers\Admin\McpUsageController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Admin\Settings\ProfileController;
 use App\Http\Controllers\Admin\Settings\SecurityController;
 use App\Http\Controllers\Admin\Settings\TrackingSettingsController;
 use App\Http\Middleware\Admin\EnsureAdminIsActive;
+use Illuminate\Broadcasting\BroadcastController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -66,6 +68,14 @@ Route::prefix(config('admin.alias'))
 
         // Authenticated admin routes
         Route::middleware(['auth:admin', EnsureAdminIsActive::class])->group(function () {
+            Route::post('broadcasting/auth', [BroadcastController::class, 'authenticate'])->name('broadcasting.auth');
+            Route::prefix('notifications')->name('notifications.')->controller(NotificationController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::patch('read-all', 'readAll')->name('read-all');
+                Route::patch('{notification}/read', 'read')->whereUuid('notification')->name('read');
+                Route::delete('{notification}', 'destroy')->whereUuid('notification')->name('destroy');
+            });
+
             Route::get('dashboard', DashboardController::class)
                 ->name('dashboard');
 

@@ -23,5 +23,6 @@ withDefaults(
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
             </template>
         </div>
+        <slot />
     </header>
 </template>
