@@ -39,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             users: fn () => Auth::guard('admin')->check() ? route('admin.dashboard') : route('dashboard'),
         );
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'tracking_consent']);
         $middleware->priority([
             HandlePrecognitiveRequests::class,
             EncryptCookies::class,

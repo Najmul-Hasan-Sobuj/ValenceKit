@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\FinanceService;
+use App\Services\TrackingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -42,6 +43,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'tracking' => fn () => TrackingService::publicState(),
             'reverb' => fn () => (Auth::guard('admin')->check() || Auth::guard('web')->check()) ? [
                 'key' => config('broadcasting.connections.reverb.key'),
                 'host' => config('broadcasting.connections.reverb.options.host'),

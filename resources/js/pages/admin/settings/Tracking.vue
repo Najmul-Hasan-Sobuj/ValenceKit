@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed } from 'vue';
 import {
     Activity,
-    ChevronDown,
+    BarChart3,
+    ChevronRight,
     Code,
+    ExternalLink,
     Info,
     ShieldCheck,
-    Sparkles,
 } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -18,9 +19,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { usePermissions } from '@/composables/usePermissions';
 import { edit, update } from '@/routes/admin/tracking/settings';
+import { home } from '@/routes';
 
-interface TrackingSettingsProps {
-    id: number;
+interface TrackingSettings {
     clarity_enabled: boolean;
     clarity_project_id: string | null;
     google_analytics_enabled: boolean;
@@ -34,598 +35,406 @@ interface TrackingSettingsProps {
     custom_body_scripts: string | null;
     exclude_admins: boolean;
 }
-
-const props = defineProps<{
-    settings: TrackingSettingsProps;
-}>();
-
+const props = defineProps<{ settings: TrackingSettings }>();
 const { isSuperAdmin } = usePermissions();
-
-const form = useForm({
-    clarity_enabled: Boolean(props.settings.clarity_enabled),
-    clarity_project_id: props.settings.clarity_project_id || '',
-    google_analytics_enabled: Boolean(props.settings.google_analytics_enabled),
-    google_analytics_id: props.settings.google_analytics_id || '',
-    google_tag_manager_enabled: Boolean(
-        props.settings.google_tag_manager_enabled,
-    ),
-    google_tag_manager_id: props.settings.google_tag_manager_id || '',
-    facebook_pixel_enabled: Boolean(props.settings.facebook_pixel_enabled),
-    facebook_pixel_id: props.settings.facebook_pixel_id || '',
-    custom_scripts_enabled: Boolean(props.settings.custom_scripts_enabled),
-    custom_head_scripts: props.settings.custom_head_scripts || '',
-    custom_body_scripts: props.settings.custom_body_scripts || '',
-    exclude_admins: Boolean(props.settings.exclude_admins),
-});
-
-// Accordion open/close state for each provider card
-const openSections = ref<Record<string, boolean>>({
-    clarity: Boolean(props.settings.clarity_enabled),
-    ga4: Boolean(props.settings.google_analytics_enabled),
-    gtm: Boolean(props.settings.google_tag_manager_enabled),
-    pixel: Boolean(props.settings.facebook_pixel_enabled),
-    custom: Boolean(props.settings.custom_scripts_enabled),
-});
-
-function toggleSection(key: string) {
-    openSections.value[key] = !openSections.value[key];
+function values(settings: TrackingSettings) {
+    return {
+        clarity_enabled: Boolean(settings.clarity_enabled),
+        clarity_project_id: settings.clarity_project_id ?? '',
+        google_analytics_enabled: Boolean(settings.google_analytics_enabled),
+        google_analytics_id: settings.google_analytics_id ?? '',
+        google_tag_manager_enabled: Boolean(
+            settings.google_tag_manager_enabled,
+        ),
+        google_tag_manager_id: settings.google_tag_manager_id ?? '',
+        facebook_pixel_enabled: Boolean(settings.facebook_pixel_enabled),
+        facebook_pixel_id: settings.facebook_pixel_id ?? '',
+        custom_scripts_enabled: Boolean(settings.custom_scripts_enabled),
+        custom_head_scripts: settings.custom_head_scripts ?? '',
+        custom_body_scripts: settings.custom_body_scripts ?? '',
+        exclude_admins: Boolean(settings.exclude_admins),
+    };
 }
-
-function handleSwitchToggle(key: string, enabled: boolean) {
-    if (enabled) {
-        openSections.value[key] = true;
-    }
+const form = useForm(values(props.settings));
+const providers = [
+    {
+        name: 'Microsoft Clarity',
+        enabled: 'clarity_enabled',
+        id: 'clarity_project_id',
+        label: 'Project ID',
+        placeholder: 'e.g. yyvng93thl',
+        description: 'Understand clicks, scrolling and session replays.',
+        help: 'Find your project ID in Clarity → Settings → Setup.',
+        url: 'https://clarity.microsoft.com/',
+        icon: Activity,
+    },
+    {
+        name: 'Google Analytics 4',
+        enabled: 'google_analytics_enabled',
+        id: 'google_analytics_id',
+        label: 'Measurement ID',
+        placeholder: 'G-XXXXXXXXXX',
+        description: 'Measure visitors, pageviews and conversions.',
+        help: 'Find your measurement ID in Admin → Data streams → Web stream.',
+        url: 'https://analytics.google.com/',
+        icon: BarChart3,
+    },
+    {
+        name: 'Google Tag Manager',
+        enabled: 'google_tag_manager_enabled',
+        id: 'google_tag_manager_id',
+        label: 'Container ID',
+        placeholder: 'GTM-XXXXXXX',
+        description: 'Manage and publish marketing tags in one place.',
+        help: 'Use your web container ID, starting with GTM-.',
+        url: 'https://tagmanager.google.com/',
+        icon: Code,
+    },
+    {
+        name: 'Meta Pixel',
+        enabled: 'facebook_pixel_enabled',
+        id: 'facebook_pixel_id',
+        label: 'Pixel ID',
+        placeholder: 'e.g. 123456789012345',
+        description: 'Measure campaign traffic and PageView events.',
+        help: 'Find your numeric pixel ID in Meta Events Manager → Data sources.',
+        url: 'https://business.facebook.com/events_manager/',
+        icon: Activity,
+    },
+] as const;
+const savedCount = computed(
+    () =>
+        providers.filter(
+            (p) => props.settings[p.enabled] && props.settings[p.id],
+        ).length,
+);
+function status(provider: (typeof providers)[number]) {
+    if (
+        form[provider.enabled] !== props.settings[provider.enabled] ||
+        form[provider.id] !== (props.settings[provider.id] ?? '')
+    )
+        return 'Unsaved';
+    if (!form[provider.enabled]) return 'Off';
+    return form[provider.id].trim() ? 'Enabled' : 'Needs ID';
 }
-
+function revealField(field: string) {
+    document
+        .getElementById(field)
+        ?.closest('details')
+        ?.setAttribute('open', '');
+}
 function submit() {
     form.patch(update.url(), {
         preserveScroll: true,
+        onError: () => {
+            Object.keys(form.errors).forEach(revealField);
+        },
+        onSuccess: () => {
+            form.defaults(values(props.settings));
+            form.reset();
+        },
     });
 }
-
 defineOptions({
     layout: { breadcrumbs: [{ title: 'Tracking settings', href: edit() }] },
 });
 </script>
 
 <template>
-    <Head title="Tracking & Analytics Settings" />
-
-    <div class="flex flex-col space-y-6">
-        <Heading
-            variant="small"
-            title="Tracking & Analytics"
-            description="Manage tracking pixels, product analytics, and dynamic custom scripts injected across your site."
-        />
-
-        <form @submit.prevent="submit" class="space-y-4">
-            <!-- Admin Exclusion Banner -->
-            <div
-                class="relative flex items-start gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 transition-all"
+    <Head title="Tracking & Analytics" />
+    <div class="min-w-0 space-y-5">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <Heading
+                variant="small"
+                title="Tracking & Analytics"
+                description="Connect analytics tools and control where tracking runs."
+            />
+            <Badge variant="secondary"
+                >{{ savedCount }} / 4 providers enabled</Badge
             >
-                <div
-                    class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-                >
-                    <ShieldCheck class="size-4.5" />
-                </div>
-                <div class="flex-1 space-y-1">
-                    <div class="flex items-center justify-between">
-                        <Label
-                            for="exclude_admins"
-                            class="cursor-pointer text-sm font-semibold text-foreground"
-                        >
-                            Exclude Authenticated Admins & Admin Routes
-                        </Label>
-                        <Switch
-                            id="exclude_admins"
-                            v-model="form.exclude_admins"
-                            :disabled="!isSuperAdmin"
-                        />
-                    </div>
-                    <p class="text-xs leading-relaxed text-muted-foreground">
-                        When enabled, all tracking pixels and analytics tags are
-                        automatically suppressed for logged-in administrators
-                        and admin panel visits to prevent polluting production
-                        data.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Provider 1: Microsoft Clarity Accordion Card -->
-            <div
-                class="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all"
-            >
-                <div
-                    @click="toggleSection('clarity')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
-                >
-                    <div class="flex items-center gap-3.5">
-                        <div
-                            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                        >
-                            <Activity class="size-4.5" />
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3
-                                    class="text-sm font-semibold text-foreground"
-                                >
-                                    Microsoft Clarity
-                                </h3>
-                                <Badge
-                                    variant="outline"
-                                    class="text-[10px] font-bold tracking-wider uppercase"
-                                >
-                                    Heatmaps & Session Replays
-                                </Badge>
-                                <Badge
-                                    v-if="form.clarity_enabled"
-                                    class="border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
-                                >
-                                    Active
-                                </Badge>
-                            </div>
-                            <p class="text-xs text-muted-foreground">
-                                Free behavioral analytics, clicks, scrolling,
-                                and session video recordings.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3" @click.stop>
-                        <Switch
-                            id="clarity_enabled"
-                            v-model="form.clarity_enabled"
-                            @update:model-value="
-                                handleSwitchToggle('clarity', $event)
-                            "
-                            :disabled="!isSuperAdmin"
-                        />
-                        <button
-                            type="button"
-                            @click="toggleSection('clarity')"
-                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Toggle Clarity details"
-                        >
-                            <ChevronDown
-                                class="size-4.5 transition-transform duration-200"
-                                :class="{ 'rotate-180': openSections.clarity }"
-                            />
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    v-if="openSections.clarity"
-                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
-                >
-                    <Label
-                        for="clarity_project_id"
-                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+        </div>
+        <p
+            v-if="!isSuperAdmin"
+            role="status"
+            class="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground"
+        >
+            Read-only access. Only a Super Admin can change tracking and custom
+            scripts.
+        </p>
+        <form class="space-y-4" @submit.prevent="submit">
+            <div class="flex items-start gap-3 rounded-xl border bg-card p-4">
+                <ShieldCheck class="mt-0.5 size-5 shrink-0 text-primary" />
+                <div class="min-w-0 flex-1">
+                    <Label for="exclude_admins" class="leading-5"
+                        >Exclude administrators from tracking</Label
                     >
-                        Clarity Project ID or Snippet
-                    </Label>
-                    <Input
-                        id="clarity_project_id"
-                        v-model="form.clarity_project_id"
-                        type="text"
-                        placeholder="e.g. yyvng93thl"
-                        class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!isSuperAdmin"
-                    />
                     <p
-                        class="flex items-center gap-1.5 text-xs text-muted-foreground"
+                        id="exclude-help"
+                        class="mt-1 text-xs leading-relaxed text-muted-foreground"
                     >
-                        <Info class="size-3.5 shrink-0" />
-                        <span>
-                            You can enter the Project ID directly (e.g.
-                            <code>yyvng93thl</code>) or paste the full tracking
-                            code — the ID will be automatically extracted.
-                        </span>
+                        Skip admin pages and visits from signed-in
+                        administrators to keep your analytics accurate.
                     </p>
-                    <InputError :message="form.errors.clarity_project_id" />
                 </div>
+                <Switch
+                    id="exclude_admins"
+                    v-model="form.exclude_admins"
+                    aria-label="Exclude administrators from tracking"
+                    aria-describedby="exclude-help"
+                    :disabled="!isSuperAdmin || form.processing"
+                />
             </div>
-
-            <!-- Provider 2: Google Analytics 4 (GA4) Accordion Card -->
-            <div
-                class="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all"
+            <p
+                v-if="!form.exclude_admins"
+                role="status"
+                class="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-relaxed"
             >
+                <Info class="mt-0.5 size-4 shrink-0" /> Administrator activity
+                will be included in analytics. Session replay tools may record
+                sensitive admin pages.
+            </p>
+            <div
+                v-if="
+                    form.google_analytics_enabled &&
+                    form.google_tag_manager_enabled
+                "
+                role="status"
+                class="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-relaxed"
+            >
+                <Info class="mt-0.5 size-4 shrink-0" /> Using GA4 and GTM
+                together? If this same GA4 property is already configured inside
+                GTM, turn off the direct GA4 integration here to avoid duplicate
+                pageviews.
+            </div>
+            <div class="grid items-start gap-4 xl:grid-cols-2">
                 <div
-                    @click="toggleSection('ga4')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
+                    v-for="provider in providers"
+                    :key="provider.id"
+                    class="relative min-w-0 rounded-xl border bg-card"
                 >
-                    <div class="flex items-center gap-3.5">
-                        <div
-                            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    <details class="group" :open="form[provider.enabled]">
+                        <summary
+                            class="cursor-pointer list-none rounded-xl p-4 pr-20 focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden"
                         >
-                            <Sparkles class="size-4.5" />
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3
-                                    class="text-sm font-semibold text-foreground"
+                            <span class="flex items-start gap-2">
+                                <ChevronRight
+                                    class="mt-1 size-3 shrink-0 transition-transform group-open:rotate-90"
+                                />
+                                <component
+                                    :is="provider.icon"
+                                    class="mt-0.5 size-5 shrink-0 text-primary"
+                                />
+                                <span class="min-w-0">
+                                    <span
+                                        class="flex flex-wrap items-center gap-2 text-sm font-semibold"
+                                    >
+                                        {{ provider.name }}
+                                        <Badge
+                                            variant="outline"
+                                            class="text-[10px]"
+                                            >{{ status(provider) }}</Badge
+                                        >
+                                    </span>
+                                    <span
+                                        class="mt-1 block text-xs leading-relaxed text-muted-foreground"
+                                        >{{ provider.description }}</span
+                                    >
+                                </span>
+                            </span>
+                        </summary>
+                        <div class="space-y-2 border-t p-4">
+                            <div
+                                class="flex flex-wrap items-center justify-between gap-2"
+                            >
+                                <Label :for="provider.id">{{
+                                    provider.label
+                                }}</Label>
+                                <a
+                                    :href="provider.url"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
                                 >
-                                    Google Analytics 4 (GA4)
-                                </h3>
-                                <Badge
-                                    variant="outline"
-                                    class="text-[10px] font-bold tracking-wider uppercase"
-                                >
-                                    Web Metrics
-                                </Badge>
-                                <Badge
-                                    v-if="form.google_analytics_enabled"
-                                    class="border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
-                                >
-                                    Active
-                                </Badge>
+                                    Open {{ provider.name }}
+                                    <ExternalLink class="size-3" />
+                                </a>
                             </div>
-                            <p class="text-xs text-muted-foreground">
-                                Track visitors, pageviews, events, and
-                                conversions using Google gtag.js.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3" @click.stop>
-                        <Switch
-                            id="google_analytics_enabled"
-                            v-model="form.google_analytics_enabled"
-                            @update:model-value="
-                                handleSwitchToggle('ga4', $event)
-                            "
-                            :disabled="!isSuperAdmin"
-                        />
-                        <button
-                            type="button"
-                            @click="toggleSection('ga4')"
-                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Toggle GA4 details"
-                        >
-                            <ChevronDown
-                                class="size-4.5 transition-transform duration-200"
-                                :class="{ 'rotate-180': openSections.ga4 }"
+                            <Input
+                                :id="provider.id"
+                                v-model="form[provider.id]"
+                                :placeholder="provider.placeholder"
+                                :required="form[provider.enabled]"
+                                :disabled="!isSuperAdmin || form.processing"
+                                :aria-invalid="
+                                    Boolean(form.errors[provider.id])
+                                "
+                                :aria-describedby="provider.id + '-help'"
+                                autocomplete="off"
+                                :spellcheck="false"
+                                class="font-mono text-sm"
                             />
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    v-if="openSections.ga4"
-                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
-                >
-                    <Label
-                        for="google_analytics_id"
-                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                    >
-                        GA4 Measurement ID
-                    </Label>
-                    <Input
-                        id="google_analytics_id"
-                        v-model="form.google_analytics_id"
-                        type="text"
-                        placeholder="e.g. G-XXXXXXXXXX"
-                        class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!isSuperAdmin"
+                            <p
+                                :id="provider.id + '-help'"
+                                class="text-xs leading-relaxed text-muted-foreground"
+                            >
+                                {{ provider.help }} Paste the ID or full
+                                installation snippet; supported snippets are
+                                converted to IDs when saved.
+                            </p>
+                            <InputError :message="form.errors[provider.id]" />
+                        </div>
+                    </details>
+                    <Switch
+                        :id="provider.enabled"
+                        v-model="form[provider.enabled]"
+                        :aria-label="'Enable ' + provider.name"
+                        :disabled="!isSuperAdmin || form.processing"
+                        class="absolute top-4 right-4"
                     />
-                    <p class="text-xs text-muted-foreground">
-                        Found in your Google Analytics Admin &gt; Data Streams
-                        &gt; Measurement ID.
-                    </p>
-                    <InputError :message="form.errors.google_analytics_id" />
                 </div>
             </div>
-
-            <!-- Provider 3: Google Tag Manager (GTM) Accordion Card -->
-            <div
-                class="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all"
-            >
-                <div
-                    @click="toggleSection('gtm')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
-                >
-                    <div class="flex items-center gap-3.5">
-                        <div
-                            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
-                        >
-                            <Code class="size-4.5" />
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3
-                                    class="text-sm font-semibold text-foreground"
-                                >
-                                    Google Tag Manager (GTM)
-                                </h3>
-                                <Badge
-                                    variant="outline"
-                                    class="text-[10px] font-bold tracking-wider uppercase"
-                                >
-                                    Container
-                                </Badge>
-                                <Badge
-                                    v-if="form.google_tag_manager_enabled"
-                                    class="border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
-                                >
-                                    Active
-                                </Badge>
-                            </div>
-                            <p class="text-xs text-muted-foreground">
-                                Manage all marketing and analytics tags
-                                centrally via Google Tag Manager container.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3" @click.stop>
-                        <Switch
-                            id="google_tag_manager_enabled"
-                            v-model="form.google_tag_manager_enabled"
-                            @update:model-value="
-                                handleSwitchToggle('gtm', $event)
-                            "
-                            :disabled="!isSuperAdmin"
-                        />
-                        <button
-                            type="button"
-                            @click="toggleSection('gtm')"
-                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Toggle GTM details"
-                        >
-                            <ChevronDown
-                                class="size-4.5 transition-transform duration-200"
-                                :class="{ 'rotate-180': openSections.gtm }"
-                            />
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    v-if="openSections.gtm"
-                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
-                >
-                    <Label
-                        for="google_tag_manager_id"
-                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+            <div class="relative rounded-xl border bg-card">
+                <details :open="form.custom_scripts_enabled">
+                    <summary
+                        class="cursor-pointer rounded-xl p-4 pr-20 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring"
                     >
-                        GTM Container ID
-                    </Label>
-                    <Input
-                        id="google_tag_manager_id"
-                        v-model="form.google_tag_manager_id"
-                        type="text"
-                        placeholder="e.g. GTM-XXXXXXX"
-                        class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!isSuperAdmin"
-                    />
-                    <p class="text-xs text-muted-foreground">
-                        Both the header script and noscript body iframe are
-                        automatically injected.
-                    </p>
-                    <InputError :message="form.errors.google_tag_manager_id" />
-                </div>
-            </div>
-
-            <!-- Provider 4: Meta (Facebook) Pixel Accordion Card -->
-            <div
-                class="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all"
-            >
-                <div
-                    @click="toggleSection('pixel')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
-                >
-                    <div class="flex items-center gap-3.5">
-                        <div
-                            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                        Custom scripts
+                        <Badge variant="outline" class="ml-2 text-[10px]"
+                            >Advanced</Badge
                         >
-                            <Activity class="size-4.5" />
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3
-                                    class="text-sm font-semibold text-foreground"
-                                >
-                                    Meta (Facebook) Pixel
-                                </h3>
-                                <Badge
-                                    variant="outline"
-                                    class="text-[10px] font-bold tracking-wider uppercase"
-                                >
-                                    Ad Retargeting
-                                </Badge>
-                                <Badge
-                                    v-if="form.facebook_pixel_enabled"
-                                    class="border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
-                                >
-                                    Active
-                                </Badge>
-                            </div>
-                            <p class="text-xs text-muted-foreground">
-                                Track conversions and run retargeting campaigns
-                                with Meta Ads.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3" @click.stop>
-                        <Switch
-                            id="facebook_pixel_enabled"
-                            v-model="form.facebook_pixel_enabled"
-                            @update:model-value="
-                                handleSwitchToggle('pixel', $event)
-                            "
-                            :disabled="!isSuperAdmin"
-                        />
-                        <button
-                            type="button"
-                            @click="toggleSection('pixel')"
-                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Toggle Meta Pixel details"
+                        <span
+                            class="mt-1 block text-xs leading-relaxed font-normal text-muted-foreground"
+                            >Optional HTML and scripts for your site's head and
+                            body.</span
                         >
-                            <ChevronDown
-                                class="size-4.5 transition-transform duration-200"
-                                :class="{ 'rotate-180': openSections.pixel }"
-                            />
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    v-if="openSections.pixel"
-                    class="animate-in space-y-2.5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
-                >
-                    <Label
-                        for="facebook_pixel_id"
-                        class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                    >
-                        Meta Pixel ID
-                    </Label>
-                    <Input
-                        id="facebook_pixel_id"
-                        v-model="form.facebook_pixel_id"
-                        type="text"
-                        placeholder="e.g. 123456789012345"
-                        class="h-10 rounded-xl font-mono text-sm"
-                        :disabled="!isSuperAdmin"
-                    />
-                    <p class="text-xs text-muted-foreground">
-                        Standard PageView event tracking is automatically
-                        initialized.
-                    </p>
-                    <InputError :message="form.errors.facebook_pixel_id" />
-                </div>
-            </div>
-
-            <!-- Provider 5: Custom Head & Body Scripts Accordion Card -->
-            <div
-                class="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all"
-            >
-                <div
-                    @click="toggleSection('custom')"
-                    class="flex cursor-pointer items-center justify-between p-4.5 transition-colors select-none hover:bg-muted/30"
-                >
-                    <div class="flex items-center gap-3.5">
-                        <div
-                            class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    </summary>
+                    <div class="space-y-4 border-t p-4">
+                        <p
+                            class="text-xs leading-relaxed text-muted-foreground"
                         >
-                            <Code class="size-4.5" />
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3
-                                    class="text-sm font-semibold text-foreground"
-                                >
-                                    Custom Header & Body Scripts
-                                </h3>
-                                <Badge
-                                    variant="outline"
-                                    class="text-[10px] font-bold tracking-wider uppercase"
-                                >
-                                    Raw Code
-                                </Badge>
-                                <Badge
-                                    v-if="form.custom_scripts_enabled"
-                                    class="border-emerald-500/20 bg-emerald-500/10 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
-                                >
-                                    Active
-                                </Badge>
-                            </div>
-                            <p class="text-xs text-muted-foreground">
-                                Paste any arbitrary &lt;script&gt; tags, meta
-                                tags, or pixels (e.g. TikTok, Twitter, LinkedIn,
-                                Hotjar).
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3" @click.stop>
-                        <Switch
-                            id="custom_scripts_enabled"
-                            v-model="form.custom_scripts_enabled"
-                            @update:model-value="
-                                handleSwitchToggle('custom', $event)
-                            "
-                            :disabled="!isSuperAdmin"
-                        />
-                        <button
-                            type="button"
-                            @click="toggleSection('custom')"
-                            class="p-1 text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label="Toggle Custom Scripts details"
-                        >
-                            <ChevronDown
-                                class="size-4.5 transition-transform duration-200"
-                                :class="{ 'rotate-180': openSections.custom }"
-                            />
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    v-if="openSections.custom"
-                    class="animate-in space-y-5 border-t border-border/60 bg-muted/10 p-5 duration-200 fade-in-50"
-                >
-                    <!-- Head Scripts -->
-                    <div class="space-y-2">
-                        <Label
-                            for="custom_head_scripts"
-                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                        >
-                            Custom &lt;head&gt; Scripts
-                        </Label>
-                        <textarea
-                            id="custom_head_scripts"
-                            v-model="form.custom_head_scripts"
-                            rows="4"
-                            placeholder="<!-- Paste any tracking script tags for the <head> section -->&#10;<script>&#10;  // custom analytics code&#10;<\/script>"
-                            class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-                            :disabled="!isSuperAdmin"
-                        ></textarea>
-                        <p class="text-xs text-muted-foreground">
-                            Injected right before <code>&lt;/head&gt;</code>.
-                            Dynamic CSP nonces are automatically attached to any
-                            <code>&lt;script&gt;</code> tags.
+                            Only add code from trusted sources. External scripts
+                            must also be allowed by your site's Content Security
+                            Policy; adding a snippet alone does not authorize a
+                            new domain.
                         </p>
-                        <InputError
-                            :message="form.errors.custom_head_scripts"
-                        />
+                        <div class="space-y-2">
+                            <Label for="custom_head_scripts"
+                                >Head HTML & scripts</Label
+                            >
+                            <textarea
+                                id="custom_head_scripts"
+                                v-model="form.custom_head_scripts"
+                                rows="5"
+                                maxlength="65535"
+                                :spellcheck="false"
+                                :disabled="!isSuperAdmin || form.processing"
+                                class="w-full resize-y rounded-md border bg-background p-3 font-mono text-xs focus-visible:outline-2 focus-visible:outline-ring"
+                                placeholder="Paste trusted script or meta tags here"
+                            ></textarea>
+                            <p class="text-xs text-muted-foreground">
+                                Inserted before the closing head tag. Script
+                                nonces are added automatically.
+                            </p>
+                            <InputError
+                                :message="form.errors.custom_head_scripts"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="custom_body_scripts"
+                                >Body HTML & fallback pixels</Label
+                            >
+                            <textarea
+                                id="custom_body_scripts"
+                                v-model="form.custom_body_scripts"
+                                rows="4"
+                                maxlength="65535"
+                                :spellcheck="false"
+                                :disabled="!isSuperAdmin || form.processing"
+                                class="w-full resize-y rounded-md border bg-background p-3 font-mono text-xs focus-visible:outline-2 focus-visible:outline-ring"
+                                placeholder="Paste body or noscript tags here"
+                            ></textarea>
+                            <p class="text-xs text-muted-foreground">
+                                Inserted immediately after the opening body tag.
+                            </p>
+                            <InputError
+                                :message="form.errors.custom_body_scripts"
+                            />
+                        </div>
                     </div>
-
-                    <!-- Body Scripts -->
-                    <div class="space-y-2">
-                        <Label
-                            for="custom_body_scripts"
-                            class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                        >
-                            Custom &lt;body&gt; Scripts (e.g. &lt;noscript&gt;
-                            pixels)
-                        </Label>
-                        <textarea
-                            id="custom_body_scripts"
-                            v-model="form.custom_body_scripts"
-                            rows="3"
-                            placeholder="<!-- Paste any fallback tracking pixels or body tags -->&#10;<noscript><img src='...' /></noscript>"
-                            class="w-full rounded-xl border border-border/80 bg-background p-3.5 font-mono text-xs leading-relaxed focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-                            :disabled="!isSuperAdmin"
-                        ></textarea>
-                        <p class="text-xs text-muted-foreground">
-                            Injected immediately after the opening
-                            <code>&lt;body&gt;</code> tag.
-                        </p>
-                        <InputError
-                            :message="form.errors.custom_body_scripts"
-                        />
-                    </div>
-                </div>
+                </details>
+                <Switch
+                    id="custom_scripts_enabled"
+                    v-model="form.custom_scripts_enabled"
+                    aria-label="Enable custom scripts"
+                    :disabled="!isSuperAdmin || form.processing"
+                    class="absolute top-4 right-4"
+                />
             </div>
-
-            <!-- Save Action Button -->
-            <div class="flex items-center justify-between pt-2">
-                <Button
-                    type="submit"
-                    :disabled="form.processing || !isSuperAdmin"
-                    class="rounded-xl px-6 py-2.5 font-semibold"
-                >
+            <div
+                class="rounded-xl border bg-muted/30 p-4 text-xs leading-relaxed text-muted-foreground"
+            >
+                <h3 class="mb-1 text-sm font-medium text-foreground">
+                    Check your setup
+                </h3>
+                Save your settings, then open the public site in a private
+                browser window. Use GA4 Realtime / DebugView, GTM Preview,
+                Clarity, or Meta Test Events to confirm delivery. “Enabled”
+                means the integration is configured here; it does not verify the
+                provider connection. For GA4, enable history-based pageviews for
+                this site's page navigation.
+                <p class="mt-3">
+                    Visitor consent is required. GA4 and Clarity use analytics
+                    consent; Meta uses marketing consent. GTM and custom scripts
+                    require both. Successful contact submissions send
+                    generate_lead (GA4/GTM) and Lead (Meta) only when permitted,
+                    without contact details.
+                </p>
+                <a
+                    :href="home.url({ query: { tracking_debug: 1 } })"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary underline underline-offset-4"
+                    >Open visitor diagnostics <ExternalLink class="size-3"
+                /></a>
+                <p class="mt-2">
+                    If administrators are excluded, open the diagnostic URL in a
+                    private window. Configure conversion tags in GTM and mark
+                    generate_lead as a key event in GA4. Do not install the same
+                    conversion tag twice through direct integrations and GTM.
+                </p>
+            </div>
+            <div
+                v-if="isSuperAdmin"
+                class="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-background p-3"
+            >
+                <p role="status" class="text-xs text-muted-foreground">
                     {{
-                        form.processing ? 'Saving...' : 'Save Tracking Settings'
+                        form.isDirty
+                            ? 'You have unsaved changes'
+                            : form.recentlySuccessful
+                              ? 'Settings saved'
+                              : 'No unsaved changes'
                     }}
-                </Button>
+                </p>
+                <div class="flex items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        :disabled="!form.isDirty || form.processing"
+                        @click="
+                            form.reset();
+                            form.clearErrors();
+                        "
+                        >Reset changes</Button
+                    >
+                    <Button
+                        type="submit"
+                        :disabled="!form.isDirty || form.processing"
+                        >{{
+                            form.processing ? 'Saving…' : 'Save settings'
+                        }}</Button
+                    >
+                </div>
             </div>
         </form>
     </div>

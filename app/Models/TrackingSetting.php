@@ -62,7 +62,7 @@ class TrackingSetting extends Model
      */
     public static function instance(): self
     {
-        $attributes = Cache::remember('tracking_settings_instance', 86400, function () {
+        $attributes = Cache::memo()->remember('tracking_settings_instance', 86400, function () {
             $record = static::first();
             if (! $record) {
                 $record = static::create([
@@ -103,6 +103,6 @@ class TrackingSetting extends Model
      */
     public static function flushCache(): void
     {
-        Cache::forget('tracking_settings_instance');
+        Cache::memo()->forget('tracking_settings_instance');
     }
 }

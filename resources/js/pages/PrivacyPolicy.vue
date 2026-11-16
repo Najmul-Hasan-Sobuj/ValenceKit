@@ -100,9 +100,9 @@ const highlights = [
     },
     {
         icon: EyeOff,
-        title: 'Zero Tracking',
+        title: 'Optional Tracking',
         description:
-            'No marketing trackers, third-party pixel cookies, or unauthorized data sharing across the platform.',
+            'Optional analytics and marketing integrations run according to your cookie preferences.',
     },
     {
         icon: Server,
@@ -732,11 +732,17 @@ useScrollReveal();
                                         Essential vs Third-Party Cookies
                                     </p>
                                     <p class="mt-0.5 text-muted-foreground">
-                                        We do not utilize invasive advertising
-                                        trackers. Essential cookies allow the
-                                        session state, CSRF protection, and
-                                        light/dark theme preference to persist
-                                        reliably.
+                                        Essential cookies support sessions, CSRF
+                                        protection and theme preferences. When
+                                        configured, GA4 and Microsoft Clarity
+                                        need analytics permission; Meta Pixel
+                                        needs marketing permission. Tag Manager
+                                        and custom scripts need both. Optional
+                                        trackers stay blocked until you consent.
+                                        Your choice is stored for up to 180 days
+                                        in a first-party preference cookie. Use
+                                        Cookie preferences in the footer to
+                                        change or withdraw permission.
                                     </p>
                                 </div>
                             </div>

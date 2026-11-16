@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { dashboard, home, login, register, services } from '@/routes';
 import { store as storeContact } from '@/routes/contact';
+import { trackContactLead, type TrackingState } from '@/lib/tracking';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppHead from '@/components/AppHead.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
@@ -45,7 +46,11 @@ import {
     Lock,
 } from '@lucide/vue';
 
-const page = usePage<{ name?: string; appUrl: string }>();
+const page = usePage<{
+    name?: string;
+    appUrl: string;
+    tracking: TrackingState;
+}>();
 const appName = page.props.name || 'ValenceKit';
 const appUrl = page.props.appUrl.replace(/\/$/, '');
 const pageTitle = 'Laravel & Vue.js Boilerplate';
@@ -124,6 +129,7 @@ const handleSubmit = () => {
         preserveScroll: true,
         onSuccess: () => {
             isSubmitted.value = true;
+            trackContactLead(page.props.tracking);
         },
     });
 };

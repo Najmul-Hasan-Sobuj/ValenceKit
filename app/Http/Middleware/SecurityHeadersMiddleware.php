@@ -23,7 +23,7 @@ class SecurityHeadersMiddleware
         $nonce = Vite::cspNonce();
 
         $trackingScriptSrc = 'https://www.clarity.ms https://*.clarity.ms https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net';
-        $trackingConnectSrc = 'https://*.clarity.ms https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.facebook.com';
+        $trackingConnectSrc = 'https://*.clarity.ms https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://stats.g.doubleclick.net https://www.facebook.com';
 
         if (app()->environment('local', 'testing')) {
             $workerSrc = "'self' blob:";

@@ -2,6 +2,8 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { privacyPolicy, terms } from '@/routes';
 import { ArrowUpRight } from '@lucide/vue';
+import TrackingConsent from '@/components/TrackingConsent.vue';
+import TrackingDiagnostics from '@/components/TrackingDiagnostics.vue';
 
 const page = usePage<{ name?: string; supportEmail?: string }>();
 const appName = page.props.name || 'ValenceKit';
@@ -10,6 +12,7 @@ const supportEmail = page.props.supportEmail || 'support@valencekit.com';
 
 <template>
     <footer class="border-t border-border py-8 text-sm text-muted-foreground">
+        <TrackingDiagnostics />
         <div class="mx-auto flex max-w-7xl flex-col gap-5 px-4 sm:px-6 lg:px-8">
             <div
                 class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -22,6 +25,7 @@ const supportEmail = page.props.supportEmail || 'support@valencekit.com';
                     aria-label="Footer navigation"
                     class="flex flex-wrap items-center gap-x-5 gap-y-2"
                 >
+                    <TrackingConsent />
                     <Link
                         :href="privacyPolicy()"
                         class="transition-colors hover:text-foreground hover:underline hover:underline-offset-4"
