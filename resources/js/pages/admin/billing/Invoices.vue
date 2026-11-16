@@ -28,10 +28,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/composables/usePermissions';
 import { decodePaginationLabel } from '@/lib/decodePaginationLabel';
-import { index, store } from '@/routes/admin/invoices';
+import { index, store, issue } from '@/routes/admin/invoices';
 import { store as storePayment } from '@/routes/admin/invoices/payments';
 
 type Invoice = {
+    status: 'draft' | 'issued';
     id: number;
     number: string;
     customer_name: string;
@@ -42,7 +43,7 @@ type Invoice = {
     currency: string;
     issued_on: string;
     due_on: string;
-    payment_status: 'paid' | 'overdue' | 'due_today' | 'unpaid';
+    payment_status: 'draft' | 'paid' | 'overdue' | 'due_today' | 'unpaid';
     overdue_days: number;
 };
 const props = defineProps<{
@@ -143,7 +144,7 @@ function recordPayment() {
     }
     payment
         .transform((data) => ({ ...data, amount_minor: amount }))
-        .post(storePayment.url(String(paymentFor.value.id)), {
+        .post(storePayment.url(paymentFor.value.id), {
             onSuccess: () => {
                 payment.reset();
                 paymentFor.value = null;
@@ -316,7 +317,12 @@ function recordPayment() {
                         </td>
                         <td class="p-3">
                             <span
-                                v-if="row.payment_status === 'paid'"
+                                v-if="row.status === 'draft'"
+                                class="font-medium text-muted-foreground"
+                                >Draft</span
+                            >
+                            <span
+                                v-else-if="row.payment_status === 'paid'"
                                 class="font-medium text-emerald-700 dark:text-emerald-400"
                                 >Paid</span
                             >
@@ -348,11 +354,20 @@ function recordPayment() {
                                 ></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end"
                                     ><DropdownMenuItem
+                                        v-if="
+                                            row.status === 'draft' &&
+                                            can('invoices.create')
+                                        "
+                                        @select="router.post(issue.url(row.id))"
+                                        ><FileText class="size-4" /> Issue
+                                        draft</DropdownMenuItem
+                                    ><DropdownMenuItem
                                         @select="printInvoice(row)"
                                         ><Printer class="size-4" /> Print
                                         invoice</DropdownMenuItem
                                     ><DropdownMenuItem
                                         v-if="
+                                            row.status !== 'draft' &&
                                             row.customer_email &&
                                             row.payment_status !== 'paid'
                                         "
@@ -364,6 +379,7 @@ function recordPayment() {
                                         > </DropdownMenuItem
                                     ><DropdownMenuItem
                                         v-if="
+                                            row.status !== 'draft' &&
                                             can('invoices.payments.create') &&
                                             row.amount_minor >
                                                 Number(

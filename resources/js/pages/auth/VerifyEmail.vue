@@ -10,7 +10,7 @@ defineOptions({
     layout: {
         title: 'Email verification',
         description:
-            'Please verify your email address by clicking on the link we just emailed to you.',
+            'Verify your email address to continue. If you have not received a link, request one below.',
     },
 });
 

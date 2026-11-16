@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\LeadTokenController;
 use App\Http\Controllers\Admin\McpUsageController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PayrollController;
+use App\Http\Controllers\Admin\ProposalController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
@@ -145,7 +146,20 @@ Route::prefix(config('admin.alias'))
                 Route::get('/', 'index')->name('index');
                 Route::post('/', 'store')->name('store');
                 Route::post('{invoice}/payments', 'payment')->name('payments.store');
+                Route::post('{invoice}/issue', 'issue')->name('issue');
             });
+
+            Route::post('proposals/{proposal}/invite', [ProposalController::class, 'invite'])->middleware('throttle:3,1,proposal-invite')->name('proposals.invite');
+            Route::get('proposals/{proposal}/preview', [ProposalController::class, 'preview'])->name('proposals.preview');
+            Route::post('proposals/{proposal}/revise', [ProposalController::class, 'revise'])->name('proposals.revise');
+            Route::post('proposals/{proposal}/transfer', [ProposalController::class, 'transfer'])->name('proposals.transfer');
+            Route::post('proposals/{proposal}/invoice', [ProposalController::class, 'invoice'])->name('proposals.invoice');
+            Route::post('proposals/{proposal}/receipt', [ProposalController::class, 'receipt'])->middleware('throttle:3,1,proposal-receipt')->name('proposals.receipt');
+            Route::post('proposals/{proposal}/remind', [ProposalController::class, 'remind'])->middleware('throttle:3,1,proposal-remind')->name('proposals.remind');
+            Route::post('proposals/{proposal}/password-reset', [ProposalController::class, 'passwordReset'])->middleware('throttle:3,1,proposal-password-reset')->name('proposals.password-reset');
+            Route::apiResource('proposals', ProposalController::class)
+                ->except(['show'])
+                ->names('proposals');
 
             Route::prefix('finance')->name('finance.')->controller(FinanceController::class)->group(function () {
                 Route::get('/', 'index')->name('index');

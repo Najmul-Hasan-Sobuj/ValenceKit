@@ -38,6 +38,14 @@ class RoleAndPermissionSeeder extends Seeder
             'invoices.create' => 'Create invoices',
             'invoices.payments.create' => 'Record invoice payments',
         ],
+        'Proposals & Contracts' => [
+            'clients.password-reset' => 'Send client password setup or reset links',
+            'proposals.transfer' => 'Transfer uncompleted documents to a verified client account',
+            'proposals.view' => 'View proposals, quotations, and contracts',
+            'proposals.create' => 'Create proposals, quotations, and contracts',
+            'proposals.edit' => 'Update and send proposals, quotations, and contracts',
+            'proposals.delete' => 'Delete documents that have not been accepted',
+        ],
         'Payroll' => [
             'payroll.view' => 'View payroll records and payslips',
             'payroll.create' => 'Create payroll records',

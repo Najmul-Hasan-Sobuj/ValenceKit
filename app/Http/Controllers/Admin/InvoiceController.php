@@ -15,6 +15,21 @@ use Inertia\Response;
 
 class InvoiceController extends Controller
 {
+    public function issue(Request $request, Invoice $invoice, AuditLogService $audit): RedirectResponse
+    {
+        abort_unless($request->user('admin')->can('invoices.create'), 403);
+        DB::transaction(function () use ($invoice, $request, $audit): void {
+            $locked = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status === 'draft') {
+                $before = $locked->auditLogValues();
+                $locked->update(['status' => 'issued']);
+                $audit->updated('invoice.issued', $locked, $before, actor: $request->user('admin'));
+            }
+        });
+
+        return back()->with('success', 'Invoice issued. Payments can now be recorded.');
+    }
+
     public function index(Request $request): Response
     {
         abort_unless($request->user('admin')->can('invoices.view'), 403);
@@ -28,8 +43,8 @@ class InvoiceController extends Controller
                     $outstanding = $invoice->amount_minor - (int) $invoice->payments_sum_amount_minor;
                     $today = CarbonImmutable::today();
                     $due = CarbonImmutable::parse($invoice->due_on)->startOfDay();
-                    $invoice->setAttribute('overdue_days', $outstanding > 0 && $due->lt($today) ? (int) $due->diffInDays($today) : 0);
-                    $invoice->setAttribute('payment_status', $outstanding <= 0 ? 'paid' : ($due->lt($today) ? 'overdue' : ($due->equalTo($today) ? 'due_today' : 'unpaid')));
+                    $invoice->setAttribute('overdue_days', $invoice->status !== 'draft' && $outstanding > 0 && $due->lt($today) ? (int) $due->diffInDays($today) : 0);
+                    $invoice->setAttribute('payment_status', $invoice->status === 'draft' ? 'draft' : ($outstanding <= 0 ? 'paid' : ($due->lt($today) ? 'overdue' : ($due->equalTo($today) ? 'due_today' : 'unpaid'))));
 
                     return $invoice;
                 }),
@@ -68,6 +83,9 @@ class InvoiceController extends Controller
         ]);
         DB::transaction(function () use ($invoice, $data, $audit, $request): void {
             $lockedInvoice = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            if ($lockedInvoice->status === 'draft') {
+                throw ValidationException::withMessages(['amount_minor' => 'Issue the invoice draft before recording payments.']);
+            }
             $remaining = $lockedInvoice->amount_minor - $lockedInvoice->payments()->sum('amount_minor');
             if ((int) $data['amount_minor'] > $remaining) {
                 throw ValidationException::withMessages(['amount_minor' => 'The payment cannot exceed the outstanding amount.']);

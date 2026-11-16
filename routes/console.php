@@ -28,3 +28,4 @@ Artisan::command('contact:sync-gmail', function (GmailSync $sync) {
 })->purpose('Sync website contact conversations with Gmail');
 
 Schedule::command('contact:sync-gmail')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('proposals:remind')->dailyAt('09:00')->withoutOverlapping();

@@ -18,6 +18,8 @@ void createInertiaApp({
                 name,
             ):
                 return null;
+            case name.startsWith('public/'):
+                return null;
             case name.startsWith('admin/auth/'):
                 return AdminAuthLayout;
             case name.startsWith('admin/settings/'):

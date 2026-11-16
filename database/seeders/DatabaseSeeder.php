@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             AdminSeeder::class,
             CategorySeeder::class,
+            ProposalSeeder::class,
         ]);
 
         app(McpToolSyncService::class)->sync();

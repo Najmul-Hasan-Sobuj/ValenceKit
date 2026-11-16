@@ -10,6 +10,8 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('proposal_id')->nullable()->unique()->constrained('proposals')->restrictOnDelete();
+            $table->string('status', 20)->default('issued');
             $table->string('number')->unique();
             $table->string('customer_name');
             $table->string('customer_email')->nullable();

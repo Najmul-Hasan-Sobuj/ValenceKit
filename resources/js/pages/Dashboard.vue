@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
 import { dashboard } from '@/routes';
+import { index as clientDocuments } from '@/routes/client/proposals';
 
 defineOptions({
     layout: {
@@ -21,6 +22,12 @@ defineOptions({
     <div
         class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
     >
+        <Link :href="clientDocuments()" class="rounded-xl border bg-card p-6"
+            ><h1 class="text-xl font-semibold">My documents</h1>
+            <p class="mt-2 text-sm text-muted-foreground">
+                View your proposals, quotations and contracts →
+            </p></Link
+        >
         <div class="grid auto-rows-min gap-4 md:grid-cols-3">
             <div
                 class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"

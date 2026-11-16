@@ -12,6 +12,7 @@ import {
     Users,
     Wallet,
     FolderOpen,
+    FileSignature,
     CalendarDays,
     CalendarCheck,
     ChartColumn,
@@ -60,6 +61,7 @@ import { index as indexContact } from '@/routes/admin/contact';
 import { index as indexHr } from '@/routes/admin/hr';
 import { index as indexInvoices } from '@/routes/admin/invoices';
 import { index as indexPayroll } from '@/routes/admin/payroll';
+import { index as indexProposals } from '@/routes/admin/proposals';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -197,6 +199,14 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     if (can('invoices.view')) {
         items.push({ title: 'Invoices', href: indexInvoices(), icon: Wallet });
+    }
+
+    if (can('proposals.view')) {
+        items.push({
+            title: 'Proposals',
+            href: indexProposals(),
+            icon: FileSignature,
+        });
     }
 
     if (can('finance.view')) {
