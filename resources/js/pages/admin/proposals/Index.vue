@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatMoney as amount, fromMinor, toMinor } from '@/lib/money';
 import { Head, Link, router, useForm, useHttp } from '@inertiajs/vue3';
 import { watchDebounced } from '@vueuse/core';
 import {
@@ -236,25 +237,6 @@ watchDebounced(
     },
     { debounce: 300 },
 );
-
-function amount(minor: number, currency: string): string {
-    try {
-        return new Intl.NumberFormat(undefined, {
-            style: 'currency',
-            currency,
-        }).format(minor / 100);
-    } catch {
-        return `${(minor / 100).toFixed(2)} ${currency}`;
-    }
-}
-const fromMinor = (minor: number) => (minor / 100).toFixed(2);
-function toMinor(value: number | string): number | null {
-    const text = String(value);
-    if (!/^\d+(\.\d{1,2})?$/.test(text)) return null;
-    const [whole, fraction = ''] = text.split('.');
-    const result = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
-    return Number.isSafeInteger(result) ? result : null;
-}
 
 const previewSubtotal = computed(() =>
     form.items.reduce((total, item) => {

@@ -55,6 +55,11 @@ jobs:
       - name: Run CI Checks
         run: composer ci:check
 
+      - name: Run frontend regression tests
+        run: |
+          npx vitest run resources/js
+          node --test resources/extensions/valence-scout/shared.test.mjs
+
       - name: Audit dependencies
         run: |
           composer audit --locked --no-interaction

@@ -16,6 +16,7 @@ use App\Models\LeaveType;
 use App\Models\WorkSchedule;
 use App\Services\AuditLogService;
 use App\Services\HrService;
+use App\Services\WorkflowNotifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -81,7 +82,7 @@ class HrController extends Controller
             $rows = [];
             $total = 0;
             (clone $query)->reorder()->chunkById(50, function (Collection $employees) use ($start, $end, $offset, $perPage, &$rows, &$total): void {
-                $batch = $this->report($employees, $start, $end);
+                $batch = $this->hr->report($employees, $start, $end);
                 $batchCount = count($batch);
                 if ($total < $offset + $perPage && $total + $batchCount > $offset) {
                     $rows = array_merge($rows, array_slice($batch, max(0, $offset - $total), $perPage - count($rows)));
@@ -108,36 +109,6 @@ class HrController extends Controller
             'report' => $reportRows,
             'totals' => ['active' => (clone $query)->where('is_active', true)->count(), 'present' => $presentCount, 'on_leave' => $onLeaveCount, 'pending' => LeaveRequest::whereIn('employee_id', clone $ids)->whereIn('status', ['pending', 'cancellation_requested'])->count()],
         ]);
-    }
-
-    private function report(Collection $employees, string $start, string $end): array
-    {
-        $rows = [];
-        $assignments = DB::table('employee_schedules')->whereIn('employee_id', $employees->pluck('id'))->where('effective_from', '<=', $end)->orderByDesc('effective_from')->get()->groupBy('employee_id');
-        $holidays = Holiday::whereBetween('date', [$start, $end])->pluck('date')->all();
-        $records = Attendance::whereIn('employee_id', $employees->pluck('id'))->whereBetween('work_date', [$start, $end])->get()->keyBy(fn ($a) => $a->employee_id.'|'.$a->work_date);
-        $leaves = LeaveRequest::whereIn('employee_id', $employees->pluck('id'))->whereIn('status', ['approved', 'cancellation_requested'])->where('start_date', '<=', $end)->where('end_date', '>=', $start)->get();
-        foreach ($employees as $employee) {
-            for ($day = CarbonImmutable::parse($start); $day->toDateString() <= $end; $day = $day->addDay()) {
-                $date = $day->toDateString();
-                if ($date < $employee->joined_on || ($employee->ended_on && $date > $employee->ended_on)) {
-                    continue;
-                }
-                $record = $records->get($employee->id.'|'.$date);
-                $assignment = $assignments->get($employee->id, collect())->first(fn ($assignment) => $assignment->effective_from <= $date);
-                if (! $record && ! $assignment) {
-                    continue;
-                }
-                $schedule = $record?->schedule ?? json_decode($assignment->snapshot, true);
-                $working = in_array($day->dayOfWeekIso, $schedule['weekdays']) && ! in_array($date, $holidays);
-                $late = $record ? max(0, (int) CarbonImmutable::parse($date.' '.$schedule['start_time'], $schedule['timezone'])->addMinutes($schedule['grace_minutes'])->diffInMinutes($record->check_in, false)) : 0;
-                $onLeave = $leaves->contains(fn ($leave) => $leave->employee_id === $employee->id && in_array($date, $leave->dates));
-                $status = $record ? ($late ? 'Late' : 'Present') : ($onLeave ? 'On leave' : (! $working ? 'Day off' : (CarbonImmutable::now($schedule['timezone']) > CarbonImmutable::parse($date.' '.$schedule['end_time'], $schedule['timezone']) ? 'Absent' : 'Not marked')));
-                $rows[] = ['employee_id' => $employee->id, 'name' => $employee->name, 'date' => $date, 'status' => $status, 'check_in' => $record?->check_in->setTimezone($schedule['timezone'])->format('H:i'), 'check_out' => $record?->check_out?->setTimezone($schedule['timezone'])->format('H:i'), 'minutes' => $record?->check_out ? (int) $record->check_in->diffInMinutes($record->check_out) : null, 'late_minutes' => $late, 'timezone' => $schedule['timezone']];
-            }
-        }
-
-        return $rows;
     }
 
     public function employee(EmployeeRequest $request, ?Employee $employee = null): RedirectResponse
@@ -192,25 +163,26 @@ class HrController extends Controller
             'holiday' => ['name' => ['required', 'string', 'max:255'], 'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today', Rule::unique('holidays', 'date')->ignore($id)]],
             'leave-type' => ['name' => ['required', 'string', 'max:255', Rule::unique('leave_types', 'name')->ignore($id)], 'is_paid' => ['required', 'boolean'], 'is_active' => ['sometimes', 'boolean']],
             'allocation' => ['employee_id' => ['required', 'integer', 'exists:employees,id'], 'leave_type_id' => ['required', 'integer', 'exists:leave_types,id'], 'year' => ['required', 'integer', 'between:2000,2100'], 'days' => ['required', 'integer', 'between:0,366'], 'reason' => ['required', 'string', 'max:255']],
+            default => abort(422),
         };
         $data = $request->validate($rules);
         $created = DB::transaction(function () use ($kind, $data, $id): int {
             if ($kind === 'allocation') {
                 Employee::lockForUpdate()->findOrFail($data['employee_id']);
                 $this->hr->check($data['days'] >= $this->hr->reserved($data['employee_id'], $data['leave_type_id'], $data['year']), 'days', 'Allowance cannot be less than reserved leave.');
-                $record = LeaveAllocation::firstOrNew(collect($data)->only(['employee_id', 'leave_type_id', 'year'])->all());
+                $record = LeaveAllocation::firstOrNew(array_intersect_key($data, array_flip(['employee_id', 'leave_type_id', 'year'])));
                 $before = $record->auditLogValues();
                 $record->fill($data)->save();
                 $this->audit->updated('hr.allocation.saved', $record, $before);
             } else {
                 $class = match ($kind) {
-                    'department' => Department::class, 'schedule' => WorkSchedule::class, 'holiday' => Holiday::class, 'leave-type' => LeaveType::class
+                    'department' => Department::class, 'schedule' => WorkSchedule::class, 'holiday' => Holiday::class, default => LeaveType::class
                 };
                 if ($kind === 'holiday') {
                     $this->hr->check(! LeaveRequest::whereIn('status', ['pending', 'approved', 'cancellation_requested'])->where('start_date', '<=', $data['date'])->where('end_date', '>=', $data['date'])->exists(), 'date', 'Resolve overlapping leave requests before adding this holiday.');
                 }
-                $record = $id ? $class::lockForUpdate()->findOrFail($id) : new $class;
-                if ($id && $kind === 'holiday') {
+                $record = $id ? $class::lockForUpdate()->whereKey($id)->firstOrFail() : new $class;
+                if ($id && $record instanceof Holiday) {
                     $this->hr->check($record->date >= now('Asia/Dhaka')->toDateString() && ! LeaveRequest::whereIn('status', ['pending', 'approved', 'cancellation_requested'])->where('start_date', '<=', $record->date)->where('end_date', '>=', $record->date)->exists(), 'date', 'Historical or referenced holidays cannot change.');
                 }
                 $before = $record->auditLogValues();
@@ -231,12 +203,12 @@ class HrController extends Controller
             'department' => Department::class, 'schedule' => WorkSchedule::class, 'holiday' => Holiday::class, 'leave-type' => LeaveType::class, default => abort(404)
         };
         DB::transaction(function () use ($class, $kind, $id): void {
-            $record = $class::lockForUpdate()->findOrFail($id);
+            $record = $class::lockForUpdate()->whereKey($id)->firstOrFail();
             $used = match ($kind) {
                 'department' => Employee::where('department_id', $id)->exists(),
                 'schedule' => DB::table('employee_schedules')->where('work_schedule_id', $id)->exists(),
                 'leave-type' => LeaveRequest::where('leave_type_id', $id)->exists() || LeaveAllocation::where('leave_type_id', $id)->exists(),
-                'holiday' => $record->date < now('Asia/Dhaka')->toDateString() || LeaveRequest::whereIn('status', ['pending', 'approved', 'cancellation_requested'])->where('start_date', '<=', $record->date)->where('end_date', '>=', $record->date)->exists(),
+                'holiday' => $record instanceof Holiday && ($record->date < now('Asia/Dhaka')->toDateString() || LeaveRequest::whereIn('status', ['pending', 'approved', 'cancellation_requested'])->where('start_date', '<=', $record->date)->where('end_date', '>=', $record->date)->exists()),
             };
             $this->hr->check(! $used, 'record', 'This record is used by HR history and cannot be deleted.');
             $this->audit->deleted('hr.'.$kind.'.deleted', $record, $record->auditLogValues());
@@ -253,7 +225,9 @@ class HrController extends Controller
         $employee = $this->hr->requireEmployee($actor, $data['employee_id']);
         abort_unless($actor->can('leave.manage') || ($actor->can('hr.self') && $employee->admin_id === $actor->id), 403);
         DB::transaction(function () use ($employee, $data): void {
-            $this->audit->created('hr.leave.requested', $this->hr->requestLeave($employee, $data));
+            $leave = $this->hr->requestLeave($employee, $data);
+            $this->audit->created('hr.leave.requested', $leave);
+            app(WorkflowNotifier::class)->leaveRequested($leave);
         });
 
         return back()->with('success', 'Leave request submitted.');
@@ -348,9 +322,12 @@ class HrController extends Controller
 
         return response()->streamDownload(function () use ($query, $start, $end): void {
             $file = fopen('php://output', 'w');
+            if ($file === false) {
+                throw new \RuntimeException('Cannot open CSV output.');
+            }
             fputcsv($file, ['Employee ID', 'Name', 'Date', 'Status', 'Check-in', 'Check-out', 'Duration minutes', 'Late minutes', 'Timezone'], escape: '');
             foreach ($query->orderBy('id')->lazy(100) as $employee) {
-                foreach ($this->report(collect([$employee]), $start, $end) as $row) {
+                foreach ($this->hr->report(collect([$employee]), $start, $end) as $row) {
                     fputcsv($file, array_map(fn ($value) => preg_match('/^[\s=+@-]/u', (string) $value) ? "'".$value : $value, array_values($row)), escape: '');
                 }
             }

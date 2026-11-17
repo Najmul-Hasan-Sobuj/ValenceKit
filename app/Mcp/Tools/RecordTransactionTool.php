@@ -7,6 +7,7 @@ use App\Services\AuditLogService;
 use App\Services\FinanceService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
+use Illuminate\Support\Facades\DB;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
@@ -57,22 +58,26 @@ class RecordTransactionTool extends BaseDbTool
             return Response::text("Error: Active {$type} category not found for '{$categoryKey}'.");
         }
 
-        $transaction = $financeService->createTransaction([
-            'type' => $type,
-            'amount' => $amount,
-            'description' => $description,
-            'category_key' => $categoryKey,
-            'payment_method' => $paymentMethod,
-            'transaction_date' => now()->toDateString(),
-        ], $admin->id);
+        $transaction = DB::transaction(function () use ($financeService, $type, $amount, $description, $categoryKey, $paymentMethod, $admin) {
+            $transaction = $financeService->createTransaction([
+                'type' => $type,
+                'amount' => $amount,
+                'description' => $description,
+                'category_key' => $categoryKey,
+                'payment_method' => $paymentMethod,
+                'transaction_date' => now()->toDateString(),
+            ], $admin->id);
 
-        app(AuditLogService::class)->record(
-            'finance.transaction.created',
-            $transaction,
-            afterValues: $transaction->only(['type', 'amount', 'currency', 'category_key', 'description', 'reference', 'transaction_date', 'payment_method']),
-            description: 'A finance transaction was recorded through MCP.',
-            actor: $admin,
-        );
+            app(AuditLogService::class)->record(
+                'finance.transaction.created',
+                $transaction,
+                afterValues: $transaction->only(['type', 'amount', 'currency', 'category_key', 'description', 'reference', 'transaction_date', 'payment_method']),
+                description: 'A finance transaction was recorded through MCP.',
+                actor: $admin,
+            );
+
+            return $transaction;
+        });
 
         $formattedAmount = number_format($amount, 2);
 

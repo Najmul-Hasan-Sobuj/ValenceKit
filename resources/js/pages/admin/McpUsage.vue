@@ -59,6 +59,9 @@ const props = defineProps<{
             ip_address: string;
             user_agent: string;
             endpoint: string;
+            response_status: number | null;
+            duration_ms: number | null;
+            request_id: string | null;
             created_at: string;
             user: {
                 id: number;
@@ -327,7 +330,8 @@ defineOptions({
                     <TableRow>
                         <TableHead class="pl-4">User / Token</TableHead>
                         <TableHead>Endpoint</TableHead>
-                        <TableHead>IP Address</TableHead>
+                        <TableHead>Result</TableHead
+                        ><TableHead>IP Address</TableHead>
                         <TableHead>Time</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -404,6 +408,33 @@ defineOptions({
                                 >{{ log.endpoint }}</Badge
                             >
                         </TableCell>
+                        <TableCell
+                            ><div class="space-y-1">
+                                <Badge
+                                    :variant="
+                                        log.response_status &&
+                                        log.response_status >= 400
+                                            ? 'destructive'
+                                            : 'secondary'
+                                    "
+                                    >{{ log.response_status ?? '—' }}</Badge
+                                >
+                                <p class="text-xs text-muted-foreground">
+                                    {{
+                                        log.duration_ms === null
+                                            ? '—'
+                                            : `${log.duration_ms} ms`
+                                    }}
+                                </p>
+                                <p
+                                    v-if="log.request_id"
+                                    class="max-w-40 truncate font-mono text-[10px] text-muted-foreground"
+                                    :title="log.request_id"
+                                >
+                                    {{ log.request_id }}
+                                </p>
+                            </div></TableCell
+                        >
                         <TableCell>
                             <span
                                 class="font-mono text-sm text-muted-foreground"
@@ -419,7 +450,7 @@ defineOptions({
                     </TableRow>
                     <TableRow v-if="formattedLogs.length === 0">
                         <TableCell
-                            colspan="4"
+                            colspan="5"
                             class="h-24 text-center text-muted-foreground"
                         >
                             No usage logs found.

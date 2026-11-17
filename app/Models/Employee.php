@@ -19,21 +19,25 @@ class Employee extends Model
         return ['is_active' => 'boolean'];
     }
 
+    /** @return array<string, mixed> */
     public function auditLogValues(): array
     {
         return $this->only(['employee_code', 'name', 'email', 'phone', 'department_id', 'designation', 'manager_id', 'admin_id', 'joined_on', 'ended_on', 'is_active']);
     }
 
+    /** @return BelongsTo<Department, $this> */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
+    /** @return BelongsTo<Employee, $this> */
     public function manager(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
+    /** @return BelongsTo<Admin, $this> */
     public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class);

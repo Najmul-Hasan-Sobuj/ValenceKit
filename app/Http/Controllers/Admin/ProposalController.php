@@ -118,9 +118,9 @@ class ProposalController extends Controller
         abort_unless(in_array($proposal->status, ['accepted', 'rejected'], true), 409);
         $email = User::find($proposal->client_user_id)?->email;
         abort_unless(is_string($email) && $email !== '', 409);
-        $sent = $documents->deliver($proposal, $email, new ProposalStatusNotification($proposal->number, 'Revision '.$proposal->revision.' was '.$proposal->status.'. Your response receipt is available in the portal.', route('proposals.public.show', $proposal)), 'proposal.receipt_sent');
+        $sent = $documents->queueStatus($proposal, $email, new ProposalStatusNotification($proposal->number, 'Revision '.$proposal->revision.' was '.$proposal->status.'. Your response receipt is available in the portal.', route('proposals.public.show', $proposal)), 'proposal.receipt_sent');
 
-        return back()->with($sent ? 'success' : 'error', $sent ? 'Receipt sent.' : 'Receipt delivery failed. Please retry.');
+        return back()->with($sent ? 'success' : 'error', $sent ? 'Receipt queued for delivery.' : 'Receipt could not be queued. Please retry.');
     }
 
     public function remind(Request $request, Proposal $proposal, ProposalService $documents): RedirectResponse
@@ -134,13 +134,13 @@ class ProposalController extends Controller
             }
             $email = $proposal->owner_claimed_at ? User::find($proposal->client_user_id)?->email : $proposal->client_email;
             abort_unless(is_string($email) && $email !== '', 409);
-            $sent = $documents->deliver($proposal, $email, new ProposalStatusNotification($proposal->number, 'Reminder: revision '.$proposal->revision.' awaits your response before '.$proposal->valid_until->toDateString().'.', route('proposals.public.show', $proposal)), 'proposal.reminder_sent');
+            $sent = $documents->queueStatus($proposal, $email, new ProposalStatusNotification($proposal->number, 'Reminder: revision '.$proposal->revision.' awaits your response before '.$proposal->valid_until->toDateString().'.', route('proposals.public.show', $proposal)), 'proposal.reminder_sent');
             if ($sent) {
                 $proposal->last_reminded_at = now();
                 $proposal->save();
             }
 
-            return back()->with($sent ? 'success' : 'error', $sent ? 'Reminder sent.' : 'Reminder delivery failed. Please retry.');
+            return back()->with($sent ? 'success' : 'error', $sent ? 'Reminder queued for delivery.' : 'Reminder could not be queued. Please retry.');
         });
 
         return $response ?: back()->with('error', 'A reminder is already being sent.');

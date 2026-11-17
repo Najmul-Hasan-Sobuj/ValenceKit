@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { money, toMinor as minor } from '@/lib/money';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { nextTick, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
@@ -97,14 +98,7 @@ const invoice = useForm({
     due_on: '',
 });
 const payment = useForm({ amount_minor: '', paid_on: '', reference: '' });
-const money = (value: number | string | null, currency: string) =>
-    `${currency} ${(Number(value ?? 0) / 100).toFixed(2)}`;
-function minor(value: string): number | null {
-    if (!/^\d+(\.\d{1,2})?$/.test(value)) return null;
-    const [whole, fraction = ''] = value.split('.');
-    const amount = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
-    return Number.isSafeInteger(amount) ? amount : null;
-}
+
 function reminderLink(row: Invoice): string {
     const due = money(
         row.amount_minor - Number(row.payments_sum_amount_minor ?? 0),

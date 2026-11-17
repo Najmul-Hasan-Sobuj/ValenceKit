@@ -214,3 +214,10 @@ it('shares session error in inertia props when an action returns with error', fu
             ->where('error', 'Cannot delete role with assigned members.')
         );
 });
+
+it('rejects malformed duplicate role identifiers before querying', function () {
+    $this->limitedAdmin->givePermissionTo('roles.create');
+    $this->actingAs($this->limitedAdmin, 'admin')
+        ->getJson(route('admin.authorization.roles.create', ['duplicate' => [1, 2]]))
+        ->assertUnprocessable()->assertJsonValidationErrors('duplicate');
+});

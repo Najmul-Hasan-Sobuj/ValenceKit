@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Services\AuditLogService;
+use App\Services\WorkflowNotifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class InvoiceController extends Controller
                 $before = $locked->auditLogValues();
                 $locked->update(['status' => 'issued']);
                 $audit->updated('invoice.issued', $locked, $before, actor: $request->user('admin'));
+                app(WorkflowNotifier::class)->invoice($locked, 'issued');
             }
         });
 
@@ -68,6 +70,7 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($data, $audit, $request): void {
             $invoice = Invoice::create($data);
             $audit->created('invoice.created', $invoice, actor: $request->user('admin'));
+            app(WorkflowNotifier::class)->invoice($invoice, 'issued');
         });
 
         return back()->with('success', 'Invoice created.');
@@ -92,6 +95,7 @@ class InvoiceController extends Controller
             }
             $payment = $lockedInvoice->payments()->create($data);
             $audit->created('invoice.payment.created', $payment, actor: $request->user('admin'));
+            app(WorkflowNotifier::class)->invoice($lockedInvoice, 'payment_recorded');
         });
 
         return back()->with('success', 'Payment recorded.');

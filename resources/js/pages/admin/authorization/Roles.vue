@@ -133,7 +133,7 @@ function confirmDeleteRole(event?: Event): void {
     event?.preventDefault();
     if (roleToDelete.value && !isDeleting.value) {
         isDeleting.value = true;
-        router.delete(rolesRoute.destroy.url(String(roleToDelete.value.id)), {
+        router.delete(rolesRoute.destroy.url(Number(roleToDelete.value.id)), {
             preserveScroll: true,
             onSuccess: () => {
                 deleteDialogOpen.value = false;
@@ -347,7 +347,7 @@ defineOptions({
                                         <Link
                                             :href="
                                                 rolesRoute.edit.url(
-                                                    String(role.id),
+                                                    Number(role.id),
                                                 )
                                             "
                                             class="flex w-full items-center"

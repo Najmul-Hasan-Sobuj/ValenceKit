@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 use Symfony\Component\Mailer\Transport\Smtp\Auth\XOAuth2Authenticator;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
 use Symfony\Component\Mime\Email;
 
 class GmailSender
@@ -68,7 +69,10 @@ class GmailSender
     protected function deliver(GmailMailbox $mailbox, Email $email): string
     {
         $transport = new EsmtpTransport('smtp.gmail.com', 465, true, authenticators: [new XOAuth2Authenticator]);
-        $transport->getStream()->setTimeout(15);
+        $stream = $transport->getStream();
+        if ($stream instanceof SocketStream) {
+            $stream->setTimeout(15);
+        }
         $transport->setUsername($mailbox->email);
         $transport->setPassword($this->tokens->accessToken($mailbox));
         $sent = $transport->send($email);

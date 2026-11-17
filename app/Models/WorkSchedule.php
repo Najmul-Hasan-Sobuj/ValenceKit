@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property list<int> $weekdays
+ */
 #[Fillable(['name', 'start_time', 'end_time', 'weekdays', 'grace_minutes', 'timezone', 'is_active'])]
 class WorkSchedule extends Model
 {
@@ -13,6 +16,7 @@ class WorkSchedule extends Model
         return ['weekdays' => 'array', 'is_active' => 'boolean'];
     }
 
+    /** @return array<string, mixed> */
     public function auditLogValues(): array
     {
         return $this->only(['name', 'start_time', 'end_time', 'weekdays', 'grace_minutes', 'timezone', 'is_active']);

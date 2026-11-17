@@ -1,40 +1,5 @@
 parameters:
 	ignoreErrors:
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Collection\<int, Spatie\\Permission\\Models\\Role\>\|Spatie\\Permission\\Models\\Role\:\:\$description\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Admin/Authorization/RoleController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Collection\<int, Spatie\\Permission\\Models\\Role\>\|Spatie\\Permission\\Models\\Role\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Admin/Authorization/RoleController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Collection\<int, Spatie\\Permission\\Models\\Role\>\|Spatie\\Permission\\Models\\Role\:\:\$is_system\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Admin/Authorization/RoleController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Collection\<int, Spatie\\Permission\\Models\\Role\>\|Spatie\\Permission\\Models\\Role\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Admin/Authorization/RoleController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Collection\<int, Spatie\\Permission\\Models\\Role\>\|Spatie\\Permission\\Models\\Role\:\:\$permissions\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Admin/Authorization/RoleController.php
-
-		-
-			message: '#^Access to an undefined property Spatie\\Permission\\Models\\Role\:\:\$is_system\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Http/Controllers/Admin/Authorization/RoleController.php
 
 		-
 			message: '#^Method App\\Http\\Controllers\\Admin\\Authorization\\RoleController\:\:create\(\) has no return type specified\.$#'
@@ -277,19 +242,7 @@ parameters:
 			path: app/Http/Resources/Admin/CategoryResource.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Category.php
-
-		-
 			message: '#^Class App\\Models\\Category uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Models/Category.php
-
-		-
-			message: '#^Method App\\Models\\Category\:\:children\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
 			identifier: missingType.generics
 			count: 1
 			path: app/Models/Category.php

@@ -6,9 +6,11 @@ use App\Notifications\UserNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationController extends Controller
 {
+    /** @return Builder<DatabaseNotification> */
     protected function visible(Request $request): Builder
     {
         return $request->user('web')->notifications()->getQuery()->where('type', UserNotification::class);

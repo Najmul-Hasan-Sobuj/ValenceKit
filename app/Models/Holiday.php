@@ -13,6 +13,7 @@ class Holiday extends Model
         return [];
     }
 
+    /** @return array<string, mixed> */
     public function auditLogValues(): array
     {
         return $this->only(['name', 'date']);

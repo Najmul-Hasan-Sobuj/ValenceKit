@@ -41,7 +41,7 @@ class SendProposalReminders extends Command
                             return;
                         }
                         $message = $proposal->valid_until->lte(today()->addDay()) ? 'Action needed: this document expires on '.$proposal->valid_until->toDateString().'.' : 'Reminder: this document is awaiting your response.';
-                        if ($documents->deliver($proposal, $email, new ProposalStatusNotification($proposal->number, $message, route('proposals.public.show', $proposal)), 'proposal.reminder_sent')) {
+                        if ($documents->queueStatus($proposal, $email, new ProposalStatusNotification($proposal->number, $message, route('proposals.public.show', $proposal)), 'proposal.reminder_sent')) {
                             $proposal->last_reminded_at = now();
                             $proposal->save();
                             $sent++;
@@ -51,7 +51,7 @@ class SendProposalReminders extends Command
                     });
                 }
             });
-        $this->info('Reminders sent: '.$sent.'. Failed: '.$failed.'.');
+        $this->info('Reminders queued: '.$sent.'. Failed: '.$failed.'.');
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }

@@ -171,6 +171,8 @@ it('lists tool schemas and records the client type for a bearer token', function
         'token_used' => $authMethod === 'passport' ? 'passport_token' : 'oauth_token',
         'auth_method' => $authMethod,
         'oauth_client_id' => $authMethod === 'passport' ? null : $client->id,
+        'response_status' => 200,
+        'request_id' => $response->headers->get('X-Request-ID'),
     ]);
 })->with([
     'personal access' => ['personal_access', 'passport'],

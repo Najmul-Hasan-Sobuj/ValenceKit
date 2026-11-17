@@ -75,6 +75,11 @@ const shownNotifications = new Set<string>();
 const busy = ref(false);
 const deleting = ref<Notice | null>(null);
 let disposed = false;
+const connected = ref(false);
+let fallbackTimer: ReturnType<typeof setInterval> | undefined;
+function refreshWhenVisible() {
+    if (!document.hidden && !connected.value) void load();
+}
 let stateVersion = 0;
 let refreshPending = false;
 const csrf = () =>
@@ -279,6 +284,8 @@ async function markAll() {
 
 onMounted(() => {
     void load();
+    fallbackTimer = setInterval(refreshWhenVisible, 45000);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
     const settings = page.props.reverb;
     const account = page.props.auth[props.scope === 'user' ? 'user' : 'admin'];
     if (!settings?.key || !account) return;
@@ -306,12 +313,18 @@ onMounted(() => {
     ).notification((notice: { id: string }) => {
         void load(false, notice.id);
     });
-    echo.connector.pusher.connection.bind('connected', () => {
-        void load();
-    });
+    echo.connector.pusher.connection.bind(
+        'state_change',
+        (state: { current: string }) => {
+            connected.value = state.current === 'connected';
+            if (connected.value) void load();
+        },
+    );
 });
 onUnmounted(() => {
     disposed = true;
+    clearInterval(fallbackTimer);
+    document.removeEventListener('visibilitychange', refreshWhenVisible);
     echo?.disconnect();
 });
 </script>
@@ -356,6 +369,11 @@ onUnmounted(() => {
                     <div class="min-w-0 flex-1">
                         <h2 class="text-base font-semibold tracking-tight">
                             Notifications
+                            <span
+                                v-if="!connected"
+                                class="ml-1 text-xs font-normal text-muted-foreground"
+                                >Periodic updates</span
+                            >
                         </h2>
                         <p class="mt-0.5 text-xs text-muted-foreground">
                             {{

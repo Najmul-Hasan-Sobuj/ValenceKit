@@ -10,11 +10,46 @@ use App\Models\LeaveAllocation;
 use App\Models\LeaveRequest;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class HrService
 {
+    /** @param Collection<int, Employee> $employees
+     * @return list<array<string, mixed>>
+     */
+    public function report(Collection $employees, string $start, string $end): array
+    {
+        $rows = [];
+        $assignments = DB::table('employee_schedules')->whereIn('employee_id', $employees->pluck('id'))->where('effective_from', '<=', $end)->orderByDesc('effective_from')->get()->groupBy('employee_id');
+        $holidays = Holiday::whereBetween('date', [$start, $end])->pluck('date')->all();
+        $records = Attendance::whereIn('employee_id', $employees->pluck('id'))->whereBetween('work_date', [$start, $end])->get()->keyBy(fn ($a) => $a->employee_id.'|'.$a->work_date);
+        $leaves = LeaveRequest::whereIn('employee_id', $employees->pluck('id'))->whereIn('status', ['approved', 'cancellation_requested'])->where('start_date', '<=', $end)->where('end_date', '>=', $start)->get();
+        foreach ($employees as $employee) {
+            for ($day = CarbonImmutable::parse($start); $day->toDateString() <= $end; $day = $day->addDay()) {
+                $date = $day->toDateString();
+                if ($date < $employee->joined_on || ($employee->ended_on && $date > $employee->ended_on)) {
+                    continue;
+                }
+                $record = $records->get($employee->id.'|'.$date);
+                $assignment = $assignments->get($employee->id, collect())->first(fn ($assignment) => $assignment->effective_from <= $date);
+                if (! $record && ! $assignment) {
+                    continue;
+                }
+                $schedule = $record->schedule ?? json_decode($assignment->snapshot, true);
+                $working = in_array($day->dayOfWeekIso, $schedule['weekdays']) && ! in_array($date, $holidays);
+                $late = $record ? max(0, (int) CarbonImmutable::parse($date.' '.$schedule['start_time'], $schedule['timezone'])->addMinutes($schedule['grace_minutes'])->diffInMinutes($record->check_in, false)) : 0;
+                $onLeave = $leaves->contains(fn ($leave) => $leave->employee_id === $employee->id && in_array($date, $leave->dates));
+                $status = $record ? ($late ? 'Late' : 'Present') : ($onLeave ? 'On leave' : (! $working ? 'Day off' : (CarbonImmutable::now($schedule['timezone']) > CarbonImmutable::parse($date.' '.$schedule['end_time'], $schedule['timezone']) ? 'Absent' : 'Not marked')));
+                $rows[] = ['employee_id' => $employee->id, 'name' => $employee->name, 'date' => $date, 'status' => $status, 'check_in' => $record?->check_in->setTimezone($schedule['timezone'])->format('H:i'), 'check_out' => $record?->check_out?->setTimezone($schedule['timezone'])->format('H:i'), 'minutes' => $record?->check_out ? (int) $record->check_in->diffInMinutes($record->check_out) : null, 'late_minutes' => $late, 'timezone' => $schedule['timezone']];
+            }
+        }
+
+        return $rows;
+    }
+
+    /** @return Builder<Employee> */
     public function employees(Admin $actor): Builder
     {
         $query = Employee::query();
@@ -40,6 +75,7 @@ class HrService
         return $employee;
     }
 
+    /** @return array<string, mixed> */
     public function schedule(Employee $employee, string $date): array
     {
         $snapshot = DB::table('employee_schedules')->where('employee_id', $employee->id)
@@ -49,6 +85,7 @@ class HrService
         return json_decode($snapshot, true, flags: JSON_THROW_ON_ERROR);
     }
 
+    /** @param array<string, mixed> $schedule */
     public function working(Employee $employee, string $date, array $schedule): bool
     {
         return $date >= $employee->joined_on && (! $employee->ended_on || $date <= $employee->ended_on)
@@ -63,6 +100,7 @@ class HrService
             ->get(['dates'])->sum(fn ($leave) => count($leave->dates));
     }
 
+    /** @param array<string, mixed> $data */
     public function requestLeave(Employee $employee, array $data): LeaveRequest
     {
         return DB::transaction(function () use ($employee, $data): LeaveRequest {
@@ -114,15 +152,17 @@ class HrService
             $before = $leave->auditLogValues();
             $leave->update(['status' => $status, 'reviewer_id' => $actor->id, 'review_note' => $note]);
             app(AuditLogService::class)->updated('hr.leave.'.$status, $leave, $before, actor: $actor);
+            app(WorkflowNotifier::class)->leaveReviewed($leave);
         });
     }
 
+    /** @param array<string, mixed> $data */
     public function saveAttendance(Employee $employee, array $data): Attendance
     {
         $date = $data['work_date'];
         $this->check($employee->is_active, 'employee_id', 'This employee is inactive.');
         $existing = Attendance::where('employee_id', $employee->id)->where('work_date', $date)->first();
-        $schedule = $existing?->schedule ?? $this->schedule($employee, $date);
+        $schedule = $existing->schedule ?? $this->schedule($employee, $date);
         $in = CarbonImmutable::parse($data['check_in'], $schedule['timezone']);
         $out = empty($data['check_out']) ? null : CarbonImmutable::parse($data['check_out'], $schedule['timezone']);
         $this->check($date >= $employee->joined_on && (! $employee->ended_on || $date <= $employee->ended_on), 'work_date', 'Date must be inside employment dates.');

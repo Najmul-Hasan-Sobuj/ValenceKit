@@ -14,6 +14,6 @@ class LeadResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return $this->resource->only(['id', 'source', 'source_id', 'name', 'phone', 'email', 'address', 'website', 'maps_url', 'category', 'rating', 'review_count', 'query', 'details', 'created_at']);
+        return $this->resource->only(['id', 'source', 'source_id', 'name', 'phone', 'email', 'address', 'website', 'maps_url', 'category', 'rating', 'review_count', 'query', 'details', 'created_at', 'assigned_to', 'stage', 'next_follow_up_at']);
     }
 }

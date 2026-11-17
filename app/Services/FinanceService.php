@@ -143,12 +143,12 @@ class FinanceService
         $endOfMonth = $targetDate->copy()->endOfMonth();
         $currency = $this->getActiveCurrency();
 
-        $transactions = FinanceTransaction::betweenDates($startOfMonth->toDateString(), $endOfMonth->toDateString())
+        $totals = FinanceTransaction::betweenDates($startOfMonth->toDateString(), $endOfMonth->toDateString())
             ->where('currency', $currency['code'])
-            ->get(['type', 'amount']);
+            ->selectRaw('type, SUM(amount) as total')->groupBy('type')->pluck('total', 'type');
 
-        $totalIncome = (float) $transactions->where('type', 'income')->sum('amount');
-        $totalExpense = (float) $transactions->where('type', 'expense')->sum('amount');
+        $totalIncome = (float) ($totals['income'] ?? 0);
+        $totalExpense = (float) ($totals['expense'] ?? 0);
         $netBalance = $totalIncome - $totalExpense;
 
         $budgetTotal = $this->getMonthlyBudget();
@@ -310,7 +310,8 @@ class FinanceService
         $expenses = FinanceTransaction::expense()
             ->where('currency', $this->getActiveCurrency()['code'])
             ->betweenDates($from->toDateString(), $to->toDateString())
-            ->get(['category_key', 'category_name', 'amount']);
+            ->selectRaw('category_key, category_name, SUM(amount) as amount')
+            ->groupBy('category_key', 'category_name')->get();
 
         $grouped = $expenses->groupBy('category_key');
         $expenseCategories = collect($this->getCategories()['expense'] ?? [])->keyBy('id');
@@ -343,6 +344,9 @@ class FinanceService
      */
     public function createTransaction(array $data, int $adminId): FinanceTransaction
     {
+        if (($data['is_recurring'] ?? false) && ! in_array($data['recurring_frequency'] ?? null, ['weekly', 'monthly', 'yearly'], true)) {
+            throw new \InvalidArgumentException('A recurring transaction requires a valid frequency.');
+        }
         $activeCurrency = $this->getActiveCurrency();
         $category = $this->findActiveCategory((string) ($data['category_key'] ?? ''), (string) ($data['type'] ?? ''));
 
@@ -384,7 +388,12 @@ class FinanceService
             $data['category_name'] = $category['name'];
         }
 
-        $transaction->update($data);
+        $transaction->fill($data);
+        if ($transaction->isDirty(['transaction_date', 'recurring_frequency', 'is_recurring'])) {
+            $transaction->recurring_occurrence = 0;
+            $transaction->recurring_next_on = null;
+        }
+        $transaction->save();
 
         return $transaction;
     }
@@ -448,17 +457,10 @@ class FinanceService
             ->betweenDates($from->toDateString(), $to->toDateString());
     }
 
-    /**
-     * Stream the filtered transactions as a CSV download.
-     *
-     * @param  Builder<FinanceTransaction>  $query
-     */
-    public function exportCsv(Builder $query): StreamedResponse
+    /** @return array<string, callable> */
+    public function exportColumns(): array
     {
-        $filename = 'finance_transactions_'.now()->format('Y-m-d_His').'.csv';
-        $exportService = app(ExportService::class);
-
-        $columns = [
+        return [
             'ID' => fn ($tx) => $tx->id,
             'Date' => fn ($tx) => $tx->transaction_date->toDateString(),
             'Type' => fn ($tx) => strtoupper($tx->type),
@@ -470,7 +472,18 @@ class FinanceService
             'Reference' => fn ($tx) => $tx->reference ?? '-',
             'Recorded By' => fn ($tx) => $tx->admin->name ?? 'System',
         ];
+    }
 
-        return $exportService->exportCsv($query->with('admin'), $filename, $columns);
+    /**
+     * Stream the filtered transactions as a CSV download.
+     *
+     * @param  Builder<FinanceTransaction>  $query
+     */
+    public function exportCsv(Builder $query): StreamedResponse
+    {
+        $filename = 'finance_transactions_'.now()->format('Y-m-d_His').'.csv';
+        $exportService = app(ExportService::class);
+
+        return $exportService->exportCsv($query->with('admin'), $filename, $this->exportColumns());
     }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, useHttp } from '@inertiajs/vue3';
+import { Head, router, useHttp, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { toast } from 'vue-sonner';
@@ -62,6 +62,7 @@ import {
     index,
     destroy,
     exportMethod,
+    update,
 } from '@/actions/App/Http/Controllers/Admin/LeadController';
 import {
     store as storeToken,
@@ -70,6 +71,9 @@ import {
 
 type Lead = {
     id: number;
+    assigned_to: number | null;
+    stage: string;
+    next_follow_up_at: string | null;
     name: string;
     phone: string | null;
     email: string | null;
@@ -105,6 +109,7 @@ const props = defineProps<{
         links: { prev: string | null; next: string | null };
     };
     filters: { search: string };
+    assignees: { id: number; name: string }[];
     webhookUrl: string;
     tokens: { id: string; name: string; expires_at: string }[];
 }>();
@@ -113,6 +118,48 @@ const { can } = usePermissions();
 const search = ref(props.filters.search);
 const connectionOpen = ref(false);
 const selected = ref<Lead | null>(null);
+const workflow = useForm({
+    assigned_to: '',
+    stage: 'new',
+    next_follow_up_at: '',
+});
+function editWorkflow(lead: Lead) {
+    selected.value = lead;
+    workflow.defaults({
+        assigned_to: lead.assigned_to ? String(lead.assigned_to) : '',
+        stage: lead.stage,
+        next_follow_up_at: lead.next_follow_up_at
+            ? new Date(
+                  new Date(lead.next_follow_up_at).getTime() -
+                      new Date().getTimezoneOffset() * 60000,
+              )
+                  .toISOString()
+                  .slice(0, 16)
+            : '',
+    });
+    workflow.reset();
+    workflow.clearErrors();
+}
+function saveWorkflow() {
+    if (!selected.value) return;
+    workflow
+        .transform((data) => ({
+            ...data,
+            assigned_to: data.assigned_to || null,
+            next_follow_up_at: data.next_follow_up_at
+                ? new Date(data.next_follow_up_at).toISOString()
+                : null,
+        }))
+        .patch(update.url(selected.value.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                selected.value =
+                    props.leads.data.find(
+                        (lead) => lead.id === selected.value?.id,
+                    ) ?? null;
+            },
+        });
+}
 const expandedLeadId = ref<number | null>(null);
 const deleting = ref<Lead | null>(null);
 const revoking = ref<string | null>(null);
@@ -172,7 +219,9 @@ interface DaySchedule {
 }
 
 const currentDayName = computed(() => {
-    return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
+    return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(
+        new Date(),
+    );
 });
 
 const parsedSelectedHours = computed<DaySchedule[]>(() => {
@@ -378,7 +427,7 @@ function revokeToken() {
                             >
                                 <button
                                     class="line-clamp-2 block w-full text-left font-medium break-words hover:underline"
-                                    @click="selected = lead"
+                                    @click="editWorkflow(lead)"
                                 >
                                     {{ lead.name }}
                                 </button>
@@ -440,7 +489,10 @@ function revokeToken() {
                                 </span>
                                 <span v-else>—</span>
                             </TableCell>
-                            <TableCell class="pr-5 text-right align-top" @click.stop>
+                            <TableCell
+                                class="pr-5 text-right align-top"
+                                @click.stop
+                            >
                                 <DropdownMenu>
                                     <DropdownMenuTrigger as-child>
                                         <Button
@@ -451,10 +503,13 @@ function revokeToken() {
                                             <MoreHorizontal class="size-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" class="w-36">
+                                    <DropdownMenuContent
+                                        align="end"
+                                        class="w-36"
+                                    >
                                         <DropdownMenuItem
                                             class="cursor-pointer gap-2"
-                                            @click="selected = lead"
+                                            @click="editWorkflow(lead)"
                                         >
                                             <Eye
                                                 class="size-4 text-muted-foreground"
@@ -481,7 +536,10 @@ function revokeToken() {
                             v-if="expandedLeadId === lead.id"
                             class="bg-muted/20 hover:bg-muted/20"
                         >
-                            <TableCell :colspan="6" class="p-0 whitespace-normal">
+                            <TableCell
+                                :colspan="6"
+                                class="p-0 whitespace-normal"
+                            >
                                 <div
                                     class="grid gap-4 border-t px-5 py-4 md:grid-cols-2 xl:grid-cols-4"
                                 >
@@ -567,7 +625,7 @@ function revokeToken() {
                                         </p>
                                         <p
                                             v-if="lead.query"
-                                            class="text-xs text-muted-foreground break-words"
+                                            class="text-xs break-words text-muted-foreground"
                                         >
                                             Search: {{ lead.query }}
                                         </p>
@@ -662,10 +720,7 @@ function revokeToken() {
                                 readonly
                                 aria-label="Webhook URL"
                             />
-                            <Button
-                                variant="outline"
-                                @click="copy(webhookUrl)"
-                            >
+                            <Button variant="outline" @click="copy(webhookUrl)">
                                 Copy
                             </Button>
                         </div>
@@ -745,21 +800,88 @@ function revokeToken() {
                                 <DrawerTitle class="text-base font-semibold">
                                     {{ selected?.name }}
                                 </DrawerTitle>
-                                <Badge v-if="selected?.category" variant="secondary">
+                                <Badge
+                                    v-if="selected?.category"
+                                    variant="secondary"
+                                >
                                     {{ selected.category }}
                                 </Badge>
                             </div>
-                            <DrawerDescription class="text-xs text-muted-foreground">
-                                Collected business contact details. Verify contact information before using it.
+                            <DrawerDescription
+                                class="text-xs text-muted-foreground"
+                            >
+                                Collected business contact details. Verify
+                                contact information before using it.
                             </DrawerDescription>
                         </div>
                     </div>
                 </DrawerHeader>
                 <div v-if="selected" class="space-y-5 px-6 py-5">
+                    <form
+                        v-if="can('leads.manage')"
+                        class="grid gap-3 rounded-lg border bg-muted/30 p-4 sm:grid-cols-2"
+                        @submit.prevent="saveWorkflow"
+                    >
+                        <label class="text-sm"
+                            >Owner<select
+                                v-model="workflow.assigned_to"
+                                class="mt-1 h-9 w-full rounded-md border bg-background px-2"
+                            >
+                                <option value="">Unassigned</option>
+                                <option
+                                    v-for="admin in assignees"
+                                    :key="admin.id"
+                                    :value="String(admin.id)"
+                                >
+                                    {{ admin.name }}
+                                </option></select
+                            ><span class="text-destructive">{{
+                                workflow.errors.assigned_to
+                            }}</span></label
+                        >
+                        <label class="text-sm"
+                            >Stage<select
+                                v-model="workflow.stage"
+                                class="mt-1 h-9 w-full rounded-md border bg-background px-2"
+                            >
+                                <option
+                                    v-for="stage in [
+                                        'new',
+                                        'contacted',
+                                        'qualified',
+                                        'won',
+                                        'lost',
+                                    ]"
+                                    :key="stage"
+                                    :value="stage"
+                                >
+                                    {{ stage }}
+                                </option></select
+                            ><span class="text-destructive">{{
+                                workflow.errors.stage
+                            }}</span></label
+                        >
+                        <label class="text-sm sm:col-span-2"
+                            >Follow-up (your local time)<Input
+                                v-model="workflow.next_follow_up_at"
+                                type="datetime-local"
+                                :disabled="
+                                    ['won', 'lost'].includes(workflow.stage)
+                                "
+                            /><span class="text-destructive">{{
+                                workflow.errors.next_follow_up_at
+                            }}</span></label
+                        >
+                        <Button :disabled="workflow.processing"
+                            >Save workflow</Button
+                        >
+                    </form>
                     <!-- Quick Highlights Grid -->
                     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <div class="rounded-lg border bg-muted/20 p-3">
-                            <span class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase">
+                            <span
+                                class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase"
+                            >
                                 <Phone class="size-3.5" /> Phone
                             </span>
                             <p class="mt-1 text-sm font-medium">
@@ -770,15 +892,19 @@ function revokeToken() {
                                 >
                                     {{ selected.phone }}
                                 </a>
-                                <span v-else class="text-muted-foreground">Not provided</span>
+                                <span v-else class="text-muted-foreground"
+                                    >Not provided</span
+                                >
                             </p>
                         </div>
 
                         <div class="rounded-lg border bg-muted/20 p-3">
-                            <span class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase">
+                            <span
+                                class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase"
+                            >
                                 <Mail class="size-3.5" /> Email
                             </span>
-                            <p class="mt-1 text-sm font-medium truncate">
+                            <p class="mt-1 truncate text-sm font-medium">
                                 <a
                                     v-if="selected.email"
                                     :href="`mailto:${selected.email}`"
@@ -786,25 +912,41 @@ function revokeToken() {
                                 >
                                     {{ selected.email }}
                                 </a>
-                                <span v-else class="text-muted-foreground">Not provided</span>
+                                <span v-else class="text-muted-foreground"
+                                    >Not provided</span
+                                >
                             </p>
                         </div>
 
                         <div class="rounded-lg border bg-muted/20 p-3">
-                            <span class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase">
-                                <Star class="size-3.5 fill-amber-400 text-amber-400" /> Rating
+                            <span
+                                class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase"
+                            >
+                                <Star
+                                    class="size-3.5 fill-amber-400 text-amber-400"
+                                />
+                                Rating
                             </span>
                             <p class="mt-1 text-sm font-medium">
-                                <span v-if="selected.rating">{{ selected.rating.toFixed(1) }} / 5.0</span>
-                                <span v-else class="text-muted-foreground">Not rated</span>
+                                <span v-if="selected.rating"
+                                    >{{ selected.rating.toFixed(1) }} /
+                                    5.0</span
+                                >
+                                <span v-else class="text-muted-foreground"
+                                    >Not rated</span
+                                >
                             </p>
                         </div>
 
                         <div class="rounded-lg border bg-muted/20 p-3">
-                            <span class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase">
+                            <span
+                                class="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase"
+                            >
                                 <Search class="size-3.5" /> Search Query
                             </span>
-                            <p class="mt-1 text-sm font-medium truncate text-muted-foreground">
+                            <p
+                                class="mt-1 truncate text-sm font-medium text-muted-foreground"
+                            >
                                 {{ selected.query || '—' }}
                             </p>
                         </div>
@@ -812,41 +954,78 @@ function revokeToken() {
 
                     <!-- Location & Links Section -->
                     <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="rounded-lg border bg-card p-4 space-y-2">
-                            <h4 class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <div class="space-y-2 rounded-lg border bg-card p-4">
+                            <h4
+                                class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >
                                 <MapPin class="size-3.5" /> Address
                             </h4>
-                            <p class="text-sm leading-relaxed">{{ selected.address || 'Address not provided' }}</p>
+                            <p class="text-sm leading-relaxed">
+                                {{ selected.address || 'Address not provided' }}
+                            </p>
                         </div>
 
-                        <div class="rounded-lg border bg-card p-4 space-y-2">
-                            <h4 class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <div class="space-y-2 rounded-lg border bg-card p-4">
+                            <h4
+                                class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >
                                 <Globe class="size-3.5" /> Links & Socials
                             </h4>
                             <div class="flex flex-wrap gap-2 pt-1">
-                                <Button v-if="selected.website" variant="outline" size="sm" as-child>
-                                    <a :href="selected.website" target="_blank" rel="noopener noreferrer">
-                                        Website <ExternalLink class="ml-1.5 size-3" />
-                                    </a>
-                                </Button>
-                                <Button v-if="selected.maps_url" variant="outline" size="sm" as-child>
-                                    <a :href="selected.maps_url" target="_blank" rel="noopener noreferrer">
-                                        Google Maps <ExternalLink class="ml-1.5 size-3" />
+                                <Button
+                                    v-if="selected.website"
+                                    variant="outline"
+                                    size="sm"
+                                    as-child
+                                >
+                                    <a
+                                        :href="selected.website"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Website
+                                        <ExternalLink class="ml-1.5 size-3" />
                                     </a>
                                 </Button>
                                 <Button
-                                    v-for="(url, network) in selected.details?.socials"
+                                    v-if="selected.maps_url"
+                                    variant="outline"
+                                    size="sm"
+                                    as-child
+                                >
+                                    <a
+                                        :href="selected.maps_url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Google Maps
+                                        <ExternalLink class="ml-1.5 size-3" />
+                                    </a>
+                                </Button>
+                                <Button
+                                    v-for="(url, network) in selected.details
+                                        ?.socials"
                                     :key="network"
                                     variant="outline"
                                     size="sm"
                                     as-child
                                 >
-                                    <a :href="url" target="_blank" rel="noopener noreferrer" class="capitalize">
-                                        {{ network }} <ExternalLink class="ml-1.5 size-3" />
+                                    <a
+                                        :href="url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="capitalize"
+                                    >
+                                        {{ network }}
+                                        <ExternalLink class="ml-1.5 size-3" />
                                     </a>
                                 </Button>
                                 <span
-                                    v-if="!selected.website && !selected.maps_url && !selected.details?.socials"
+                                    v-if="
+                                        !selected.website &&
+                                        !selected.maps_url &&
+                                        !selected.details?.socials
+                                    "
                                     class="text-sm text-muted-foreground"
                                 >
                                     No online links available.
@@ -856,11 +1035,18 @@ function revokeToken() {
                     </div>
 
                     <!-- Description -->
-                    <div v-if="selected.details?.description" class="rounded-lg border bg-card p-4 space-y-1.5">
-                        <h4 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    <div
+                        v-if="selected.details?.description"
+                        class="space-y-1.5 rounded-lg border bg-card p-4"
+                    >
+                        <h4
+                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >
                             About / Description
                         </h4>
-                        <p class="text-sm text-muted-foreground leading-relaxed">
+                        <p
+                            class="text-sm leading-relaxed text-muted-foreground"
+                        >
                             {{ selected.details.description }}
                         </p>
                     </div>
@@ -960,7 +1146,7 @@ function revokeToken() {
                                     </span>
                                     <span
                                         v-else
-                                        class="font-medium text-foreground/90 leading-tight"
+                                        class="leading-tight font-medium text-foreground/90"
                                     >
                                         {{ item.hours }}
                                     </span>
@@ -970,12 +1156,19 @@ function revokeToken() {
                     </div>
 
                     <!-- Footer Action Bar -->
-                    <div class="flex items-center justify-between border-t border-border/40 pt-4">
-                        <Button variant="outline" @click="selected = null">Close</Button>
+                    <div
+                        class="flex items-center justify-between border-t border-border/40 pt-4"
+                    >
+                        <Button variant="outline" @click="selected = null"
+                            >Close</Button
+                        >
                         <Button
                             v-if="can('leads.delete')"
                             variant="destructive"
-                            @click="deleting = selected; selected = null;"
+                            @click="
+                                deleting = selected;
+                                selected = null;
+                            "
                         >
                             <Trash2 class="mr-1.5 size-4" /> Delete lead
                         </Button>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin\Hr;
 
+use App\Models\Employee;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,7 +30,7 @@ class EmployeeRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:100'],
             'department_id' => ['required', Rule::exists('departments', 'id')->where('is_active', true)],
             'designation' => ['required', 'string', 'max:255'],
-            'manager_id' => ['nullable', 'integer', 'exists:employees,id', Rule::notIn([$this->route('employee')?->id])],
+            'manager_id' => ['nullable', 'integer', 'exists:employees,id', Rule::notIn([($this->route('employee') instanceof Employee ? $this->route('employee')->id : null)])],
             'admin_id' => ['nullable', 'integer', 'exists:admins,id', Rule::unique('employees', 'admin_id')->ignore($this->route('employee'))],
             'joined_on' => ['required', 'date_format:Y-m-d'],
             'ended_on' => ['nullable', 'required_if:is_active,false', 'date_format:Y-m-d', 'after_or_equal:joined_on'],

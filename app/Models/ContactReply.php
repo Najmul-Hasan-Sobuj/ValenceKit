@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Hidden(['gmail_message_id'])]
 class ContactReply extends Model
 {
+    /** @return Attribute<string, string> */
     protected function body(): Attribute
     {
         return Attribute::make(

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Admin;
 use App\Models\AuditLog;
 use App\Models\Invoice;
 use App\Models\Proposal;
@@ -86,12 +87,30 @@ class ProposalService
     public function deliver(Proposal $proposal, string $email, NotificationMessage $notification, string $event): bool
     {
         try {
-            Notification::route('mail', $email)->notify($notification);
+            if ($notification instanceof ResetPassword) {
+                User::whereRaw('LOWER(email) = ?', [mb_strtolower($email)])->firstOrFail()->notify($notification);
+            } else {
+                Notification::route('mail', $email)->notify($notification);
+            }
             $this->audit->record($event, $proposal, metadata: ['delivery' => 'accepted_by_transport']);
 
             return true;
         } catch (\Throwable) {
             $this->audit->record($event.'.failed', $proposal, description: 'Email transport failed. Retry is available.');
+
+            return false;
+        }
+    }
+
+    public function queueStatus(Proposal $proposal, string $email, NotificationMessage $notification, string $event, ?Admin $admin = null): bool
+    {
+        $recipient = $admin ?? User::whereRaw('LOWER(email) = ?', [mb_strtolower($email)])->first() ?? $email;
+        try {
+            app(MailDeliveryService::class)->queue($proposal, $recipient, $notification, $event, $admin ? 'proposals.view' : null, $event === 'proposal.reminder_sent' ? today()->toDateString() : null);
+
+            return true;
+        } catch (\Throwable) {
+            $this->audit->record($event.'.queue_failed', $proposal, description: 'Email could not be queued. Retry is available.');
 
             return false;
         }

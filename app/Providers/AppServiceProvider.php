@@ -11,6 +11,7 @@ use App\Observers\ContactMessageObserver;
 use App\Observers\ContactReplyObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -41,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->enforceProductionSecurity();
         $this->configureDefaults();
+        if ($this->app->runningInConsole()) {
+            DevCommands::except('server');
+            DevCommands::artisan('queue:listen --queue=mail,notifications,default,imports,exports --tries=3 --timeout=300', 'queue');
+        }
         require base_path('routes/channels.php');
         ContactMessage::observe(ContactMessageObserver::class);
         ContactReply::observe(ContactReplyObserver::class);

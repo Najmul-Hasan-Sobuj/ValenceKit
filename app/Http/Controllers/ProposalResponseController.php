@@ -151,10 +151,10 @@ class ProposalResponseController extends Controller
         $proposal->refresh();
         $url = route('proposals.public.show', $proposal);
         $receipt = new ProposalStatusNotification($proposal->number, 'Revision '.$proposal->revision.' was '.$proposal->status.'. Response recorded at '.$proposal->responded_at->toIso8601String().'. Your document and approval receipt are available in the portal.', $url);
-        $this->documents->deliver($proposal, $request->user('web')->email, $receipt, 'proposal.receipt_sent');
+        $this->documents->queueStatus($proposal, $request->user('web')->email, $receipt, 'proposal.receipt_sent');
         $creator = Admin::find($proposal->created_by);
         if ($creator) {
-            $this->documents->deliver($proposal, $creator->email, new ProposalStatusNotification($proposal->number, 'Client '.$proposal->status.' revision '.$proposal->revision.'.', route('admin.proposals.preview', $proposal)), 'proposal.admin_notified');
+            $this->documents->queueStatus($proposal, $creator->email, new ProposalStatusNotification($proposal->number, 'Client '.$proposal->status.' revision '.$proposal->revision.'.', route('admin.proposals.preview', $proposal)), 'proposal.admin_notified', $creator);
         }
 
         return back()->with('success', 'Your verified response has been recorded.');

@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\Passkey;
 use App\Services\AuditLogService;
+use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Laravel\Passkeys\Actions\GenerateRegistrationOptions;
 use Laravel\Passkeys\Actions\StorePasskey;
 use Laravel\Passkeys\Http\Requests\PasskeyRegistrationRequest;
@@ -37,20 +39,26 @@ class PasskeyController extends Controller
 
         abort_unless(is_string($serialized), 422, 'Passkey registration session expired. Please try again.');
 
-        $passkey = $store(
-            $request->user('admin'),
-            $request->string('name')->toString(),
-            $request->credential(),
-            WebAuthn::fromJson($serialized, PublicKeyCredentialCreationOptions::class),
-        );
+        $passkey = DB::transaction(function () use ($request, $store, $serialized, $auditLogService) {
+            $passkey = $store(
+                $request->user('admin'),
+                $request->string('name')->toString(),
+                $request->credential(),
+                WebAuthn::fromJson($serialized, PublicKeyCredentialCreationOptions::class),
+            );
 
-        $auditLogService->record(
-            'settings.security.passkey_registered',
-            $passkey,
-            afterValues: ['name' => $passkey->name, 'authenticator' => $passkey->authenticator],
-            description: 'A passkey was registered.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->record(
+                'settings.security.passkey_registered',
+                $passkey,
+                afterValues: ['name' => $passkey->name, 'authenticator' => $passkey->authenticator],
+                description: 'A passkey was registered.',
+                actor: $request->user('admin'),
+            );
+
+            app(WorkflowNotifier::class)->account($request->user('admin'), 'account.self', 'Passkey registered', 'A passkey was added to your administrator account.', 'admin.dashboard');
+
+            return $passkey;
+        });
 
         return response()->json(['status' => 'passkey-registered', 'id' => (string) $passkey->id]);
     }
@@ -60,16 +68,20 @@ class PasskeyController extends Controller
         abort_unless($request->user('admin')->can('settings.security.edit'), 403);
         abort_unless((string) $passkey->user_id === (string) Auth::guard('admin')->id() && $passkey->user_type === Admin::class, 404);
 
-        $before = $passkey->only(['name', 'authenticator']);
-        $passkey->delete();
+        DB::transaction(function () use ($request, $passkey, $auditLogService): void {
+            $before = $passkey->only(['name', 'authenticator']);
+            $passkey->delete();
 
-        $auditLogService->record(
-            'settings.security.passkey_deleted',
-            $passkey,
-            beforeValues: $before,
-            description: 'A passkey was removed.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->record(
+                'settings.security.passkey_deleted',
+                $passkey,
+                beforeValues: $before,
+                description: 'A passkey was removed.',
+                actor: $request->user('admin'),
+            );
+
+            app(WorkflowNotifier::class)->account($request->user('admin'), 'account.self', 'Passkey removed', 'A passkey was removed from your administrator account.', 'admin.dashboard');
+        });
 
         return back();
     }

@@ -63,7 +63,10 @@ import {
 } from '@/components/ui/tooltip';
 import { index as usersRoute } from '@/routes/admin/users';
 import UserDrawer from './UserDrawer.vue';
-import { destroy } from '@/actions/App/Http/Controllers/Admin/Authorization/UserController';
+import {
+    destroy,
+    resendInvitation,
+} from '@/actions/App/Http/Controllers/Admin/Authorization/UserController';
 import RelativeTime from '@/components/RelativeTime.vue';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { parseDate } from '@internationalized/date';
@@ -496,7 +499,11 @@ defineOptions({
                         </TableCell>
                         <TableCell class="pr-5 text-right" @click.stop>
                             <DropdownMenu
-                                v-if="canEditUser(user) || canDeleteUser(user)"
+                                v-if="
+                                    canEditUser(user) ||
+                                    canDeleteUser(user) ||
+                                    canInviteUsers
+                                "
                             >
                                 <DropdownMenuTrigger as-child>
                                     <Button
@@ -507,7 +514,22 @@ defineOptions({
                                         <MoreHorizontal class="size-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" class="w-36">
+                                <DropdownMenuContent align="end" class="w-48">
+                                    <DropdownMenuItem
+                                        v-if="
+                                            canInviteUsers &&
+                                            user.must_change_password &&
+                                            user.is_active
+                                        "
+                                        @select="
+                                            router.post(
+                                                resendInvitation.url(user.id),
+                                                {},
+                                                { preserveScroll: true },
+                                            )
+                                        "
+                                        >Resend invitation</DropdownMenuItem
+                                    >
                                     <DropdownMenuItem
                                         v-if="canEditUser(user)"
                                         class="cursor-pointer gap-2"

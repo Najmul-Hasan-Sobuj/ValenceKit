@@ -34,11 +34,11 @@ class GmailImap
 
     public function connect(string $email, #[\SensitiveParameter] string $token): void
     {
-        $this->stream = @stream_socket_client('ssl://imap.gmail.com:993', $errorCode, $errorMessage, 15, STREAM_CLIENT_CONNECT);
-        if ($this->stream === false) {
-            $this->stream = null;
+        $stream = @stream_socket_client('ssl://imap.gmail.com:993', $errorCode, $errorMessage, 15, STREAM_CLIENT_CONNECT);
+        if ($stream === false) {
             throw new RuntimeException('Could not connect to Gmail.');
         }
+        $this->stream = $stream;
         stream_set_timeout($this->stream, 15);
         if (! str_starts_with($this->readLine(), '* OK')) {
             throw new RuntimeException('Gmail did not accept the connection.');
@@ -77,7 +77,7 @@ class GmailImap
         $response = $this->command('UID SEARCH '.$criteria);
         foreach ($response as $line) {
             if (preg_match('/^\* SEARCH(?: ([0-9]+(?: [0-9]+)*))?\r?\n$/', $line, $matches)) {
-                return isset($matches[1]) && $matches[1] !== '' ? explode(' ', $matches[1]) : [];
+                return isset($matches[1]) ? explode(' ', $matches[1]) : [];
             }
         }
 
@@ -122,7 +122,11 @@ class GmailImap
                 }
                 $literal = '';
                 while (strlen($literal) < $length) {
-                    $chunk = fread($this->stream, min(65536, $length - strlen($literal)));
+                    $remaining = $length - strlen($literal);
+                    if ($remaining <= 0) {
+                        break;
+                    }
+                    $chunk = fread($this->stream, min(65536, $remaining));
                     if ($chunk === false || $chunk === '') {
                         throw new RuntimeException('Gmail connection ended while reading a message.');
                     }

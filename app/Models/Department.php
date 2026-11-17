@@ -13,6 +13,7 @@ class Department extends Model
         return ['is_active' => 'boolean'];
     }
 
+    /** @return array<string, mixed> */
     public function auditLogValues(): array
     {
         return $this->only(['name', 'is_active']);

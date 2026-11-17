@@ -51,7 +51,11 @@ it('requires a dedicated permission and sends reset links to the bound account c
     $admin->givePermissionTo('clients.password-reset');
     $this->post(route('admin.proposals.password-reset', $proposal), ['email' => 'attacker@example.test', 'password' => 'ignored-value'])->assertSessionHas('success');
     expect($user->refresh()->password)->toBe($originalPassword);
-    Notification::assertSentOnDemand(ResetPassword::class, fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === $user->email);
+    Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        $mail = $notification->toMail($user);
+
+        return str_contains($mail->actionUrl, urlencode($user->email));
+    });
     $this->post(route('admin.proposals.password-reset', $proposal))->assertSessionHas('error', 'Please wait one minute before requesting another reset link.');
     $this->assertDatabaseHas('audit_logs', ['action' => 'proposal.password_reset_delivery', 'subject_id' => $proposal->id]);
 });

@@ -6,9 +6,11 @@ use App\Models\Admin;
 use App\Models\McpUsageLog;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Laravel\Passport\AccessToken;
 use Laravel\Passport\Token;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class McpTokenMiddleware
 {
@@ -30,7 +32,8 @@ class McpTokenMiddleware
         $tokenUsed = $clientId ? 'oauth_token' : 'passport_token';
         $authMethod = $clientId ? 'oauth' : 'passport';
 
-        McpUsageLog::create([
+        $started = hrtime(true);
+        $usage = McpUsageLog::create([
             'token_used' => $tokenUsed,
             'admin_id' => $actor->id,
             'ip_address' => $request->ip(),
@@ -41,7 +44,18 @@ class McpTokenMiddleware
             'scopes' => $this->scopes($token),
         ]);
 
-        return $next($request);
+        $status = 500;
+        try {
+            $response = $next($request);
+            $status = $response->getStatusCode();
+
+            return $response;
+        } catch (\Throwable $exception) {
+            $status = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : 500;
+            throw $exception;
+        } finally {
+            $usage->update(['response_status' => $status, 'duration_ms' => (int) ((hrtime(true) - $started) / 1000000), 'request_id' => Context::get('request_id')]);
+        }
     }
 
     private function oauthClientId(Admin $actor): ?string

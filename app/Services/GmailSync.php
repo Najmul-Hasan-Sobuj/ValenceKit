@@ -24,6 +24,12 @@ class GmailSync
         });
     }
 
+    public function syncSingle(GmailMailbox $mailbox, ContactMessage $contact): void
+    {
+        $this->imap->connect($mailbox->email, $this->tokens->accessToken($mailbox));
+        $this->syncContact($contact, $mailbox);
+    }
+
     /** @return array{threads: list<array{id: string, uid: string, subject: string, date: string|null, imported: bool}>, next_before: string|null} */
     public function searchThreads(GmailMailbox $mailbox, string $email, ?string $before = null): array
     {

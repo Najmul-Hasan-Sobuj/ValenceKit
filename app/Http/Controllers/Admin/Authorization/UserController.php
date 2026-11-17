@@ -9,7 +9,10 @@ use App\Http\Requests\Admin\Authorization\UpdateUserRequest;
 use App\Models\Admin;
 use App\Notifications\AdminInviteNotification;
 use App\Services\AuditLogService;
+use App\Services\WorkflowNotifier;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -61,28 +64,30 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request, AuditLogService $auditLogService)
     {
-        $temporaryPassword = Str::password(24);
+        return DB::transaction(function () use ($request, $auditLogService) {
+            $temporaryPassword = Str::password(24);
 
-        $admin = Admin::create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'password' => Hash::make($temporaryPassword),
-            'is_active' => $request->validated('is_active', true),
-            'must_change_password' => true,
-        ]);
+            $admin = Admin::create([
+                'name' => $request->validated('name'),
+                'email' => $request->validated('email'),
+                'password' => Hash::make($temporaryPassword),
+                'is_active' => $request->validated('is_active', true),
+                'must_change_password' => true,
+            ]);
 
-        $admin->assignRole($request->validated('role'));
+            $admin->assignRole($request->validated('role'));
 
-        $admin->notify(new AdminInviteNotification(Password::broker('admins')->createToken($admin)));
+            $admin->notify(new AdminInviteNotification(Password::broker('admins')->createToken($admin)));
 
-        $auditLogService->created(
-            'user.invited',
-            $admin,
-            description: 'User '.$admin->name.' was invited.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->created(
+                'user.invited',
+                $admin,
+                description: 'User '.$admin->name.' was invited.',
+                actor: $request->user('admin'),
+            );
 
-        return back()->with('success', 'User invited successfully. An invitation link was sent by email.');
+            return back()->with('success', 'User invited successfully. An invitation link was queued for delivery.');
+        });
     }
 
     /**
@@ -90,39 +95,61 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, Admin $user, AuditLogService $auditLogService)
     {
-        if ($user->hasRole('Super Admin') && ! $request->user('admin')->hasRole('Super Admin')) {
-            return back()->with('error', 'Only Super Admins can modify a Super Admin account.');
-        }
-
-        if ($request->user('admin')->is($user) && ! $request->validated('is_active', true)) {
-            return back()->with('error', 'You cannot deactivate your own account.');
-        }
-
-        if ($user->is_active && $user->hasRole('Super Admin') && Admin::role('Super Admin')->where('is_active', true)->count() <= 1) {
-            if ($request->validated('role') !== 'Super Admin' || ! $request->validated('is_active', true)) {
-                return back()->with('error', 'Cannot demote or deactivate the only remaining Super Admin.');
+        return DB::transaction(function () use ($request, $user, $auditLogService) {
+            Admin::role('Super Admin')->where('is_active', true)->lockForUpdate()->get();
+            if ($user->hasRole('Super Admin') && ! $request->user('admin')->hasRole('Super Admin')) {
+                return back()->with('error', 'Only Super Admins can modify a Super Admin account.');
             }
+
+            if ($request->user('admin')->is($user) && ! $request->validated('is_active', true)) {
+                return back()->with('error', 'You cannot deactivate your own account.');
+            }
+
+            if ($user->is_active && $user->hasRole('Super Admin') && Admin::role('Super Admin')->where('is_active', true)->count() <= 1) {
+                if ($request->validated('role') !== 'Super Admin' || ! $request->validated('is_active', true)) {
+                    return back()->with('error', 'Cannot demote or deactivate the only remaining Super Admin.');
+                }
+            }
+
+            $before = $user->auditLogValues();
+
+            $user->update([
+                'name' => $request->validated('name'),
+                'email' => $request->validated('email'),
+                'is_active' => $request->validated('is_active', true),
+            ]);
+
+            $user->syncRoles([$request->validated('role')]);
+
+            $auditLogService->updated(
+                'user.updated',
+                $user,
+                beforeValues: $before,
+                description: 'User '.$user->name.' was updated.',
+                actor: $request->user('admin'),
+            );
+            app(WorkflowNotifier::class)->account($user, 'account.self', 'Account access updated', 'Your profile or assigned access was updated by an administrator.', 'admin.dashboard');
+
+            return back()->with('success', 'User updated successfully.');
+        });
+    }
+
+    public function resendInvitation(Request $request, Admin $user, AuditLogService $audit): RedirectResponse
+    {
+        $actor = $request->user('admin');
+        abort_unless($actor->can('users.invite') && $actor->canDelegatePermissions($user->getAllPermissions()->pluck('name')->all()), 403);
+        abort_if($user->hasRole('Super Admin') && ! $actor->hasRole('Super Admin'), 403);
+        if (! $user->is_active || ! $user->must_change_password) {
+            return back()->with('error', 'Only active accounts awaiting password setup can receive another invitation.');
+        }
+        $status = Password::broker('admins')->sendResetLink(['email' => $user->email], function (Admin $recipient, string $token): void {
+            $recipient->notify(new AdminInviteNotification($token));
+        });
+        if ($status === Password::RESET_LINK_SENT) {
+            $audit->record('user.invitation_resent', $user, actor: $actor);
         }
 
-        $before = $user->auditLogValues();
-
-        $user->update([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'is_active' => $request->validated('is_active', true),
-        ]);
-
-        $user->syncRoles([$request->validated('role')]);
-
-        $auditLogService->updated(
-            'user.updated',
-            $user,
-            beforeValues: $before,
-            description: 'User '.$user->name.' was updated.',
-            actor: $request->user('admin'),
-        );
-
-        return back()->with('success', 'User updated successfully.');
+        return back()->with($status === Password::RESET_LINK_SENT ? 'success' : 'error', $status === Password::RESET_LINK_SENT ? 'Invitation queued for delivery.' : 'Please wait before requesting another invitation.');
     }
 
     /**
@@ -130,36 +157,39 @@ class UserController extends Controller
      */
     public function destroy(Request $request, Admin $user, AuditLogService $auditLogService)
     {
-        abort_unless($request->user('admin')->can('users.delete'), 403);
+        return DB::transaction(function () use ($request, $user, $auditLogService) {
+            Admin::role('Super Admin')->where('is_active', true)->lockForUpdate()->get();
+            abort_unless($request->user('admin')->can('users.delete'), 403);
 
-        if ($request->user('admin')->is($user)) {
-            return back()->with('error', 'You cannot delete yourself.');
-        }
-
-        if ($user->hasRole('Super Admin')) {
-            if ($user->is_active && Admin::role('Super Admin')->where('is_active', true)->count() <= 1) {
-                return back()->with('error', 'Cannot delete the last Super Admin.');
+            if ($request->user('admin')->is($user)) {
+                return back()->with('error', 'You cannot delete yourself.');
             }
 
-            if (! $request->user('admin')->hasRole('Super Admin')) {
-                return back()->with('error', 'Only Super Admins can delete a Super Admin account.');
+            if ($user->hasRole('Super Admin')) {
+                if ($user->is_active && Admin::role('Super Admin')->where('is_active', true)->count() <= 1) {
+                    return back()->with('error', 'Cannot delete the last Super Admin.');
+                }
+
+                if (! $request->user('admin')->hasRole('Super Admin')) {
+                    return back()->with('error', 'Only Super Admins can delete a Super Admin account.');
+                }
             }
-        }
 
-        abort_unless($request->user('admin')->canDelegatePermissions($user->getAllPermissions()->pluck('name')->all()), 403);
+            abort_unless($request->user('admin')->canDelegatePermissions($user->getAllPermissions()->pluck('name')->all()), 403);
 
-        $before = $user->auditLogValues();
-        $userName = $user->name;
-        $user->delete();
+            $before = $user->auditLogValues();
+            $userName = $user->name;
+            $user->delete();
 
-        $auditLogService->deleted(
-            'user.deleted',
-            $user,
-            beforeValues: $before,
-            description: 'User '.$userName.' was deleted.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->deleted(
+                'user.deleted',
+                $user,
+                beforeValues: $before,
+                description: 'User '.$userName.' was deleted.',
+                actor: $request->user('admin'),
+            );
 
-        return back()->with('success', 'User deleted successfully.');
+            return back()->with('success', 'User deleted successfully.');
+        });
     }
 }

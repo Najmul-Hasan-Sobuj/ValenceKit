@@ -27,6 +27,10 @@ return new class extends Migration
             $table->string('query')->nullable();
             $table->json('details')->nullable();
             $table->unique(['source', 'source_id']);
+            $table->foreignId('assigned_to')->nullable()->constrained('admins')->nullOnDelete();
+            $table->string('stage', 20)->default('new')->index();
+            $table->timestamp('next_follow_up_at')->nullable()->index();
+            $table->timestamp('follow_up_notified_at')->nullable();
             $table->timestamps();
         });
     }

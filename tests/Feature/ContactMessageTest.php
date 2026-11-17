@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\ImportGmailThread;
+use App\Jobs\SyncGmailMailbox;
 use App\Models\Admin;
 use App\Models\ContactMessage;
 use App\Models\GmailMailbox;
@@ -531,27 +532,24 @@ it('enforces contact role permissions and reflects changes on the next request',
     $this->actingAs($other, 'admin')->get(route('admin.contact.index'))->assertForbidden();
 });
 
-it('syncs Gmail when an authorized admin requests it', function () {
+it('queues Gmail sync when an authorized admin requests it', function () {
+    Bus::fake([SyncGmailMailbox::class]);
     $this->seed(RoleAndPermissionSeeder::class);
     $admin = Admin::factory()->create();
     $admin->givePermissionTo(['contact.view', 'contact.manage']);
     GmailMailbox::create(['email' => 'mailbox@example.com', 'refresh_token' => 'test-refresh']);
-    $sync = Mockery::mock(GmailSync::class);
-    $sync->shouldReceive('sync')->once();
-    $this->app->instance(GmailSync::class, $sync);
 
     $this->actingAs($admin, 'admin')->post(route('admin.contact.sync'))
-        ->assertSessionHas('success', 'Gmail conversations synced.');
+        ->assertSessionHas('success', 'Gmail conversation sync queued.');
+    Bus::assertDispatched(SyncGmailMailbox::class, fn ($job) => $job->adminId === $admin->id);
 });
 
-it('shows an error when an authorized Gmail sync fails', function () {
+it('shows a safe error when Gmail sync cannot be queued', function () {
     $this->seed(RoleAndPermissionSeeder::class);
     $admin = Admin::factory()->create();
     $admin->givePermissionTo(['contact.view', 'contact.manage']);
     GmailMailbox::create(['email' => 'mailbox@example.com', 'refresh_token' => 'test-refresh']);
-    $sync = Mockery::mock(GmailSync::class);
-    $sync->shouldReceive('sync')->once()->andThrow(new RuntimeException('Sensitive details'));
-    $this->app->instance(GmailSync::class, $sync);
+    Bus::shouldReceive('dispatch')->once()->andThrow(new RuntimeException('Sensitive details'));
 
     $this->actingAs($admin, 'admin')->post(route('admin.contact.sync'))
         ->assertSessionHasErrors(['gmail' => 'Could not sync Gmail. Please check the connection and try again.']);
@@ -571,11 +569,10 @@ it('does not replace the Gmail connection when consent lacks the required scope'
 });
 
 it('runs scheduled Gmail sync when a mailbox is connected', function () {
+    Bus::fake([SyncGmailMailbox::class]);
     GmailMailbox::create(['email' => 'mailbox@example.com', 'refresh_token' => 'test-refresh']);
-    $sync = Mockery::mock(GmailSync::class);
-    $sync->shouldReceive('sync')->once();
-    $this->app->instance(GmailSync::class, $sync);
     $this->artisan('contact:sync-gmail')->assertSuccessful();
+    Bus::assertDispatched(SyncGmailMailbox::class, fn ($job) => $job->adminId === null);
 });
 
 it('refreshes Gmail access without exposing tokens in failure messages', function () {

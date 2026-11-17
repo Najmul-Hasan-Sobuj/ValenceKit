@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ForwardContactMessage;
 use App\Models\ContactMessage;
 use App\Models\GmailMailbox;
 use App\Services\GmailSender;
@@ -24,7 +25,7 @@ class ContactMessageController extends Controller
         $mailbox = GmailMailbox::query()->first();
         if ($mailbox) {
             try {
-                $sender->notifyIfNeeded($mailbox, $contact);
+                ForwardContactMessage::dispatch($mailbox->id, $contact->id)->afterCommit();
             } catch (\Throwable) {
                 // The saved message can be forwarded when Gmail is next synced.
             }

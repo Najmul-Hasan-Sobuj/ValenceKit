@@ -47,6 +47,8 @@ class RoleAndPermissionSeeder extends Seeder
             'proposals.delete' => 'Delete documents that have not been accepted',
         ],
         'Payroll' => [
+            'payroll.approve' => 'Approve payroll drafts',
+            'payroll.pay' => 'Record payment of approved payroll',
             'payroll.view' => 'View payroll records and payslips',
             'payroll.create' => 'Create payroll records',
         ],
@@ -64,6 +66,7 @@ class RoleAndPermissionSeeder extends Seeder
             'hr.export' => 'Export scoped attendance reports',
         ],
         'Lead Management' => [
+            'leads.manage' => 'Assign leads and manage follow-ups',
             'leads.view' => 'Browse collected business leads',
             'leads.import' => 'Manage personal webhook tokens and import leads',
             'leads.export' => 'Export business leads',
@@ -168,6 +171,7 @@ class RoleAndPermissionSeeder extends Seeder
         ],
     ];
 
+    /** @return array<string, string> */
     public static function hrPermissions(): array
     {
         return self::GROUPS['People & HR'];

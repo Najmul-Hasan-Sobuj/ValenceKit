@@ -36,7 +36,9 @@ header {
     height: 34px;
     border-radius: 11px;
     box-shadow: 0 5px 12px #164a3a24;
-    transition: transform 160ms ease, box-shadow 160ms ease;
+    transition:
+        transform 160ms ease,
+        box-shadow 160ms ease;
 }
 .brand:hover .logo {
     transform: rotate(-5deg) translateY(-1px);

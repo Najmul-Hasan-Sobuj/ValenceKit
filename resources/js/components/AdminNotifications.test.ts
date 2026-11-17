@@ -22,6 +22,8 @@ vi.mock('vue', async (original) => ({
 }));
 
 type Inbox = {
+    refreshWhenVisible: () => void;
+    connected: { value: boolean };
     load: (older?: boolean, id?: string) => Promise<void>;
     notices: { value: { id: string; read_at: string | null }[] };
     toggleRead: (notice: {
@@ -213,4 +215,19 @@ test('a failed read action preserves unread state and releases the processing lo
     expect(panel.unread.value).toBe(1);
     expect(panel.error.value).toContain('Could not update');
     expect(panel.busy.value).toBe(false);
+});
+
+test('fallback refresh only fetches while the page is visible and realtime is disconnected', async () => {
+    const panel = inbox();
+    mocks.fetch.mockResolvedValue(response([]));
+    vi.stubGlobal('document', { cookie: '', hidden: true });
+    panel.refreshWhenVisible();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    vi.stubGlobal('document', { cookie: '', hidden: false });
+    panel.connected.value = true;
+    panel.refreshWhenVisible();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    panel.connected.value = false;
+    panel.refreshWhenVisible();
+    await vi.waitFor(() => expect(mocks.fetch).toHaveBeenCalledTimes(1));
 });

@@ -25,6 +25,9 @@ return new class extends Migration
             $table->string('auth_method')->default('sanctum');
             $table->string('oauth_client_id')->nullable();
             $table->json('scopes')->nullable();
+            $table->unsignedSmallInteger('response_status')->nullable();
+            $table->unsignedInteger('duration_ms')->nullable();
+            $table->uuid('request_id')->nullable()->index();
             $table->timestamps();
         });
     }

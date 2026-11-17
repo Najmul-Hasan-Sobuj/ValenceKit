@@ -61,6 +61,7 @@ import { index as indexContact } from '@/routes/admin/contact';
 import { index as indexHr } from '@/routes/admin/hr';
 import { index as indexInvoices } from '@/routes/admin/invoices';
 import { index as indexPayroll } from '@/routes/admin/payroll';
+import { index as indexExports } from '@/routes/admin/exports';
 import { index as indexProposals } from '@/routes/admin/proposals';
 import type { Admin, NavItem } from '@/types';
 
@@ -105,6 +106,13 @@ const mainNavItems = computed<NavItem[]>(() => {
         },
     ];
 
+    if (can('finance.export') || can('leads.export') || can('hr.export')) {
+        items.push({
+            title: 'Exports',
+            href: indexExports(),
+            icon: FolderOpen,
+        });
+    }
     if (can('leads.view')) {
         items.push({ title: 'Leads', href: indexLeads(), icon: Users });
     }
@@ -149,7 +157,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             icon: UserRound,
         });
     }
-    if (can('payroll.view')) {
+    if (can('payroll.view') || can('hr.self')) {
         hrChildren.push({
             title: 'Payroll',
             href: indexPayroll(),

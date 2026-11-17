@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { money, toMinor as minor } from '@/lib/money';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { nextTick, ref } from 'vue';
 import { FileText, MoreHorizontal, Plus, Printer } from '@lucide/vue';
@@ -28,10 +29,14 @@ import {
 } from '@/components/ui/combobox';
 import { usePermissions } from '@/composables/usePermissions';
 import { decodePaginationLabel } from '@/lib/decodePaginationLabel';
-import { store } from '@/routes/admin/payroll';
+import { store, approve, pay } from '@/routes/admin/payroll';
+import { Badge } from '@/components/ui/badge';
 
 type Payroll = {
     id: number;
+    status: 'draft' | 'approved' | 'paid';
+    paid_on: string | null;
+    payment_reference: string | null;
     employee_name: string;
     period: string;
     base_minor: number;
@@ -68,6 +73,22 @@ async function printPayslip(row: Payroll): Promise<void> {
     await documentRef.value?.printDocument();
 }
 const createOpen = ref(false);
+const paying = ref<Payroll | null>(null);
+const approveForm = useForm({ status: '' });
+const payment = useForm({
+    paid_on: new Date().toLocaleDateString('en-CA'),
+    payment_reference: '',
+    status: '',
+});
+function recordPayment() {
+    if (!paying.value) return;
+    payment.post(pay.url(paying.value.id), {
+        onSuccess: () => {
+            paying.value = null;
+            payment.reset();
+        },
+    });
+}
 const form = useForm({
     employee_id: '',
     period: '',
@@ -77,14 +98,7 @@ const form = useForm({
     currency: 'BDT',
     note: '',
 });
-const money = (amount: number, currency: string) =>
-    `${currency} ${(Number(amount) / 100).toFixed(2)}`;
-function minor(value: string): number | null {
-    if (!/^\d+(\.\d{1,2})?$/.test(value)) return null;
-    const [whole, fraction = ''] = value.split('.');
-    const amount = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
-    return Number.isSafeInteger(amount) ? amount : null;
-}
+
 function createPayroll() {
     const base = minor(form.base_minor),
         allowance = minor(form.allowance_minor),
@@ -115,8 +129,7 @@ function createPayroll() {
         <header>
             <h1 class="text-2xl font-semibold">Payroll</h1>
             <p class="text-sm text-muted-foreground">
-                Create a monthly payroll record with manually reviewed
-                adjustments.
+                Review monthly payroll, approvals and published payslips.
             </p>
         </header>
         <div class="flex justify-end">
@@ -130,6 +143,54 @@ function createPayroll() {
                 ><Plus class="size-4" /> Create payroll record</Button
             >
         </div>
+        <Drawer :open="!!paying" @update:open="if (!$event) paying = null;">
+            <DrawerContent class="max-h-[90vh] overflow-y-auto">
+                <DrawerHeader
+                    ><DrawerTitle>Record payroll payment</DrawerTitle
+                    ><DrawerDescription
+                        >Confirm the completed payment for
+                        {{ paying?.employee_name }}. This records a payment; it
+                        does not transfer funds.</DrawerDescription
+                    ></DrawerHeader
+                >
+                <form
+                    class="grid gap-4 px-6 pb-6"
+                    @submit.prevent="recordPayment"
+                >
+                    <label
+                        >Payment date<Input
+                            v-model="payment.paid_on"
+                            type="date"
+                            required
+                        /><span class="text-sm text-destructive">{{
+                            payment.errors.paid_on
+                        }}</span></label
+                    >
+                    <label
+                        >Payment reference<Input
+                            v-model="payment.payment_reference"
+                            maxlength="255"
+                            required
+                        /><span class="text-sm text-destructive">{{
+                            payment.errors.payment_reference
+                        }}</span></label
+                    >
+                    <p class="text-sm text-destructive">
+                        {{ payment.errors.status }}
+                    </p>
+                    <Button :disabled="payment.processing"
+                        >Record payment</Button
+                    >
+                </form>
+            </DrawerContent>
+        </Drawer>
+        <p
+            v-if="approveForm.errors.status"
+            role="alert"
+            class="text-sm text-destructive"
+        >
+            {{ approveForm.errors.status }}
+        </p>
         <Drawer v-model:open="createOpen">
             <DrawerContent
                 class="max-h-[92vh] overflow-y-auto md:inset-x-auto md:right-2 md:left-64"
@@ -254,6 +315,7 @@ function createPayroll() {
                         <th class="p-3">Employee</th>
                         <th class="p-3">Month</th>
                         <th class="p-3">Net pay</th>
+                        <th class="p-3">Status</th>
                         <th class="p-3">Actions</th>
                     </tr>
                 </thead>
@@ -275,6 +337,9 @@ function createPayroll() {
                                 )
                             }}
                         </td>
+                        <td class="p-3">
+                            <Badge variant="secondary">{{ row.status }}</Badge>
+                        </td>
                         <td class="p-3 text-right">
                             <DropdownMenu
                                 ><DropdownMenuTrigger as-child
@@ -285,7 +350,30 @@ function createPayroll() {
                                         ><MoreHorizontal
                                             class="size-4" /></Button
                                 ></DropdownMenuTrigger>
-                                <DropdownMenuContent align="end"
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                        v-if="
+                                            row.status === 'draft' &&
+                                            can('payroll.approve')
+                                        "
+                                        :disabled="approveForm.processing"
+                                        @select="
+                                            approveForm.post(
+                                                approve.url(row.id),
+                                            )
+                                        "
+                                        >Approve payroll</DropdownMenuItem
+                                    >
+                                    <DropdownMenuItem
+                                        v-if="
+                                            row.status === 'approved' &&
+                                            can('payroll.pay')
+                                        "
+                                        @select="
+                                            payment.clearErrors();
+                                            paying = row;
+                                        "
+                                        >Record payment</DropdownMenuItem
                                     ><DropdownMenuItem
                                         @select="printPayslip(row)"
                                         ><Printer class="size-4" /> Print
@@ -296,7 +384,7 @@ function createPayroll() {
                         </td>
                     </tr>
                     <tr v-if="!props.payrolls.data.length">
-                        <td colspan="4" class="p-5 text-muted-foreground">
+                        <td colspan="5" class="p-5 text-muted-foreground">
                             No payroll records yet.
                         </td>
                     </tr>
@@ -345,7 +433,9 @@ function createPayroll() {
             <BusinessDocument
                 ref="documentRef"
                 v-if="selected"
-                title="Payslip"
+                :title="
+                    selected.status === 'draft' ? 'Draft payslip' : 'Payslip'
+                "
                 :reference="`Payroll ${selected.id}`"
                 :date="selected.period"
                 date-label="Pay period"

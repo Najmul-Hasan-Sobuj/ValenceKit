@@ -14,16 +14,19 @@ class LeaveAllocation extends Model
         return ['days' => 'integer'];
     }
 
+    /** @return array<string, mixed> */
     public function auditLogValues(): array
     {
         return $this->only(['employee_id', 'leave_type_id', 'year', 'days']);
     }
 
+    /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
+    /** @return BelongsTo<LeaveType, $this> */
     public function leaveType(): BelongsTo
     {
         return $this->belongsTo(LeaveType::class);

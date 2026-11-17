@@ -45,6 +45,7 @@ use Illuminate\Support\Carbon;
     'recurring_frequency',
     'notes',
     'admin_id',
+    'recurring_parent_id', 'recurring_occurrence', 'recurrence_on', 'recurring_next_on',
 ])]
 class FinanceTransaction extends Model
 {
@@ -77,6 +78,9 @@ class FinanceTransaction extends Model
             'amount' => 'decimal:2',
             'transaction_date' => 'date',
             'is_recurring' => 'boolean',
+            'recurring_next_on' => 'date',
+            'recurrence_on' => 'date',
+            'recurring_occurrence' => 'integer',
         ];
     }
 

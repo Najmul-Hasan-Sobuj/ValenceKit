@@ -40,7 +40,8 @@ function renderGrid() {
     const enabled = $('grid-mode').checked;
     $('grid-options').hidden = !enabled;
     $('grid-status').hidden = !enabled || gridCells.length === 0;
-    $('grid-progress').textContent = `${gridCells.filter((cell) => cell.state === 'done').length} / ${gridCells.length || 9}`;
+    $('grid-progress').textContent =
+        `${gridCells.filter((cell) => cell.state === 'done').length} / ${gridCells.length || 9}`;
     $('grid-cells').replaceChildren(
         ...gridCells.map((cell) => {
             const element = document.createElement('div');
@@ -92,26 +93,6 @@ function render() {
                 card.append(line);
             }
 
-            async function collectUrls(tabId, query, limit) {
-                const urls = new Set();
-                let unchanged = 0;
-                for (
-                    let attempt = 0;
-                    attempt < 40 && urls.size < limit && unchanged < 4;
-                    attempt++
-                ) {
-                    if (stopped) break;
-                    const before = urls.size;
-                    const page = await mapsCall(tabId, 'collect');
-                    for (const url of page.urls) urls.add(url);
-                    if (page.url.includes('/maps/place/') && page.name)
-                        urls.add(page.url);
-                    unchanged = before === urls.size ? unchanged + 1 : 0;
-                    status(`Found ${urls.size} business links for ${query}…`);
-                    await pause(1500);
-                }
-                return [...urls].slice(0, limit);
-            }
             const badge = document.createElement('span');
             badge.className = `badge ${row.state === 'failed' ? 'error' : ''}`;
             badge.textContent =
@@ -193,7 +174,9 @@ $('search-form').addEventListener('submit', async (event) => {
             const center = await mapsCall(tab.id, 'center');
             const latitudeStep = cellSize / 111;
             const longitudeStep =
-                cellSize / (111 * Math.max(0.2, Math.cos((center.latitude * Math.PI) / 180)));
+                cellSize /
+                (111 *
+                    Math.max(0.2, Math.cos((center.latitude * Math.PI) / 180)));
             for (const row of [-1, 0, 1]) {
                 for (const column of [-1, 0, 1]) {
                     cells.push({
@@ -243,9 +226,7 @@ $('search-form').addEventListener('submit', async (event) => {
         const urls = [...allUrls];
         for (const [index, url] of urls.entries()) {
             if (stopped) break;
-            status(
-                `Reading business ${index + 1} of ${urls.length}…`,
-            );
+            status(`Reading business ${index + 1} of ${urls.length}…`);
             try {
                 await openLoaded(tab.id, url);
                 const lead = await mapsCall(tab.id, 'read');
@@ -488,10 +469,7 @@ async function enrichWebsite(row) {
                     if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
                         emails.add(email);
                 }
-                if (
-                    !row.lead.phone &&
-                    raw.toLowerCase().startsWith('tel:')
-                ) {
+                if (!row.lead.phone && raw.toLowerCase().startsWith('tel:')) {
                     row.lead.phone = raw
                         .slice(4)
                         .replace(/[^\d+().\s-]/g, '')
@@ -519,12 +497,17 @@ async function enrichWebsite(row) {
                 }
             }
             if (!row.lead.phone)
-                row.lead.phone = visibleText.match(phonePattern)?.[0]
+                row.lead.phone = visibleText
+                    .match(phonePattern)?.[0]
                     ?.trim()
                     .slice(0, 100);
         }
-        row.lead.email = [...emails]
-            .find((email) => email.endsWith(`@${url.hostname}`) || email.endsWith(`.${url.hostname}`)) ||
+        row.lead.email =
+            [...emails].find(
+                (email) =>
+                    email.endsWith(`@${url.hostname}`) ||
+                    email.endsWith(`.${url.hostname}`),
+            ) ||
             [...emails][0] ||
             row.lead.email ||
             null;
@@ -657,3 +640,23 @@ await browser.storage.session.setAccessLevel({
 });
 ({ rows = [] } = await browser.storage.local.get('rows'));
 render();
+
+async function collectUrls(tabId, query, limit) {
+    const urls = new Set();
+    let unchanged = 0;
+    for (
+        let attempt = 0;
+        attempt < 40 && urls.size < limit && unchanged < 4;
+        attempt++
+    ) {
+        if (stopped) break;
+        const before = urls.size;
+        const page = await mapsCall(tabId, 'collect');
+        for (const url of page.urls) urls.add(url);
+        if (page.url.includes('/maps/place/') && page.name) urls.add(page.url);
+        unchanged = before === urls.size ? unchanged + 1 : 0;
+        status(`Found ${urls.size} business links for ${query}…`);
+        await pause(1500);
+    }
+    return [...urls].slice(0, limit);
+}

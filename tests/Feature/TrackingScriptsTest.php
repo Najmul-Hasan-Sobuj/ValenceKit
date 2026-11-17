@@ -13,6 +13,12 @@ beforeEach(function () {
     $this->withUnencryptedCookies(['tracking_consent' => json_encode(['version' => 1, 'analytics' => true, 'marketing' => true])]);
 });
 
+test('private authentication pages never include analytics even with consent and admin exclusion disabled', function (string $path) {
+    TrackingSetting::instance()->update(['exclude_admins' => false, 'google_analytics_enabled' => true, 'google_analytics_id' => 'G-QAPRIVATE']);
+    TrackingSetting::flushCache();
+    $this->get($path)->assertOk()->assertDontSee('gtag/js?id=', false)->assertDontSee('G-QAPRIVATE', false);
+})->with(['/login', '/forgot-password', '/reset-password/qa-token?email=qa%40example.test']);
+
 test('visitor tracking and fallback pixels obey strictly validated consent categories', function (string $cookie, bool $analytics, bool $marketing) {
     $setting = TrackingSetting::instance();
     $setting->update([
@@ -177,10 +183,11 @@ test('tracking scripts respect dynamic admin alias configuration', function () {
 });
 
 test('admin exclusion does not suppress public paths that merely share the admin prefix', function () {
+    config(['admin.alias' => 'service']);
     $settings = TrackingSetting::instance();
     $settings->update(['exclude_admins' => true]);
     TrackingSetting::flushCache();
-    $this->get('/administrator-services');
+    $this->get('/services')->assertOk();
     expect(TrackingService::shouldTrack())->toBeTrue();
 });
 

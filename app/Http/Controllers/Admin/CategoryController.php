@@ -9,6 +9,7 @@ use App\Http\Resources\Admin\CategoryResource;
 use App\Models\Category;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
@@ -58,27 +59,29 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request, AuditLogService $auditLogService)
     {
-        $data = $request->validated();
-        if (! empty($data['parent_id'])) {
-            $parent = Category::find($data['parent_id']);
-            if ($parent && ! $parent->is_active) {
-                $data['is_active'] = false;
+        return DB::transaction(function () use ($request, $auditLogService) {
+            $data = $request->validated();
+            if (! empty($data['parent_id'])) {
+                $parent = Category::find($data['parent_id']);
+                if ($parent && ! $parent->is_active) {
+                    $data['is_active'] = false;
+                }
             }
-        }
 
-        $category = Category::create([
-            ...$data,
-            'is_system' => false,
-        ]);
+            $category = Category::create([
+                ...$data,
+                'is_system' => false,
+            ]);
 
-        $auditLogService->created(
-            'category.created',
-            $category,
-            description: 'Category '.$category->name.' was created.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->created(
+                'category.created',
+                $category,
+                description: 'Category '.$category->name.' was created.',
+                actor: $request->user('admin'),
+            );
 
-        return back()->with('success', 'Category created successfully.');
+            return back()->with('success', 'Category created successfully.');
+        });
     }
 
     /**
@@ -86,27 +89,29 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, Category $category, AuditLogService $auditLogService)
     {
-        $before = $category->auditLogValues();
-        $data = $request->validated();
-        $parentId = array_key_exists('parent_id', $data) ? $data['parent_id'] : $category->parent_id;
-        if ($parentId) {
-            $parent = Category::find($parentId);
-            if ($parent && ! $parent->is_active) {
-                $data['is_active'] = false;
+        return DB::transaction(function () use ($request, $category, $auditLogService) {
+            $before = $category->auditLogValues();
+            $data = $request->validated();
+            $parentId = array_key_exists('parent_id', $data) ? $data['parent_id'] : $category->parent_id;
+            if ($parentId) {
+                $parent = Category::find($parentId);
+                if ($parent && ! $parent->is_active) {
+                    $data['is_active'] = false;
+                }
             }
-        }
 
-        $category->update($data);
+            $category->update($data);
 
-        $auditLogService->updated(
-            'category.updated',
-            $category,
-            beforeValues: $before,
-            description: 'Category '.$category->name.' was updated.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->updated(
+                'category.updated',
+                $category,
+                beforeValues: $before,
+                description: 'Category '.$category->name.' was updated.',
+                actor: $request->user('admin'),
+            );
 
-        return back()->with('success', 'Category updated successfully.');
+            return back()->with('success', 'Category updated successfully.');
+        });
     }
 
     /**
@@ -114,24 +119,26 @@ class CategoryController extends Controller
      */
     public function destroy(Request $request, Category $category, AuditLogService $auditLogService)
     {
-        abort_unless($request->user('admin')->can('categories.delete'), 403);
+        return DB::transaction(function () use ($request, $category, $auditLogService) {
+            abort_unless($request->user('admin')->can('categories.delete'), 403);
 
-        if ($category->is_system) {
-            return back()->with('error', 'System categories cannot be deleted.');
-        }
+            if ($category->is_system) {
+                return back()->with('error', 'System categories cannot be deleted.');
+            }
 
-        $before = $category->auditLogValues();
-        $categoryName = $category->name;
-        $category->delete();
+            $before = $category->auditLogValues();
+            $categoryName = $category->name;
+            $category->delete();
 
-        $auditLogService->deleted(
-            'category.deleted',
-            $category,
-            beforeValues: $before,
-            description: 'Category '.$categoryName.' was deleted.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->deleted(
+                'category.deleted',
+                $category,
+                beforeValues: $before,
+                description: 'Category '.$categoryName.' was deleted.',
+                actor: $request->user('admin'),
+            );
 
-        return back()->with('success', 'Category deleted successfully.');
+            return back()->with('success', 'Category deleted successfully.');
+        });
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Authorization\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DataExportController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\GmailConnectionController;
 use App\Http\Controllers\Admin\HrController;
@@ -81,14 +82,20 @@ Route::prefix(config('admin.alias'))
                 ->name('dashboard');
 
             Route::prefix('authorization')->group(function () {
+                Route::post('users/{user}/invite', [UserController::class, 'resendInvitation'])->middleware('throttle:3,1,user-invite')->name('users.invite');
                 Route::apiResource('users', UserController::class)->except(['show']);
                 Route::resource('roles', RoleController::class)->names('authorization.roles')->except(['show']);
             });
+
+            Route::get('exports', [DataExportController::class, 'index'])->name('exports.index');
+            Route::post('exports', [DataExportController::class, 'store'])->middleware('throttle:3,1')->name('exports.store');
+            Route::get('exports/{export}/download', [DataExportController::class, 'download'])->name('exports.download');
 
             Route::prefix('leads')->name('leads.')->group(function () {
                 Route::controller(LeadController::class)->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::get('export', 'export')->name('export');
+                    Route::patch('{lead}', 'update')->name('update');
                     Route::delete('{lead}', 'destroy')->name('destroy');
                 });
 
@@ -140,6 +147,8 @@ Route::prefix(config('admin.alias'))
             Route::prefix('payroll')->name('payroll.')->controller(PayrollController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('/', 'store')->name('store');
+                Route::post('{payroll}/approve', 'approve')->name('approve');
+                Route::post('{payroll}/pay', 'pay')->name('pay');
             });
 
             Route::prefix('invoices')->name('invoices.')->controller(InvoiceController::class)->group(function () {

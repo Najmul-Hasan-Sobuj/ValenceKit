@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ImportGmailThread;
+use App\Jobs\SyncGmailMailbox;
 use App\Models\ContactMessage;
 use App\Models\GmailMailbox;
 use App\Services\AuditLogService;
@@ -56,6 +57,7 @@ class ContactMessageController extends Controller
             ->orderByDesc('created_at')->orderByDesc('id')->cursorPaginate(10));
     }
 
+    /** @return CursorPaginator<int, ContactMessage> */
     private function conversationPage(string $search): CursorPaginator
     {
         return ContactMessage::query()->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
@@ -123,12 +125,12 @@ class ContactMessageController extends Controller
             return back()->withErrors(['gmail' => 'Connect Gmail before syncing.']);
         }
         try {
-            $sync->sync($mailbox);
+            SyncGmailMailbox::dispatch($mailbox->id, adminId: $request->user('admin')->id)->afterCommit();
         } catch (\Throwable) {
             return back()->withErrors(['gmail' => 'Could not sync Gmail. Please check the connection and try again.']);
         }
 
-        return back()->with('success', 'Gmail conversations synced.');
+        return back()->with('success', 'Gmail conversation sync queued.');
     }
 
     public function searchGmail(Request $request, GmailSync $sync): JsonResponse
@@ -160,7 +162,7 @@ class ContactMessageController extends Controller
             throw ValidationException::withMessages(['threads' => 'Connect Gmail before importing.']);
         }
         $adminId = $request->user('admin')->id;
-        $jobs = collect($data['threads'])->map(fn ($thread) => new ImportGmailThread($adminId, $mailbox->id, $data['email'], $thread['thread_id'], $thread['uid']))->all();
+        $jobs = collect($request->array('threads'))->map(fn ($thread) => new ImportGmailThread($adminId, $mailbox->id, $data['email'], $thread['thread_id'], $thread['uid']))->all();
         $batch = Bus::batch($jobs)->name('contact-gmail-import')->allowFailures()
             ->withOption('admin_id', $adminId)->withOption('email', strtolower($data['email']))
             ->withOption('thread_ids', array_column($data['threads'], 'thread_id'))->dispatch();

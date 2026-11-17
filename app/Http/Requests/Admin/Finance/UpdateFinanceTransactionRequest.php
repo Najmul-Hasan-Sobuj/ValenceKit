@@ -46,6 +46,10 @@ class UpdateFinanceTransactionRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
+                $transaction = $this->route('transaction');
+                if ($transaction instanceof FinanceTransaction && $this->boolean('is_recurring', $transaction->is_recurring) && ! $this->input('recurring_frequency', $transaction->recurring_frequency)) {
+                    $validator->errors()->add('recurring_frequency', 'Select a frequency for recurring transactions.');
+                }
                 if ($validator->errors()->hasAny(['type', 'category_key'])) {
                     return;
                 }

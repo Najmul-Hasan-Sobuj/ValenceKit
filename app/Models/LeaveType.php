@@ -13,6 +13,7 @@ class LeaveType extends Model
         return ['is_paid' => 'boolean', 'is_active' => 'boolean'];
     }
 
+    /** @return array<string, mixed> */
     public function auditLogValues(): array
     {
         return $this->only(['name', 'is_paid', 'is_active']);

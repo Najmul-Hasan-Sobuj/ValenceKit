@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AuditLogService;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -79,7 +80,9 @@ class Category extends Model
     {
         foreach ($this->children as $child) {
             if ($child->is_active) {
+                $before = $child->auditLogValues();
                 $child->update(['is_active' => false]);
+                app(AuditLogService::class)->updated('category.cascade_deactivated', $child, $before, metadata: ['parent_category_id' => $this->id]);
             }
         }
     }
@@ -140,6 +143,8 @@ class Category extends Model
 
     /**
      * Get the child categories.
+     *
+     * @return HasMany<Category, $this>
      */
     public function children(): HasMany
     {

@@ -26,9 +26,14 @@ class TrackingService
     {
         $consent = static::consent();
 
-        return $category === 'all'
-            ? ($consent['analytics'] ?? false) && ($consent['marketing'] ?? false)
-            : ($consent[$category] ?? false);
+        if ($consent === null) {
+            return false;
+        }
+
+        return match ($category) {
+            'all' => $consent['analytics'] && $consent['marketing'],
+            'analytics' => $consent['analytics'], 'marketing' => $consent['marketing'], default => false,
+        };
     }
 
     /** @return array<string, mixed> */
@@ -51,6 +56,10 @@ class TrackingService
      */
     public static function shouldTrack(): bool
     {
+        $publicPaths = array_map(static fn (array $page): string => trim($page['path'], '/') ?: '/', app(SeoService::class)->getPublicPages());
+        if (! in_array(Request::path(), $publicPaths, true)) {
+            return false;
+        }
         $settings = TrackingSetting::instance();
 
         if ($settings->exclude_admins) {
@@ -89,9 +98,9 @@ class TrackingService
         $nonce = Vite::cspNonce() ?? '';
         $html = [];
 
+        $marketingConsent = static::consentAllows('marketing') ? 'granted' : 'denied';
         if (static::publicState()['available']) {
             $analyticsConsent = static::consentAllows('analytics') ? 'granted' : 'denied';
-            $marketingConsent = static::consentAllows('marketing') ? 'granted' : 'denied';
             $html[] = <<<HTML
 <script nonce="{$nonce}">
 window.dataLayer = window.dataLayer || [];

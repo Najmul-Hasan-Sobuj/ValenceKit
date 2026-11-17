@@ -16,7 +16,7 @@ class McpUsageLog extends Model
         'endpoint',
         'auth_method',
         'oauth_client_id',
-        'scopes',
+        'scopes', 'response_status', 'duration_ms', 'request_id',
     ];
 
     /**

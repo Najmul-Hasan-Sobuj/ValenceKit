@@ -33,7 +33,7 @@ class StoreFinanceTransactionRequest extends FormRequest
             'transaction_date' => ['required', 'date'],
             'payment_method' => ['required', 'string', Rule::in(array_keys(config('finance.payment_methods', [])))],
             'is_recurring' => ['boolean'],
-            'recurring_frequency' => ['nullable', 'string', Rule::in(['weekly', 'monthly', 'yearly'])],
+            'recurring_frequency' => [Rule::requiredIf(fn () => $this->boolean('is_recurring')), 'nullable', 'string', Rule::in(['weekly', 'monthly', 'yearly'])],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

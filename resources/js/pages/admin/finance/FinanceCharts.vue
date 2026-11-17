@@ -130,7 +130,8 @@ const categoryChartOptions = computed(() => ({
                         (a, b) => a + Number(b),
                         0,
                     );
-                    const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                    const pct =
+                        total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                     return ` ${label}: ${props.currencySymbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct}%)`;
                 },
             },

@@ -18,6 +18,7 @@ return [
     */
 
     'default' => env('DB_CONNECTION', 'sqlite'),
+    'backup_binary' => env('DB_BACKUP_BINARY', 'mysqldump'),
 
     /*
     |--------------------------------------------------------------------------

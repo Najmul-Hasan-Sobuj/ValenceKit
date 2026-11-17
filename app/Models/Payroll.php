@@ -9,13 +9,15 @@ class Payroll extends Model
 {
     protected $guarded = ['id'];
 
+    /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
+    /** @return array<string, mixed> */
     public function auditLogValues(): array
     {
-        return $this->only(['employee_id', 'period', 'currency']);
+        return $this->only(['employee_id', 'period', 'currency', 'status', 'approved_by', 'paid_by', 'paid_on', 'payment_reference']);
     }
 }

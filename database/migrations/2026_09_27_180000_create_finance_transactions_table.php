@@ -26,6 +26,11 @@ return new class extends Migration
             $table->string('recurring_frequency', 20)->nullable();
             $table->text('notes')->nullable();
             $table->foreignId('admin_id')->nullable()->constrained('admins')->nullOnDelete();
+            $table->foreignId('recurring_parent_id')->nullable()->constrained('finance_transactions')->nullOnDelete();
+            $table->unsignedInteger('recurring_occurrence')->default(0);
+            $table->date('recurrence_on')->nullable();
+            $table->date('recurring_next_on')->nullable()->index();
+            $table->unique(['recurring_parent_id', 'recurrence_on']);
             $table->timestamps();
 
             $table->index(['transaction_date', 'type']);

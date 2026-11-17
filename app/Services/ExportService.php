@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportService
@@ -29,23 +30,45 @@ class ExportService
                 return;
             }
 
-            fwrite($output, "\xEF\xBB\xBF");
-            fputcsv($output, array_keys($columns), ',', '"', '', "\r\n");
-
-            $query->chunk($chunkSize, function ($items) use ($output, $columns) {
-                foreach ($items as $item) {
-                    $row = [];
-
-                    foreach ($columns as $callback) {
-                        $row[] = $this->escapeFormula($callback($item));
-                    }
-
-                    fputcsv($output, $row, ',', '"', '', "\r\n");
-                }
-            });
+            $this->writeCsv($query, $columns, $output, $chunkSize);
 
             fclose($output);
         }, 200, $headers);
+    }
+
+    /**
+     * @param  Builder<Model>  $query
+     * @param  array<string, callable>  $columns
+     * @param  resource  $output
+     */
+    public function writeCsv(Builder $query, array $columns, mixed $output, int $chunkSize = 100): void
+    {
+        fwrite($output, "\xEF\xBB\xBF");
+        fputcsv($output, array_keys($columns), ',', '"', '', "\r\n");
+
+        $query->chunk($chunkSize, function ($items) use ($output, $columns) {
+            foreach ($items as $item) {
+                $row = [];
+
+                foreach ($columns as $callback) {
+                    $row[] = $this->escapeFormula($callback($item));
+                }
+
+                fputcsv($output, $row, ',', '"', '', "\r\n");
+            }
+        });
+
+    }
+
+    /** @return array<string, callable> */
+    public function leadColumns(): array
+    {
+        return [
+            'Name' => fn ($lead) => $lead->name, 'Phone' => fn ($lead) => $lead->phone,
+            'Email' => fn ($lead) => $lead->email, 'Address' => fn ($lead) => $lead->address,
+            'Website' => fn ($lead) => $lead->website, 'Google Maps' => fn ($lead) => $lead->maps_url,
+            'Stage' => fn ($lead) => $lead->stage,
+        ];
     }
 
     /**

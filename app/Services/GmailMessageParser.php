@@ -64,7 +64,7 @@ class GmailMessageParser
     private function addresses(string $header): array
     {
         $result = [];
-        foreach (preg_split('/,(?=(?:[^"]*"[^"]*")*[^"]*$)/', $header) as $address) {
+        foreach ((preg_split('/,(?=(?:[^"]*"[^"]*")*[^"]*$)/', $header) ?: []) as $address) {
             try {
                 $result[] = strtolower(Address::create(trim($address))->getAddress());
             } catch (\Throwable) {
@@ -78,7 +78,7 @@ class GmailMessageParser
     /** @return array{0: string, 1: string} */
     private function split(string $raw): array
     {
-        $parts = preg_split('/\r?\n\r?\n/', $raw, 2);
+        $parts = preg_split('/\r?\n\r?\n/', $raw, 2) ?: [$raw];
 
         return [$parts[0], $parts[1] ?? ''];
     }
@@ -99,7 +99,7 @@ class GmailMessageParser
         }
         if (preg_match('/^multipart\//i', $type) && preg_match('/boundary\s*=\s*(?:"([^"]+)"|([^;\s]+))/i', $type, $boundaryMatch)) {
             $boundary = $boundaryMatch[1] !== '' ? $boundaryMatch[1] : $boundaryMatch[2];
-            $segments = preg_split('/^--'.preg_quote($boundary, '/').'(?:--)?[ \t]*\r?$/m', $body);
+            $segments = preg_split('/^--'.preg_quote($boundary, '/').'(?:--)?[ \t]*\r?$/m', $body) ?: [];
             $hasClosingBoundary = preg_match('/^--'.preg_quote($boundary, '/').'--[ \t]*\r?$/m', $body) === 1;
             $result = [];
             foreach (array_slice($segments, 1, $hasClosingBoundary ? -1 : null) as $segment) {
@@ -124,7 +124,11 @@ class GmailMessageParser
         if (preg_match('/charset\s*=\s*(?:"([^"]+)"|([^;\s]+))/i', $type, $charsetMatch)) {
             $charset = $charsetMatch[1] !== '' ? $charsetMatch[1] : $charsetMatch[2];
             try {
-                $body = mb_convert_encoding($body, 'UTF-8', $charset);
+                $converted = mb_convert_encoding($body, 'UTF-8', $charset);
+                if ($converted === false) {
+                    return [];
+                }
+                $body = $converted;
             } catch (\ValueError) {
                 return [];
             }

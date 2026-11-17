@@ -9,6 +9,7 @@ use App\Models\FinanceTransaction;
 use App\Services\AuditLogService;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -104,17 +105,20 @@ class FinanceController extends Controller
      */
     public function store(StoreFinanceTransactionRequest $request, AuditLogService $auditLogService)
     {
-        $transaction = $this->financeService->createTransaction(
-            $request->validated(),
-            $request->user('admin')->id
-        );
+        DB::transaction(function () use ($request, $auditLogService) {
+            $transaction = $this->financeService->createTransaction(
+                $request->validated(),
+                $request->user('admin')->id
+            );
 
-        $auditLogService->created(
-            'finance.transaction.created',
-            $transaction,
-            description: 'A finance transaction was recorded.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->created(
+                'finance.transaction.created',
+                $transaction,
+                description: 'A finance transaction was recorded.',
+                actor: $request->user('admin'),
+            );
+
+        });
 
         return back()->with('success', 'Transaction recorded successfully.');
     }
@@ -124,16 +128,19 @@ class FinanceController extends Controller
      */
     public function update(UpdateFinanceTransactionRequest $request, FinanceTransaction $transaction, AuditLogService $auditLogService)
     {
-        $before = $transaction->auditLogValues();
-        $this->financeService->updateTransaction($transaction, $request->validated());
+        DB::transaction(function () use ($request, $transaction, $auditLogService) {
+            $before = $transaction->auditLogValues();
+            $this->financeService->updateTransaction($transaction, $request->validated());
 
-        $auditLogService->updated(
-            'finance.transaction.updated',
-            $transaction,
-            beforeValues: $before,
-            description: 'A finance transaction was updated.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->updated(
+                'finance.transaction.updated',
+                $transaction,
+                beforeValues: $before,
+                description: 'A finance transaction was updated.',
+                actor: $request->user('admin'),
+            );
+
+        });
 
         return back()->with('success', 'Transaction updated successfully.');
     }
@@ -145,16 +152,19 @@ class FinanceController extends Controller
     {
         abort_unless($request->user('admin')->can('finance.delete'), 403);
 
-        $before = $transaction->auditLogValues();
-        $transaction->delete();
+        DB::transaction(function () use ($request, $transaction, $auditLogService) {
+            $before = $transaction->auditLogValues();
+            $transaction->delete();
 
-        $auditLogService->deleted(
-            'finance.transaction.deleted',
-            $transaction,
-            beforeValues: $before,
-            description: 'A finance transaction was deleted.',
-            actor: $request->user('admin'),
-        );
+            $auditLogService->deleted(
+                'finance.transaction.deleted',
+                $transaction,
+                beforeValues: $before,
+                description: 'A finance transaction was deleted.',
+                actor: $request->user('admin'),
+            );
+
+        });
 
         return back()->with('success', 'Transaction removed successfully.');
     }
@@ -171,15 +181,19 @@ class FinanceController extends Controller
             'ids.*' => ['integer', 'exists:finance_transactions,id'],
         ]);
 
-        $count = $this->financeService->deleteTransactions($validated['ids']);
+        $count = DB::transaction(function () use ($request, $validated, $auditLogService) {
+            $count = $this->financeService->deleteTransactions($validated['ids']);
 
-        $auditLogService->record(
-            'finance.transaction.bulk_deleted',
-            afterValues: ['count' => $count],
-            description: "{$count} finance transactions were deleted.",
-            metadata: ['transaction_ids' => $validated['ids']],
-            actor: $request->user('admin'),
-        );
+            $auditLogService->record(
+                'finance.transaction.bulk_deleted',
+                afterValues: ['count' => $count],
+                description: "{$count} finance transactions were deleted.",
+                metadata: ['transaction_ids' => $validated['ids']],
+                actor: $request->user('admin'),
+            );
+
+            return $count;
+        });
 
         return back()->with('success', "{$count} transactions removed successfully.");
     }

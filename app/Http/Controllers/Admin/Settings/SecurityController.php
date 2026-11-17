@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Services\AuditLogService;
+use App\Services\WorkflowNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,18 +50,22 @@ class SecurityController extends Controller
             'password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user('admin')->update([
-            'password' => $validated['password'],
-            'must_change_password' => false,
-        ]);
+        DB::transaction(function () use ($request, $admin, $validated, $auditLogService): void {
+            $request->user('admin')->update([
+                'password' => $validated['password'],
+                'must_change_password' => false,
+            ]);
 
-        $auditLogService->record(
-            'settings.security.password_updated',
-            $admin,
-            afterValues: ['password_updated' => true],
-            description: 'The administrator password was updated.',
-            actor: $admin,
-        );
+            $auditLogService->record(
+                'settings.security.password_updated',
+                $admin,
+                afterValues: ['password_updated' => true],
+                description: 'The administrator password was updated.',
+                actor: $admin,
+            );
+            app(WorkflowNotifier::class)->account($admin, 'account.self', 'Password changed', 'Your administrator password was changed. Review your active access if this was unexpected.', 'admin.security.edit');
+
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 

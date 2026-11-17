@@ -25,6 +25,7 @@ class ImportGmailThread implements ShouldBeEncrypted, ShouldQueue
 
     public function __construct(public int $adminId, public int $mailboxId, public string $email, public string $threadId, public string $uid) {}
 
+    /** @return list<int> */
     public function backoff(): array
     {
         return [10, 30, 120];
