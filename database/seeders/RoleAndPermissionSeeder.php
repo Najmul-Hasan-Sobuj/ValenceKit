@@ -28,6 +28,13 @@ class RoleAndPermissionSeeder extends Seeder
      * @var array<string, array<string, string>>
      */
     private const GROUPS = [
+        'Database Backups' => [
+            'backups.view' => 'View database backup history',
+            'backups.create' => 'Create and retry database backups',
+            'backups.download' => 'Download encrypted database backups',
+            'backups.delete' => 'Delete database backup copies',
+            'backups.manage' => 'Manage Google Drive connection and backup schedules',
+        ],
         'Contact' => [
             'contact.view' => 'View website contact messages',
             'contact.reply' => 'Reply to website contact messages',

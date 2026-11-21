@@ -2,8 +2,8 @@
 
 use App\Jobs\QueueHeartbeat;
 use App\Services\DatabaseBackup;
+use DriveSnap\EncryptedFile;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,20 +17,23 @@ it('reports missing workers and accepts fresh scheduler and worker heartbeats', 
 });
 
 it('encrypts a database snapshot and verifies restoration away from the source database', function () {
-    Storage::fake('local');
+    Storage::fake('drivesnap');
     // VACUUM requires an isolated connection outside the test transaction.
     config(['database.connections.backup_test' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
-    $original = config('database.default');
-    config(['database.default' => 'backup_test']);
+    $original = config('drivesnap.connection');
+    config(['drivesnap.connection' => 'backup_test']);
     DB::connection('backup_test')->statement('CREATE TABLE restore_probe (value TEXT)');
     DB::connection('backup_test')->insert('INSERT INTO restore_probe VALUES (?)', ['restore-test']);
     try {
         $path = app(DatabaseBackup::class)->create(true);
-        expect(Storage::disk('local')->get($path))->not->toContain('restore-test');
-        expect(Crypt::decryptString(Storage::disk('local')->get($path)))->toContain('SQLite format 3');
+        expect(Storage::disk('drivesnap')->get($path))->not->toContain('restore-test');
+        $restored = Storage::disk('drivesnap')->path('verified.sqlite');
+        app(EncryptedFile::class)->decrypt(Storage::disk('drivesnap')->path($path), $restored);
+        $pdo = new PDO('sqlite:'.$restored);
+        expect($pdo->query('PRAGMA integrity_check')->fetchColumn())->toBe('ok');
         expect(DB::connection('backup_test')->table('restore_probe')->value('value'))->toBe('restore-test');
     } finally {
-        config(['database.default' => $original]);
+        config(['drivesnap.connection' => $original]);
         DB::purge('backup_test');
     }
 });

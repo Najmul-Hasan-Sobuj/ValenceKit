@@ -9,7 +9,10 @@ use App\Models\Passkey;
 use App\Models\User;
 use App\Observers\ContactMessageObserver;
 use App\Observers\ContactReplyObserver;
+use App\Services\AuditLogService;
+use App\Services\WorkflowNotifier;
 use Carbon\CarbonImmutable;
+use DriveSnap\BackupActivity;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -42,9 +46,21 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->enforceProductionSecurity();
         $this->configureDefaults();
+        Event::listen(BackupActivity::class, function (BackupActivity $event): void {
+            app(AuditLogService::class)->record('drivesnap.'.$event->action,
+                afterValues: $event->backup->auditLogValues(), actor: in_array($event->action, ['completed', 'failed'], true) ? $event->backup->requestedBy : null);
+            if ($event->action === 'completed') {
+                Cache::put('operations.backup_completed_at', now()->getTimestamp(), now()->addDays(8));
+            }
+            if (in_array($event->action, ['completed', 'failed'], true)) {
+                app(WorkflowNotifier::class)->admins('backups.view', 'Database backup '.$event->action,
+                    $event->action === 'completed' ? 'An encrypted database backup is ready.' : 'A database backup needs attention.', 'drivesnap.index');
+            }
+        });
         if ($this->app->runningInConsole()) {
             DevCommands::except('server');
-            DevCommands::artisan('queue:listen --queue=mail,notifications,default,imports,exports --tries=3 --timeout=300', 'queue');
+            $queueTimeout = max(300, (int) config('drivesnap.job_timeout', 300));
+            DevCommands::artisan('queue:listen --queue=mail,notifications,default,backups,imports,exports --tries=3 --timeout='.$queueTimeout, 'queue');
         }
         require base_path('routes/channels.php');
         ContactMessage::observe(ContactMessageObserver::class);

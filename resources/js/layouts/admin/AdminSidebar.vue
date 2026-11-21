@@ -61,6 +61,7 @@ import { index as indexContact } from '@/routes/admin/contact';
 import { index as indexHr } from '@/routes/admin/hr';
 import { index as indexInvoices } from '@/routes/admin/invoices';
 import { index as indexPayroll } from '@/routes/admin/payroll';
+import { index as indexBackups } from '@/routes/drivesnap';
 import { index as indexExports } from '@/routes/admin/exports';
 import { index as indexProposals } from '@/routes/admin/proposals';
 import type { Admin, NavItem } from '@/types';
@@ -106,6 +107,13 @@ const mainNavItems = computed<NavItem[]>(() => {
         },
     ];
 
+    if (can('backups.view')) {
+        items.push({
+            title: 'Backups',
+            href: indexBackups(),
+            icon: FolderOpen,
+        });
+    }
     if (can('finance.export') || can('leads.export') || can('hr.export')) {
         items.push({
             title: 'Exports',

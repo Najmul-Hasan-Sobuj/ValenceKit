@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0cb11ccaa6c8fb0c4e3d94b0566fd7ee",
+    "content-hash": "9f42389206ec904d7dbd5c9973d28c03",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -3395,6 +3395,73 @@
                 }
             ],
             "time": "2026-09-29T19:21:12+00:00"
+        },
+        {
+            "name": "najmul-hasan-sobuj/drivesnap",
+            "version": "v0.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Najmul-Hasan-Sobuj/drivesnap.git",
+                "reference": "f426fe944bff196365cb298af164197db500f709"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Najmul-Hasan-Sobuj/drivesnap/zipball/f426fe944bff196365cb298af164197db500f709",
+                "reference": "f426fe944bff196365cb298af164197db500f709",
+                "shasum": ""
+            },
+            "require": {
+                "ext-pdo": "*",
+                "ext-sodium": "*",
+                "illuminate/database": "^12.0|^13.0",
+                "illuminate/http": "^12.0|^13.0",
+                "illuminate/queue": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
+                "inertiajs/inertia-laravel": "^2.0|^3.0",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^10.0|^11.0",
+                "phpunit/phpunit": "^12.0|^13.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "DriveSnap\\DriveSnapServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "DriveSnap\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Najmul Hasan",
+                    "homepage": "https://github.com/Najmul-Hasan-Sobuj"
+                }
+            ],
+            "description": "Encrypted Google Drive database backups with a portable Inertia dashboard for Laravel.",
+            "homepage": "https://github.com/Najmul-Hasan-Sobuj/drivesnap",
+            "keywords": [
+                "backup",
+                "drivesnap",
+                "google-drive",
+                "inertia",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/issues",
+                "source": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/tree/v0.2.1"
+            },
+            "time": "2026-11-21T17:19:05+00:00",
+            "published-time": "2026-11-21T17:19:44+00:00"
         },
         {
             "name": "nesbot/carbon",
@@ -13519,5 +13586,5 @@
         "php": "^8.5"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.11.0"
 }

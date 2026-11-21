@@ -42,5 +42,4 @@ Schedule::call(function (): void {
 Schedule::command('operations:prune --apply')->dailyAt('03:00')->timezone('Asia/Dhaka')->withoutOverlapping()->onOneServer();
 Schedule::command('queue:prune-failed --hours=720')->daily()->withoutOverlapping();
 Schedule::command('queue:prune-batches --hours=168')->daily()->withoutOverlapping();
-Schedule::command('operations:backup')->dailyAt('02:00')->timezone('Asia/Dhaka')->withoutOverlapping()->onOneServer();
 Schedule::command('mail:recover-pending')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
