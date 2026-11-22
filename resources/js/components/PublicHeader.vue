@@ -105,23 +105,24 @@ const handleServicesClick = (e: MouseEvent) => {
                             <ul
                                 class="grid w-[340px] grid-cols-1 gap-3 p-4 sm:w-[480px] sm:grid-cols-[.85fr_1.15fr] md:w-[540px] lg:w-[620px]"
                             >
-                                <!-- Left Featured Card with Vertical Minimal Bolt Image -->
+                                <!-- Featured services visual -->
                                 <li class="sm:row-span-4">
                                     <NavigationMenuLink as-child>
                                         <Link
                                             :href="services()"
-                                            class="group relative flex h-full min-h-[300px] w-full flex-col justify-end overflow-hidden rounded-md border border-border/70 p-5 no-underline shadow-xs transition-all outline-none select-none hover:opacity-95 focus:shadow-md"
+                                            class="group relative flex h-full min-h-[300px] w-full flex-col justify-end overflow-hidden rounded-md border border-border/70 p-4 no-underline shadow-xs transition-all outline-none select-none hover:opacity-95 focus:shadow-md"
                                         >
-                                            <!-- Vertical Bolt Background Image -->
                                             <img
-                                                src="/static/service/bolt.jpg"
-                                                alt="ValenceKit Engineering Bolt"
+                                                src="/static/service/services-showcase-v1.jpg"
+                                                alt="Premium glass tiles representing POS, inventory, e-commerce, and CRM services"
+                                                width="640"
+                                                height="960"
                                                 class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                 loading="eager"
                                             />
                                             <!-- Dark Gradient Scrim for crisp typography contrast -->
                                             <div
-                                                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/15"
+                                                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/10 to-transparent"
                                             />
 
                                             <!-- Card Content Overlaid -->
@@ -136,9 +137,8 @@ const handleServicesClick = (e: MouseEvent) => {
                                                 <p
                                                     class="text-xs leading-relaxed text-zinc-300"
                                                 >
-                                                    Full-stack Laravel & Vue
-                                                    engineering: POS, inventory,
-                                                    and tailored platforms.
+                                                    POS, inventory, e-commerce
+                                                    &amp; CRM, built for you.
                                                 </p>
                                                 <div
                                                     class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-white/90"

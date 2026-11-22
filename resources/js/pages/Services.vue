@@ -833,10 +833,10 @@ const structuredDataEntities = [
                             class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
                         >
                             <img
-                                src="/static/service/audit.webp"
-                                alt="Code audit, profiling, and server diagnostics workspace"
-                                width="1376"
-                                height="768"
+                                src="/static/service/audit-premium-v1.jpg"
+                                alt="Precision inspection lens and security shield over glass code panels"
+                                width="1200"
+                                height="675"
                                 loading="lazy"
                                 decoding="async"
                                 class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
@@ -985,10 +985,10 @@ const structuredDataEntities = [
                             class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
                         >
                             <img
-                                src="/static/service/architecture.webp"
-                                alt="System architecture and relational database schema design overview"
-                                width="1376"
-                                height="768"
+                                src="/static/service/architecture-premium-v1.jpg"
+                                alt="Layered glass interface panels connected to relational database models"
+                                width="1200"
+                                height="675"
                                 loading="lazy"
                                 decoding="async"
                                 class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
@@ -1141,10 +1141,10 @@ const structuredDataEntities = [
                             class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
                         >
                             <img
-                                src="/static/service/apps.webp"
-                                alt="Custom Laravel web application, POS system, and business software interface"
-                                width="1376"
-                                height="768"
+                                src="/static/service/apps-premium-v1.jpg"
+                                alt="Premium POS terminal with inventory, e-commerce, and CRM application tiles"
+                                width="1200"
+                                height="675"
                                 loading="lazy"
                                 decoding="async"
                                 class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
@@ -1336,10 +1336,10 @@ const structuredDataEntities = [
                             class="mt-4 aspect-video w-full overflow-hidden rounded-lg border border-border/70 bg-muted/40 shadow-xs"
                         >
                             <img
-                                src="/static/service/cloud.webp"
-                                alt="Cloud infrastructure, VPS management, and high-availability server orchestration"
-                                width="1376"
-                                height="768"
+                                src="/static/service/cloud-premium-v1.jpg"
+                                alt="Graphite server towers connected to a glass cloud with a security shield"
+                                width="1200"
+                                height="675"
                                 loading="lazy"
                                 decoding="async"
                                 class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
