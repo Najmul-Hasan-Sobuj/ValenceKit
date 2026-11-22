@@ -70,17 +70,17 @@ it('hides operational widgets when modules are disabled', function () {
     }
     $this->actingAs($admin, 'admin')->get(route('admin.dashboard'))->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('contacts', null)->where('proposals', null)->where('people', null)
+            ->where('contacts', null)->missing('proposals')->missing('people')
             ->where('backupOverview', null)->where('mcpStats', null));
 });
 
-it('restricts HR overview to the same employee scope as the HR module', function () {
+it('does not load the removed HR overview even with HR access', function () {
     $admin = Admin::factory()->create();
     $admin->givePermissionTo('hr.self');
     Employee::factory()->create(['admin_id' => $admin->id, 'is_active' => true]);
     Employee::factory()->create(['is_active' => true]);
     $this->actingAs($admin, 'admin')->get(route('admin.dashboard'))->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('people.active', 1)->where('contacts', null)->where('backupOverview', null));
+        ->assertInertia(fn (Assert $page) => $page->missing('people')->where('contacts', null)->where('backupOverview', null));
 });
 
 it('shows backup storage badges without exposing private paths or drive ids', function () {
@@ -106,7 +106,7 @@ it('shows backup storage badges without exposing private paths or drive ids', fu
         ->assertInertia(fn (Assert $page) => $page->where('backupOverview.latest.location', null));
 });
 
-it('counts current proposals while excluding expired proposals from awaiting responses', function () {
+it('does not load removed proposal and finance lookup data', function () {
     $admin = Admin::factory()->create();
     $admin->givePermissionTo('proposals.view');
     Proposal::factory()->create(['status' => 'sent']);
@@ -115,10 +115,11 @@ it('counts current proposals while excluding expired proposals from awaiting res
 
     $this->actingAs($admin, 'admin')->get(route('admin.dashboard'))->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('proposals.this_month', 3)
-            ->where('proposals.awaiting_response', 1)
+            ->missing('proposals')
+            ->missing('financeCategories')
+            ->missing('paymentMethods')
             ->where('contacts', null)
-            ->where('people', null)
+            ->missing('people')
             ->where('backupOverview', null));
 });
 
@@ -160,6 +161,7 @@ it('renders mcpStats with total_calls and calls_today when permitted', function 
     $superAdmin->assignRole('Super Admin');
 
     McpUsageLog::create([
+        'rpc_method' => 'tools/call',
         'token_used' => 'bearer_oauth_key',
         'ip_address' => '127.0.0.1',
         'user_agent' => 'PhpUnitTest',
@@ -168,6 +170,7 @@ it('renders mcpStats with total_calls and calls_today when permitted', function 
     ]);
 
     $log2 = McpUsageLog::create([
+        'rpc_method' => 'tools/call',
         'token_used' => 'passport_token',
         'ip_address' => '127.0.0.1',
         'user_agent' => 'PhpUnitTest',
@@ -176,6 +179,10 @@ it('renders mcpStats with total_calls and calls_today when permitted', function 
     $log2->timestamps = false;
     $log2->created_at = now()->subDays(2);
     $log2->save();
+
+    foreach (['initialize', 'tools/list', null] as $method) {
+        McpUsageLog::create(['token_used' => 'test', 'endpoint' => '/mcp/valencekit', 'rpc_method' => $method]);
+    }
 
     $this->actingAs($superAdmin, 'admin')
         ->get(route('admin.dashboard'))

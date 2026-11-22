@@ -4,6 +4,7 @@ namespace App\Mcp\Tools;
 
 use App\Models\Admin;
 use App\Models\McpTool;
+use App\Models\Module;
 use Illuminate\Support\Facades\Cache;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -16,6 +17,10 @@ abstract class BaseDbTool extends Tool
      */
     protected function allows(Request $request, string $scope): bool
     {
+        if (! Module::enabled('mcp') || (str_starts_with($scope, 'mcp:finance.') && ! Module::enabled('finance'))) {
+            return false;
+        }
+
         $admin = rescue(static fn () => $request->user('mcp'), null, false);
 
         if (! $admin instanceof Admin) {

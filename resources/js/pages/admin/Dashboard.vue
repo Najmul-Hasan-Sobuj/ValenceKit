@@ -21,12 +21,9 @@ const props = defineProps<{
         total_users: number;
         total_admins: number;
         verified_users: number;
-        passkey_count: number;
     } | null;
     recentActivity?: Array<{ id: number; action: string; description: string | null; created_at: string }> | null;
     contacts?: { unread: number; latest: Array<{ id: number; name: string; subject: string | null; created_at: string }> } | null;
-    proposals?: { this_month: number; awaiting_response: number } | null;
-    people?: { active: number; present_today: number; pending_leave: number } | null;
     backupOverview?: { latest: { name: string; date: string; status: string; location: string | null } | null } | null;
 }>();
 

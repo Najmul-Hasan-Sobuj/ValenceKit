@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools;
 
 use App\Models\Category;
+use App\Models\Module;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -29,6 +30,11 @@ class GetCategoriesForModuleTool extends BaseDbTool
             'module' => ['required', 'string', 'max:50', 'alpha_dash'],
             'type' => ['nullable', 'string', 'in:income,expense'],
         ]);
+
+        if (! Module::enabled('categories')
+            || (array_key_exists($validated['module'], config('modules', [])) && ! Module::enabled($validated['module']))) {
+            return Response::error('This module is disabled.');
+        }
 
         $categories = Category::forModule($validated['module'])
             ->active()

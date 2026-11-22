@@ -14,6 +14,7 @@ class McpUsageLog extends Model
         'ip_address',
         'user_agent',
         'endpoint',
+        'rpc_method',
         'auth_method',
         'oauth_client_id',
         'scopes', 'response_status', 'duration_ms', 'request_id',

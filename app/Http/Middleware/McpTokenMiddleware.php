@@ -39,6 +39,10 @@ class McpTokenMiddleware
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'endpoint' => '/'.ltrim($request->path(), '/'),
+            'rpc_method' => in_array($request->input('method'), [
+                'initialize', 'ping', 'tools/list', 'tools/call', 'resources/list',
+                'resources/read', 'prompts/list', 'prompts/get', 'notifications/initialized',
+            ], true) ? $request->input('method') : null,
             'auth_method' => $authMethod,
             'oauth_client_id' => $clientId,
             'scopes' => $this->scopes($token),

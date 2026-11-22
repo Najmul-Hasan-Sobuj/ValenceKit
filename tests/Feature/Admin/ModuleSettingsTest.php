@@ -130,3 +130,25 @@ test('unknown module keys are rejected', function () {
 
     $this->assertDatabaseCount('modules', 0);
 });
+
+test('disabled modules block external entry points', function (string $module, string $url) {
+    Module::create(['key' => $module, 'enabled' => false]);
+    if ($module === 'leads') {
+        $this->createPersonalAccessClient();
+        $this->withToken($this->superAdmin->createToken('Module boundary test', ['leads:import'])->accessToken);
+    }
+
+    $this->postJson($url, ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'])
+        ->assertNotFound();
+})->with([
+    'MCP' => ['mcp', '/mcp/valencekit'],
+    'lead webhook' => ['leads', '/api/v1/leads/webhook'],
+    'public contact' => ['contact', '/contact'],
+]);
+
+test('disabled proposals block the client portal', function () {
+    Module::create(['key' => 'proposals', 'enabled' => false]);
+
+    $this->actingAs(User::factory()->create(), 'web')
+        ->get(route('client.proposals.index'))->assertNotFound();
+});

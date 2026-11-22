@@ -1,9 +1,11 @@
 <?php
 
+use App\Mcp\Tools\GetCategoriesForModuleTool;
 use App\Mcp\Tools\GetFinancialSummaryTool;
 use App\Mcp\Tools\RecordTransactionTool;
 use App\Models\Admin;
 use App\Models\McpTool;
+use App\Models\Module;
 use App\Services\McpToolSyncService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Support\Facades\Cache;
@@ -167,6 +169,7 @@ it('lists tool schemas and records the client type for a bearer token', function
         ->and(data_get($tools['record-transaction-tool'], 'inputSchema.properties.description.minLength'))->toBe(1)
         ->and(data_get($tools['get-financial-summary-tool'], 'inputSchema.properties.month.maximum'))->toBe(12);
     $this->assertDatabaseHas('mcp_usage_logs', [
+        'rpc_method' => 'tools/list',
         'admin_id' => $admin->id,
         'token_used' => $authMethod === 'passport' ? 'passport_token' : 'oauth_token',
         'auth_method' => $authMethod,
@@ -178,3 +181,24 @@ it('lists tool schemas and records the client type for a bearer token', function
     'personal access' => ['personal_access', 'passport'],
     'authorization code' => ['authorization_code', 'oauth'],
 ]);
+
+it('denies finance tools when finance or MCP is disabled', function (string $module) {
+    $admin = Admin::factory()->create();
+    $admin->assignRole('Super Admin');
+    Passport::actingAs($admin, ['mcp:use'], 'mcp');
+    Module::create(['key' => $module, 'enabled' => false]);
+
+    expect((string) (new GetFinancialSummaryTool)->handle(new McpRequest)->content())
+        ->toContain('required scope');
+})->with(['finance', 'mcp']);
+
+it('does not expose categories from disabled modules through MCP', function (string $module) {
+    $admin = Admin::factory()->create();
+    $admin->assignRole('Super Admin');
+    Passport::actingAs($admin, ['mcp:use'], 'mcp');
+    Module::create(['key' => $module, 'enabled' => false]);
+
+    $response = (new GetCategoriesForModuleTool)->handle(new McpRequest(['module' => 'finance']));
+
+    expect((string) $response->content())->toContain('module is disabled');
+})->with(['categories', 'finance']);
