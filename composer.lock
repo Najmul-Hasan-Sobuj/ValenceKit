@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9f42389206ec904d7dbd5c9973d28c03",
+    "content-hash": "35dab4e82def5ef412a866c2c4e93ad4",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -3398,16 +3398,16 @@
         },
         {
             "name": "najmul-hasan-sobuj/drivesnap",
-            "version": "v0.2.1",
+            "version": "v0.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Najmul-Hasan-Sobuj/drivesnap.git",
-                "reference": "f426fe944bff196365cb298af164197db500f709"
+                "reference": "96b5489db8b957e73e3181ae8c835c296210afec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Najmul-Hasan-Sobuj/drivesnap/zipball/f426fe944bff196365cb298af164197db500f709",
-                "reference": "f426fe944bff196365cb298af164197db500f709",
+                "url": "https://api.github.com/repos/Najmul-Hasan-Sobuj/drivesnap/zipball/96b5489db8b957e73e3181ae8c835c296210afec",
+                "reference": "96b5489db8b957e73e3181ae8c835c296210afec",
                 "shasum": ""
             },
             "require": {
@@ -3458,10 +3458,10 @@
             ],
             "support": {
                 "issues": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/issues",
-                "source": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/tree/v0.2.1"
+                "source": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/tree/v0.2.2"
             },
-            "time": "2026-11-21T17:19:05+00:00",
-            "published-time": "2026-11-21T17:19:44+00:00"
+            "time": "2026-11-22T05:35:10+00:00",
+            "published-time": "2026-11-22T05:35:45+00:00"
         },
         {
             "name": "nesbot/carbon",

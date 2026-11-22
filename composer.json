@@ -19,7 +19,7 @@
         "laravel/reverb": "^1.13",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
-        "najmul-hasan-sobuj/drivesnap": "^0.2.1",
+        "najmul-hasan-sobuj/drivesnap": "^0.2.2",
         "spatie/laravel-permission": "^8.3"
     },
     "require-dev": {
