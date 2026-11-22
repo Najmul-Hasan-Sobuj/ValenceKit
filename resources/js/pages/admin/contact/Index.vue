@@ -44,6 +44,7 @@ import { usePermissions } from '@/composables/usePermissions';
 import {
     index,
     messages as threadMessages,
+    read as markThreadRead,
     more,
     reply,
     start,
@@ -103,6 +104,7 @@ const conversationSearch = ref(props.filters.search);
 let appliedSearch = props.filters.search;
 const listRequest = useHttp<{}, CursorPage<ContactMessage>>({});
 const threadRequest = useHttp<{}, CursorPage<Reply>>({});
+const readRequest = useHttp<{ reply_id: number | null }, { read: boolean }>({ reply_id: null });
 const conversationError = ref('');
 const threadError = ref('');
 const replies = ref<Reply[]>([]);
@@ -302,6 +304,13 @@ function loadThread(id: number, older = false) {
                       ]
                     : batch;
                 nextReplyCursor.value = result.next_cursor;
+                if (!older) {
+                    readRequest.reply_id = result.data[0]?.id ?? null;
+                    void readRequest.post(markThreadRead.url(id), {
+                        onHttpException: () => false,
+                        onNetworkError: () => false,
+                    });
+                }
                 await nextTick();
                 if (threadScroll.value)
                     threadScroll.value.scrollTop = older

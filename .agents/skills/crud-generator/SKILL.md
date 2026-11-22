@@ -7,6 +7,8 @@ description: Build or extend ValenceKit admin CRUD modules using the project's e
 
 Use this skill when creating or extending an admin CRUD module. First read `AGENTS.md`, applicable `.ai/rules` if present, and the relevant domain skills. Check installed package versions and Laravel Boost documentation as instructed there. Inspect the closest current module and shared components before implementing: these files, rather than a frozen template, are the source of truth.
 
+Read `../module-toggle-development/SKILL.md` when adding a business module or extending an existing toggleable module. Include its route guards and permission-aware navigation in the implementation and verification.
+
 ## Choose a comparable module
 
 - `resources/js/pages/admin/categories/Index.vue`, `CategoryDrawer.vue` and `app/Http/Controllers/Admin/CategoryController.php`: resource-backed, paginated CRUD with a create/edit drawer, filters, status switches and delete confirmation.

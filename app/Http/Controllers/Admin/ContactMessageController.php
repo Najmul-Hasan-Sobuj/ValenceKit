@@ -57,6 +57,22 @@ class ContactMessageController extends Controller
             ->orderByDesc('created_at')->orderByDesc('id')->cursorPaginate(10));
     }
 
+    public function markRead(Request $request, ContactMessage $contactMessage): JsonResponse
+    {
+        abort_unless($request->user('admin')->can('contact.view'), 403);
+        $data = $request->validate(['reply_id' => ['nullable', 'integer']]);
+        $reply = isset($data['reply_id'])
+            ? $contactMessage->replies()->where('notification', false)->findOrFail($data['reply_id'])
+            : null;
+        $seenAt = $reply?->created_at ?? $contactMessage->created_at;
+        $replyId = $reply?->id ?? 0;
+        ContactMessage::whereKey($contactMessage->id)
+            ->where(fn ($query) => $query->whereNull('read_at')->orWhere('last_read_reply_id', '<', $replyId))
+            ->update(['read_at' => $seenAt, 'last_read_reply_id' => $replyId]);
+
+        return response()->json(['read' => true]);
+    }
+
     /** @return CursorPaginator<int, ContactMessage> */
     private function conversationPage(string $search): CursorPaginator
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Module;
 use App\Services\FinanceService;
 use App\Services\TrackingService;
 use Illuminate\Http\Request;
@@ -52,6 +53,7 @@ class HandleInertiaRequests extends Middleware
             ] : null,
             'appUrl' => config('app.url'),
             'supportEmail' => config('app.support_email', 'support@valencekit.com'),
+            'moduleStates' => fn () => Auth::guard('admin')->check() ? Module::states() : [],
             'flash' => fn () => $request->session()->get('flash'),
             'hr_created' => fn () => $request->session()->get('hr_created'),
             'success' => fn () => $request->session()->get('success'),

@@ -107,6 +107,8 @@ class RoleAndPermissionSeeder extends Seeder
             'settings.finance.edit' => 'Update global currency and financial configuration',
             'settings.tracking.view' => 'View analytics, tracking pixels, and custom scripts tab',
             'settings.tracking.edit' => 'Update tracking IDs, pixels, and custom scripts',
+            'settings.modules.view' => 'View application module availability',
+            'settings.modules.edit' => 'Enable or disable application modules',
         ],
 
         'Audit & Compliance' => [

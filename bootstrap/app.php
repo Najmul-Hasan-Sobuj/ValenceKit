@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureModuleIsEnabled;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequestContext;
@@ -36,6 +37,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'module' => EnsureModuleIsEnabled::class,
+        ]);
         $middleware->append(RequestContext::class);
         $middleware->trustHosts(at: fn () => ['^'.preg_quote((string) parse_url((string) config('app.url'), PHP_URL_HOST), '/').'$'], subdomains: false);
         $middleware->redirectTo(

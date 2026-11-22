@@ -58,6 +58,47 @@ it('denies audit logs to admins without audit permission', function () {
         ->assertForbidden();
 });
 
+it('filters audit records and preserves filters across pagination', function () {
+    $admin = Admin::factory()->create();
+    $admin->assignRole('Super Admin');
+    foreach (range(1, 26) as $number) {
+        AuditLog::create(['action' => 'category.updated', 'description' => 'Reviewed category '.$number]);
+    }
+    AuditLog::create(['action' => 'role.updated', 'description' => 'Other action']);
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.audit-logs.index', ['action' => 'category.updated', 'search' => 'Reviewed', 'page' => 2]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('logs.total', 26)
+            ->where('logs.current_page', 2)
+            ->has('logs.data', 1)
+            ->where('logs.data.0.action', 'category.updated')
+            ->where('filters.search', 'Reviewed')
+            ->where('filters.action', 'category.updated')
+        );
+});
+
+it('requires separate permission to export audit records', function () {
+    $admin = Admin::factory()->create();
+    $admin->givePermissionTo('audit.view');
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.audit-logs.export'))
+        ->assertForbidden();
+});
+
+it('returns an empty list when no audit records match', function () {
+    $admin = Admin::factory()->create();
+    $admin->assignRole('Super Admin');
+    AuditLog::create(['action' => 'role.updated']);
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.audit-logs.index', ['search' => 'no_matching_event']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('logs.data', 0)->where('logs.total', 0));
+});
+
 it('records role creation from the admin endpoint', function () {
     $admin = Admin::factory()->create();
     $admin->assignRole('Super Admin');

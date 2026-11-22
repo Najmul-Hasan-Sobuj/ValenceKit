@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Admin\ProposalController;
 use App\Http\Controllers\Admin\Settings\FinanceSettingsController;
 use App\Http\Controllers\Admin\Settings\McpSettingsController;
+use App\Http\Controllers\Admin\Settings\ModuleSettingsController;
 use App\Http\Controllers\Admin\Settings\PasskeyController as SettingsPasskeyController;
 use App\Http\Controllers\Admin\Settings\ProfileController;
 use App\Http\Controllers\Admin\Settings\SecurityController;
@@ -87,11 +88,13 @@ Route::prefix(config('admin.alias'))
                 Route::resource('roles', RoleController::class)->names('authorization.roles')->except(['show']);
             });
 
-            Route::get('exports', [DataExportController::class, 'index'])->name('exports.index');
-            Route::post('exports', [DataExportController::class, 'store'])->middleware('throttle:3,1')->name('exports.store');
-            Route::get('exports/{export}/download', [DataExportController::class, 'download'])->name('exports.download');
+            Route::middleware('module:exports')->group(function () {
+                Route::get('exports', [DataExportController::class, 'index'])->name('exports.index');
+                Route::post('exports', [DataExportController::class, 'store'])->middleware('throttle:3,1')->name('exports.store');
+                Route::get('exports/{export}/download', [DataExportController::class, 'download'])->name('exports.download');
+            });
 
-            Route::prefix('leads')->name('leads.')->group(function () {
+            Route::middleware('module:leads')->prefix('leads')->name('leads.')->group(function () {
                 Route::controller(LeadController::class)->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::get('export', 'export')->name('export');
@@ -105,13 +108,14 @@ Route::prefix(config('admin.alias'))
                 });
             });
 
-            Route::prefix('contact')->name('contact.')->group(function () {
+            Route::middleware('module:contact')->prefix('contact')->name('contact.')->group(function () {
                 Route::controller(ContactMessageController::class)->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::get('more', 'more')->name('more');
                     Route::post('start', 'start')->middleware('throttle:10,1,contact-send')->name('start');
                     Route::post('sync', 'sync')->middleware('throttle:6,1,contact-sync')->name('sync');
                     Route::get('{contactMessage}/messages', 'messages')->name('messages');
+                    Route::post('{contactMessage}/read', 'markRead')->name('read');
                     Route::post('{contactMessage}/reply', 'reply')->middleware('throttle:10,1,contact-send')->name('reply');
                 });
 
@@ -130,7 +134,7 @@ Route::prefix(config('admin.alias'))
                 });
             });
 
-            Route::prefix('hr')->name('hr.')->controller(HrController::class)->group(function () {
+            Route::middleware('module:people')->prefix('hr')->name('hr.')->controller(HrController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('export', 'export')->name('export');
                 Route::post('employees', 'employee')->name('employees.store');
@@ -144,33 +148,35 @@ Route::prefix(config('admin.alias'))
                 Route::post('corrections/{correction}', 'correction')->name('corrections.review');
             });
 
-            Route::prefix('payroll')->name('payroll.')->controller(PayrollController::class)->group(function () {
+            Route::middleware('module:people')->prefix('payroll')->name('payroll.')->controller(PayrollController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('/', 'store')->name('store');
                 Route::post('{payroll}/approve', 'approve')->name('approve');
                 Route::post('{payroll}/pay', 'pay')->name('pay');
             });
 
-            Route::prefix('invoices')->name('invoices.')->controller(InvoiceController::class)->group(function () {
+            Route::middleware('module:billing')->prefix('invoices')->name('invoices.')->controller(InvoiceController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('/', 'store')->name('store');
                 Route::post('{invoice}/payments', 'payment')->name('payments.store');
                 Route::post('{invoice}/issue', 'issue')->name('issue');
             });
 
-            Route::post('proposals/{proposal}/invite', [ProposalController::class, 'invite'])->middleware('throttle:3,1,proposal-invite')->name('proposals.invite');
-            Route::get('proposals/{proposal}/preview', [ProposalController::class, 'preview'])->name('proposals.preview');
-            Route::post('proposals/{proposal}/revise', [ProposalController::class, 'revise'])->name('proposals.revise');
-            Route::post('proposals/{proposal}/transfer', [ProposalController::class, 'transfer'])->name('proposals.transfer');
-            Route::post('proposals/{proposal}/invoice', [ProposalController::class, 'invoice'])->name('proposals.invoice');
-            Route::post('proposals/{proposal}/receipt', [ProposalController::class, 'receipt'])->middleware('throttle:3,1,proposal-receipt')->name('proposals.receipt');
-            Route::post('proposals/{proposal}/remind', [ProposalController::class, 'remind'])->middleware('throttle:3,1,proposal-remind')->name('proposals.remind');
-            Route::post('proposals/{proposal}/password-reset', [ProposalController::class, 'passwordReset'])->middleware('throttle:3,1,proposal-password-reset')->name('proposals.password-reset');
-            Route::apiResource('proposals', ProposalController::class)
-                ->except(['show'])
-                ->names('proposals');
+            Route::middleware('module:proposals')->group(function () {
+                Route::post('proposals/{proposal}/invite', [ProposalController::class, 'invite'])->middleware('throttle:3,1,proposal-invite')->name('proposals.invite');
+                Route::get('proposals/{proposal}/preview', [ProposalController::class, 'preview'])->name('proposals.preview');
+                Route::post('proposals/{proposal}/revise', [ProposalController::class, 'revise'])->name('proposals.revise');
+                Route::post('proposals/{proposal}/transfer', [ProposalController::class, 'transfer'])->name('proposals.transfer');
+                Route::post('proposals/{proposal}/invoice', [ProposalController::class, 'invoice'])->name('proposals.invoice');
+                Route::post('proposals/{proposal}/receipt', [ProposalController::class, 'receipt'])->middleware('throttle:3,1,proposal-receipt')->name('proposals.receipt');
+                Route::post('proposals/{proposal}/remind', [ProposalController::class, 'remind'])->middleware('throttle:3,1,proposal-remind')->name('proposals.remind');
+                Route::post('proposals/{proposal}/password-reset', [ProposalController::class, 'passwordReset'])->middleware('throttle:3,1,proposal-password-reset')->name('proposals.password-reset');
+                Route::apiResource('proposals', ProposalController::class)
+                    ->except(['show'])
+                    ->names('proposals');
+            });
 
-            Route::prefix('finance')->name('finance.')->controller(FinanceController::class)->group(function () {
+            Route::middleware('module:finance')->prefix('finance')->name('finance.')->controller(FinanceController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('summary', 'summary')->name('summary');
                 Route::get('export', 'export')->name('export');
@@ -182,11 +188,12 @@ Route::prefix(config('admin.alias'))
 
             Route::apiResource('categories', CategoryController::class)
                 ->except(['show'])
-                ->names('categories');
+                ->names('categories')
+                ->middleware('module:categories');
 
-            Route::get('mcp/usage', [McpUsageController::class, 'index'])->name('mcp.usage.index');
+            Route::get('mcp/usage', [McpUsageController::class, 'index'])->middleware('module:mcp')->name('mcp.usage.index');
 
-            Route::prefix('audit-logs')->name('audit-logs.')->controller(AuditLogController::class)->group(function () {
+            Route::middleware('module:audit')->prefix('audit-logs')->name('audit-logs.')->controller(AuditLogController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('export', 'export')->name('export');
             });
@@ -208,7 +215,7 @@ Route::prefix(config('admin.alias'))
                     return Inertia::render('admin/settings/Appearance');
                 })->name('appearance.edit');
 
-                Route::prefix('mcp')->name('mcp.')->controller(McpSettingsController::class)->group(function () {
+                Route::middleware('module:mcp')->prefix('mcp')->name('mcp.')->controller(McpSettingsController::class)->group(function () {
                     Route::get('/', 'edit')->name('edit');
                     Route::post('tools/sync', 'sync')->name('tools.sync');
                     Route::patch('tools/{mcpTool}', 'update')->name('tools.update');
@@ -216,7 +223,7 @@ Route::prefix(config('admin.alias'))
                     Route::delete('tokens/{tokenId}', 'destroy')->name('tokens.destroy');
                 });
 
-                Route::controller(FinanceSettingsController::class)->group(function () {
+                Route::middleware('module:finance')->controller(FinanceSettingsController::class)->group(function () {
                     Route::get('finance', 'edit')->name('finance.settings.edit');
                     Route::patch('finance', 'update')->name('finance.settings.update');
                 });
@@ -224,6 +231,11 @@ Route::prefix(config('admin.alias'))
                 Route::controller(TrackingSettingsController::class)->group(function () {
                     Route::get('tracking', 'edit')->name('tracking.settings.edit');
                     Route::patch('tracking', 'update')->name('tracking.settings.update');
+                });
+
+                Route::controller(ModuleSettingsController::class)->group(function () {
+                    Route::get('modules', 'edit')->name('modules.edit');
+                    Route::patch('modules', 'update')->name('modules.update');
                 });
             });
 

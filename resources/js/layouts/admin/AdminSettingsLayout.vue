@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,14 @@ import { edit as editProfile } from '@/routes/admin/profile';
 import { edit as editSecurity } from '@/routes/admin/security';
 import { edit as editFinanceSettings } from '@/routes/admin/finance/settings';
 import { edit as editTrackingSettings } from '@/routes/admin/tracking/settings';
+import { edit as editModules } from '@/routes/admin/modules';
 import type { NavItem } from '@/types';
 import { usePermissions } from '@/composables/usePermissions';
 
 const { can } = usePermissions();
+const page = usePage();
+const moduleEnabled = (module: string): boolean =>
+    page.props.moduleStates[module] ?? true;
 
 const sidebarNavItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [];
@@ -26,11 +30,15 @@ const sidebarNavItems = computed<NavItem[]>(() => {
 
     items.push({ title: 'Security', href: editSecurity() });
 
-    if (can('settings.mcp.view')) {
+    if (moduleEnabled('mcp') && can('settings.mcp.view')) {
         items.push({ title: 'MCP (AI Tools)', href: editMcp() });
     }
 
-    if (can('settings.finance.view')) {
+    if (can('settings.modules.view')) {
+        items.push({ title: 'Modules & Features', href: editModules() });
+    }
+
+    if (moduleEnabled('finance') && can('settings.finance.view')) {
         items.push({ title: 'Finance', href: editFinanceSettings() });
     }
 
@@ -52,7 +60,8 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 const isFullWidthPage = computed(
     () =>
         isCurrentOrParentUrl(editMcp()) ||
-        isCurrentOrParentUrl(editTrackingSettings()),
+        isCurrentOrParentUrl(editTrackingSettings()) ||
+        isCurrentOrParentUrl(editModules()),
 );
 </script>
 
@@ -64,7 +73,9 @@ const isFullWidthPage = computed(
         />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
-            <aside class="w-full max-w-xl lg:w-48">
+            <aside
+                class="w-full max-w-xl lg:sticky lg:top-6 lg:w-48 lg:self-start"
+            >
                 <nav
                     class="flex flex-col space-y-1 space-x-0"
                     aria-label="Admin settings"

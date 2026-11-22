@@ -3398,16 +3398,16 @@
         },
         {
             "name": "najmul-hasan-sobuj/drivesnap",
-            "version": "v0.2.2",
+            "version": "v0.2.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Najmul-Hasan-Sobuj/drivesnap.git",
-                "reference": "96b5489db8b957e73e3181ae8c835c296210afec"
+                "reference": "0ff432872daa02eb9199e9ac7802d297f6dc3f8f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Najmul-Hasan-Sobuj/drivesnap/zipball/96b5489db8b957e73e3181ae8c835c296210afec",
-                "reference": "96b5489db8b957e73e3181ae8c835c296210afec",
+                "url": "https://api.github.com/repos/Najmul-Hasan-Sobuj/drivesnap/zipball/0ff432872daa02eb9199e9ac7802d297f6dc3f8f",
+                "reference": "0ff432872daa02eb9199e9ac7802d297f6dc3f8f",
                 "shasum": ""
             },
             "require": {
@@ -3458,10 +3458,10 @@
             ],
             "support": {
                 "issues": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/issues",
-                "source": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/tree/v0.2.2"
+                "source": "https://github.com/Najmul-Hasan-Sobuj/drivesnap/tree/v0.2.3"
             },
-            "time": "2026-11-22T05:35:10+00:00",
-            "published-time": "2026-11-22T05:35:45+00:00"
+            "time": "2026-11-22T05:46:11+00:00",
+            "published-time": "2026-11-22T05:46:46+00:00"
         },
         {
             "name": "nesbot/carbon",

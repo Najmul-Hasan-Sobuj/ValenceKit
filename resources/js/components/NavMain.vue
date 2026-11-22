@@ -20,9 +20,13 @@ import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import type { NavItem } from '@/types';
 
-defineProps<{
-    items: NavItem[];
-}>();
+withDefaults(
+    defineProps<{
+        label?: string;
+        items: NavItem[];
+    }>(),
+    { label: 'Platform' },
+);
 
 const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
 const page = usePage();
@@ -45,7 +49,7 @@ function isCurrentChild(href: NavItem['href']): boolean {
 
 <template>
     <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <SidebarGroupLabel>{{ label }}</SidebarGroupLabel>
         <SidebarMenu>
             <template v-for="item in items" :key="item.title">
                 <Collapsible

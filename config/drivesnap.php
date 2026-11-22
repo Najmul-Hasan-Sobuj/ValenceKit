@@ -4,7 +4,7 @@ use App\Http\Middleware\Admin\EnsureAdminIsActive;
 
 return [
     'prefix' => trim((string) config('admin.alias', 'admin'), '/').'/backups',
-    'middleware' => ['web', 'auth:admin', EnsureAdminIsActive::class],
+    'middleware' => ['web', 'auth:admin', EnsureAdminIsActive::class, 'module:backups'],
     'guard' => 'admin',
     'page' => 'admin/backups/Index',
     'abilities' => [

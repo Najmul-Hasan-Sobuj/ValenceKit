@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { Download, Minus, Plus, Search } from '@lucide/vue';
 import { parseDate } from '@internationalized/date';
@@ -34,6 +34,9 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import auditLogs from '@/routes/admin/audit-logs';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 type AuditEntry = {
     id: number;
@@ -166,7 +169,7 @@ function formatValue(value: unknown): string {
     }
 
     if (Array.isArray(value)) {
-        return value.length ? value.join(', ') : 'None';
+        return value.length ? value.map(formatValue).join(', ') : 'None';
     }
 
     if (typeof value === 'object') {
@@ -209,7 +212,7 @@ defineOptions({
                 title="Audit Logs"
                 description="Review security and business activity across the workspace."
             />
-            <Button variant="secondary" @click="exportLogs">
+            <Button v-if="can('audit.export')" variant="secondary" @click="exportLogs">
                 <Download class="size-4" />
                 Export CSV
             </Button>
@@ -222,6 +225,7 @@ defineOptions({
                 />
                 <Input
                     v-model="search"
+                    aria-label="Search audit records"
                     class="pl-9"
                     placeholder="Search actions or descriptions"
                 />
@@ -252,6 +256,15 @@ defineOptions({
             <DateRangePicker v-model="dateRange" class="w-full" />
         </div>
 
+        <Button
+            v-if="search || action || dateRange"
+            variant="ghost"
+            class="self-start"
+            @click="search = ''; action = ''; dateRange = undefined"
+        >
+            Clear filters
+        </Button>
+
         <div class="overflow-hidden rounded-lg border">
             <Table>
                 <TableHeader>
@@ -270,13 +283,13 @@ defineOptions({
                             <TableCell class="text-sm whitespace-nowrap">{{
                                 formatDate(log.created_at)
                             }}</TableCell>
-                            <TableCell>
+                            <TableCell class="whitespace-normal">
                                 <Badge variant="outline">{{
                                     actionLabel(log.action)
                                 }}</Badge>
                                 <p
                                     v-if="log.description"
-                                    class="mt-1 max-w-xs text-xs text-muted-foreground"
+                                    class="mt-1 max-w-xs break-words text-xs text-muted-foreground"
                                 >
                                     {{ log.description }}
                                 </p>
@@ -331,10 +344,10 @@ defineOptions({
                             </TableCell>
                         </TableRow>
                         <TableRow v-if="expandedId === log.id">
-                            <TableCell colspan="6" class="bg-muted/30">
+                            <TableCell colspan="6" class="bg-muted/30 whitespace-normal">
                                 <div class="grid gap-4 md:grid-cols-2">
                                     <div
-                                        class="rounded-lg border bg-background p-3"
+                                        class="min-w-0 rounded-lg border bg-background p-3"
                                     >
                                         <div
                                             class="mb-3 flex items-center justify-between"
@@ -368,7 +381,7 @@ defineOptions({
                                                     {{ entry.label }}
                                                 </dt>
                                                 <dd
-                                                    class="text-right font-medium text-foreground"
+                                                    class="min-w-0 break-words text-right font-medium text-foreground"
                                                 >
                                                     {{ entry.value }}
                                                 </dd>
@@ -382,7 +395,7 @@ defineOptions({
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-lg border bg-background p-3"
+                                        class="min-w-0 rounded-lg border bg-background p-3"
                                     >
                                         <div
                                             class="mb-3 flex items-center justify-between"
@@ -416,7 +429,7 @@ defineOptions({
                                                     {{ entry.label }}
                                                 </dt>
                                                 <dd
-                                                    class="text-right font-medium text-foreground"
+                                                    class="min-w-0 break-words text-right font-medium text-foreground"
                                                 >
                                                     {{ entry.value }}
                                                 </dd>
@@ -430,6 +443,19 @@ defineOptions({
                                         </p>
                                     </div>
                                 </div>
+                                <dl
+                                    v-if="valueEntries(log.metadata).length"
+                                    class="mt-4 space-y-2 rounded-lg border bg-background p-3 text-sm"
+                                >
+                                    <dt class="font-semibold">Additional context</dt>
+                                    <dd
+                                        v-for="entry in valueEntries(log.metadata)"
+                                        :key="entry.label"
+                                        class="min-w-0 break-words"
+                                    >
+                                        {{ entry.label }}: {{ entry.value }}
+                                    </dd>
+                                </dl>
                             </TableCell>
                         </TableRow>
                     </template>
@@ -445,7 +471,7 @@ defineOptions({
         </div>
 
         <div
-            class="flex items-center justify-between text-sm text-muted-foreground"
+            class="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground"
         >
             <span v-if="logs.total">
                 Showing
@@ -467,6 +493,7 @@ defineOptions({
                     variant="outline"
                     size="sm"
                     :disabled="!link.url"
+                    :aria-current="link.active ? 'page' : undefined"
                     @click="
                         link.url &&
                         router.get(
