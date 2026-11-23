@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasMedia;
 use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,8 @@ class Employee extends Model
 {
     /** @use HasFactory<EmployeeFactory> */
     use HasFactory;
+
+    use HasMedia;
 
     protected function casts(): array
     {

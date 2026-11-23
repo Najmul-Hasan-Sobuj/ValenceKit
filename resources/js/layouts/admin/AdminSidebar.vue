@@ -19,6 +19,7 @@ import {
     Contact,
     Mail,
     UserRound,
+    Images,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -64,6 +65,7 @@ import { index as indexPayroll } from '@/routes/admin/payroll';
 import { index as indexBackups } from '@/routes/drivesnap';
 import { index as indexExports } from '@/routes/admin/exports';
 import { index as indexProposals } from '@/routes/admin/proposals';
+import { index as indexMedia } from '@/routes/admin/media';
 import type { Admin, NavItem } from '@/types';
 
 import { usePermissions } from '@/composables/usePermissions';
@@ -138,10 +140,7 @@ const mainNavGroups = computed<NavGroup[]>(() => {
     }
 
     const hrChildren: NavItem[] = [];
-    if (
-        moduleEnabled('people') &&
-        (can('employees.view') || can('hr.team'))
-    ) {
+    if (moduleEnabled('people') && (can('employees.view') || can('hr.team'))) {
         hrChildren.push(
             {
                 title: 'Overview',
@@ -177,10 +176,7 @@ const mainNavGroups = computed<NavGroup[]>(() => {
             icon: UserRound,
         });
     }
-    if (
-        moduleEnabled('people') &&
-        (can('payroll.view') || can('hr.self'))
-    ) {
+    if (moduleEnabled('people') && (can('payroll.view') || can('hr.self'))) {
         hrChildren.push({
             title: 'Payroll',
             href: indexPayroll(),
@@ -216,6 +212,14 @@ const mainNavGroups = computed<NavGroup[]>(() => {
             title: 'Categories',
             href: indexCategories(),
             icon: FolderOpen,
+        });
+    }
+
+    if (moduleEnabled('media') && can('media.view')) {
+        operations.push({
+            title: 'Media Library',
+            href: indexMedia(),
+            icon: Images,
         });
     }
 

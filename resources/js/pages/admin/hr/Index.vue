@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import MediaManager from '@/components/MediaManager.vue';
+import type { MediaItem } from '@/types/media';
 import { useDebounceFn } from '@vueuse/core';
 import { parseDate } from '@internationalized/date';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -15,6 +17,7 @@ import {
     X,
     Clock,
     Download,
+    ImagePlus,
 } from '@lucide/vue';
 import {
     index,
@@ -91,6 +94,9 @@ type Employee = Option & {
     admin_id: number | null;
     joined_on: string;
     ended_on: string | null;
+    emergency_contact: string | null;
+    notes: string | null;
+    media: MediaItem[];
 };
 type Page<T> = {
     data: T[];
@@ -186,6 +192,16 @@ defineOptions({
     layout: { breadcrumbs: [{ title: 'People & HR', href: index.url() }] },
 });
 const { can, admin } = usePermissions();
+const page = usePage();
+const mediaEnabled = computed(() => page.props.moduleStates.media ?? true);
+const photoEmployeeId = ref<number | null>(null);
+const photoEmployee = computed(() =>
+    props.employees.data.find(
+        (employee) => employee.id === photoEmployeeId.value,
+    ),
+);
+const employeeAvatar = (employee: Employee) =>
+    employee.media.find((image) => image.collection === 'avatar');
 const filters = ref({
     search: props.filters.search || '',
     department_id: props.filters.department_id || '',
@@ -266,11 +282,14 @@ const description = ref('');
 const fields = ref<Field[]>([]);
 const target = ref('');
 const method = ref<'post' | 'put'>('post');
+const formFields = ref<HTMLDivElement | null>(null);
 const form = useForm<Record<string, Value>>({
     id: null,
     name: '',
     email: '',
     phone: '',
+    emergency_contact: '',
+    notes: '',
     designation: '',
     department_id: '',
     manager_id: '',
@@ -330,6 +349,7 @@ type ParentForm = {
     errors: Record<string, string>;
     selectKey: string;
     kind: string;
+    scrollTop: number;
 };
 const parents = ref<ParentForm[]>([]);
 const options = (rows: Option[]) =>
@@ -371,6 +391,19 @@ function submit() {
             const parent = parents.value.pop();
             if (!parent) {
                 open.value = false;
+                const created = page.props.hr_created as {
+                    kind: string;
+                    id: number;
+                } | null;
+                if (
+                    created?.kind === 'employee' &&
+                    method.value === 'post' &&
+                    mediaEnabled.value &&
+                    can('media.create')
+                ) {
+                    await nextTick();
+                    photoEmployeeId.value = created.id;
+                }
                 return;
             }
             const created = page.props.hr_created as {
@@ -378,22 +411,11 @@ function submit() {
                 id: number;
             } | null;
             await nextTick();
-            title.value = parent.title;
-            description.value = parent.description;
-            target.value = parent.target;
-            method.value = parent.method;
-            fields.value = parent.fields.map((input) => ({
-                ...input,
-                options: input.options
-                    ? refreshedOptions(input.key, input.options)
-                    : undefined,
-            }));
-            form.reset();
-            Object.assign(form, parent.data);
-            form.clearErrors();
-            form.setError(parent.errors);
-            if (created && created.kind === parent.kind)
+            restoreParent(parent);
+            if (created && created.kind === parent.kind) {
                 form[parent.selectKey] = created.id;
+                form.clearErrors(parent.selectKey);
+            }
         },
     });
 }
@@ -413,10 +435,16 @@ function refreshedOptions(
         return options(
             props.leaveTypes.filter((row) => row.is_active !== false),
         );
-    if (
-        (key === 'employee_id' || key === 'manager_id') &&
-        (can('employees.view') || can('hr.team'))
-    )
+    if (key === 'manager_id') {
+        return employeeOptions.value.filter(
+            (option) =>
+                option.value !== form.id &&
+                !parents.value.some(
+                    (parent) => parent.data.id === option.value,
+                ),
+        );
+    }
+    if (key === 'employee_id' && (can('employees.view') || can('hr.team')))
         return employeeOptions.value;
     return current;
 }
@@ -433,9 +461,20 @@ function addRelated(input: Field) {
         errors: { ...form.errors },
         selectKey: input.key,
         kind,
+        scrollTop: formFields.value?.scrollTop ?? 0,
     });
-    if (kind === 'employee') employeeForm();
-    else setting(kind);
+    if (kind === 'employee') {
+        employeeForm();
+        if (input.key === 'manager_id') {
+            title.value = 'Add manager';
+            description.value =
+                'Create a manager, then return to the previous employee form. Your entered details are kept.';
+        }
+        void nextTick(() => {
+            if (formFields.value) formFields.value.scrollTop = 0;
+            document.getElementById('hr-name')?.focus();
+        });
+    } else setting(kind);
 }
 function relatedKind(key: string): string | null {
     if (
@@ -461,24 +500,45 @@ function cancelForm() {
         open.value = false;
         return;
     }
+    restoreParent(parent);
+}
+function restoreParent(parent: ParentForm) {
     title.value = parent.title;
     description.value = parent.description;
     target.value = parent.target;
     method.value = parent.method;
-    fields.value = parent.fields;
     form.reset();
     Object.assign(form, parent.data);
+    fields.value = parent.fields.map((input) => ({
+        ...input,
+        options: input.options
+            ? refreshedOptions(input.key, input.options)
+            : undefined,
+    }));
     form.clearErrors();
     form.setError(parent.errors);
+    void nextTick(() => {
+        if (formFields.value) {
+            formFields.value.scrollTop = parent.scrollTop;
+            formFields.value
+                .querySelector<HTMLButtonElement>(
+                    `[data-related-key="${parent.selectKey}"]`,
+                )
+                ?.focus({ preventScroll: true });
+        }
+    });
 }
 function employeeForm(employee?: Employee) {
     show(
         employee ? 'Edit employee' : 'Add employee',
         employee ? updateEmployee.url(employee.id) : storeEmployee.url(),
         {
+            id: employee?.id ?? null,
             name: employee?.name || '',
             email: employee?.email || '',
             phone: employee?.phone || '',
+            emergency_contact: employee?.emergency_contact || '',
+            notes: employee?.notes || '',
             designation: employee?.designation || '',
             department_id: employee?.department_id || '',
             manager_id: employee?.manager_id || '',
@@ -498,7 +558,13 @@ function employeeForm(employee?: Employee) {
             select(
                 'manager_id',
                 'Manager (optional)',
-                employeeOptions.value.filter((o) => o.value !== employee?.id),
+                employeeOptions.value.filter(
+                    (o) =>
+                        o.value !== employee?.id &&
+                        !parents.value.some(
+                            (parent) => parent.data.id === o.value,
+                        ),
+                ),
             ),
             select(
                 'admin_id',
@@ -518,6 +584,8 @@ function employeeForm(employee?: Employee) {
                 'date',
             ),
             field('is_active', 'Active employee', 'checkbox'),
+            field('emergency_contact', 'Emergency contact (optional)'),
+            field('notes', 'Notes (optional)', 'textarea'),
         ],
     );
     if (employee) method.value = 'put';
@@ -895,14 +963,41 @@ function editSetting(kind: string, row: Option) {
                             v-for="employee in employees.data"
                             :key="employee.id"
                             ><TableCell class="pl-5 whitespace-normal"
-                                ><button
-                                    class="block w-full text-left font-medium break-words"
-                                    @click="detail = employee"
-                                >
-                                    {{ employee.name }}</button
-                                ><span class="text-xs text-muted-foreground">{{
-                                    employee.employee_code
-                                }}</span></TableCell
+                                ><div class="flex items-center gap-3">
+                                    <img
+                                        v-if="
+                                            mediaEnabled &&
+                                            employeeAvatar(employee)
+                                        "
+                                        :src="employeeAvatar(employee)!.url"
+                                        :alt="
+                                            employeeAvatar(employee)!.alt ||
+                                            employee.name
+                                        "
+                                        class="size-10 shrink-0 rounded-full border object-cover"
+                                        loading="lazy"
+                                    /><span
+                                        v-else
+                                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground"
+                                        aria-hidden="true"
+                                        >{{
+                                            employee.name
+                                                .slice(0, 1)
+                                                .toUpperCase()
+                                        }}</span
+                                    >
+                                    <div class="min-w-0">
+                                        <button
+                                            class="block w-full text-left font-medium break-words"
+                                            @click="detail = employee"
+                                        >
+                                            {{ employee.name }}</button
+                                        ><span
+                                            class="text-xs text-muted-foreground"
+                                            >{{ employee.employee_code }}</span
+                                        >
+                                    </div>
+                                </div></TableCell
                             ><TableCell class="whitespace-normal">{{
                                 employee.department?.name
                             }}</TableCell
@@ -934,6 +1029,19 @@ function editSetting(kind: string, row: Option) {
                                             @select="employeeForm(employee)"
                                             ><Pencil class="size-4" /> Edit
                                             employee</DropdownMenuItem
+                                        ><DropdownMenuItem
+                                            v-if="
+                                                mediaEnabled &&
+                                                can('employees.edit') &&
+                                                (can('media.create') ||
+                                                    can('media.edit') ||
+                                                    can('media.delete'))
+                                            "
+                                            @select="
+                                                photoEmployeeId = employee.id
+                                            "
+                                            ><ImagePlus class="size-4" /> Manage
+                                            photo</DropdownMenuItem
                                         ><DropdownMenuSeparator /><DropdownMenuItem
                                             @select="
                                                 filters.employee_id = String(
@@ -1530,7 +1638,7 @@ function editSetting(kind: string, row: Option) {
             "
             ><DrawerContent
                 class="max-h-[92vh] overflow-y-auto [color-scheme:light] md:inset-x-auto md:right-2 md:left-64 dark:[color-scheme:dark]"
-                ><DrawerHeader
+                ><DrawerHeader class="shrink-0"
                     ><div class="flex items-center gap-3">
                         <span
                             class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
@@ -1546,6 +1654,33 @@ function editSetting(kind: string, row: Option) {
                     </div></DrawerHeader
                 >
                 <div v-if="detail" class="grid gap-5 px-6 pb-6 sm:grid-cols-2">
+                    <div
+                        v-if="mediaEnabled && employeeAvatar(detail)"
+                        class="flex items-center gap-4 sm:col-span-2"
+                    >
+                        <img
+                            :src="employeeAvatar(detail)!.url"
+                            :alt="employeeAvatar(detail)!.alt || detail.name"
+                            class="size-20 rounded-xl border object-cover"
+                        />
+                        <div>
+                            <p class="font-medium">{{ detail.name }}</p>
+                            <Button
+                                v-if="
+                                    can('employees.edit') && can('media.create')
+                                "
+                                size="sm"
+                                variant="outline"
+                                class="mt-2"
+                                @click="
+                                    photoEmployeeId = detail.id;
+                                    detail = null;
+                                "
+                                ><ImagePlus class="size-4" /> Manage
+                                photo</Button
+                            >
+                        </div>
+                    </div>
                     <div class="min-w-0 rounded-xl border p-4">
                         <p class="text-sm text-muted-foreground">Contact</p>
                         <p class="break-words">
@@ -1580,6 +1715,63 @@ function editSetting(kind: string, row: Option) {
             ></Drawer
         >
         <Drawer
+            :open="photoEmployeeId !== null"
+            @update:open="
+                (value) => {
+                    if (!value) photoEmployeeId = null;
+                }
+            "
+        >
+            <DrawerContent
+                class="max-h-[92vh] overflow-y-auto md:inset-x-auto md:right-2 md:left-64"
+            >
+                <DrawerHeader
+                    ><div class="flex items-center gap-3">
+                        <span
+                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
+                            ><ImagePlus class="size-5"
+                        /></span>
+                        <div>
+                            <DrawerTitle>Employee photo</DrawerTitle
+                            ><DrawerDescription
+                                >{{ photoEmployee?.name || 'Employee saved' }} ·
+                                One profile photo per
+                                employee.</DrawerDescription
+                            >
+                        </div>
+                    </div></DrawerHeader
+                >
+                <div class="px-6 pb-6">
+                    <MediaManager
+                        v-if="photoEmployee && mediaEnabled"
+                        :key="photoEmployee.id"
+                        :items="
+                            photoEmployee.media.filter(
+                                (image) => image.collection === 'avatar',
+                            )
+                        "
+                        :multiple="false"
+                        :owner="{ type: 'employee', id: photoEmployee.id }"
+                        collection="avatar"
+                        folder="Employees"
+                        :editable="can('employees.edit')"
+                        empty-message="Add a profile photo to help your team recognize this employee."
+                    />
+                    <p v-else class="text-sm text-muted-foreground">
+                        Find this employee in the list, then choose Manage photo
+                        from their actions.
+                    </p>
+                    <DrawerFooter class="px-0"
+                        ><Button
+                            variant="outline"
+                            @click="photoEmployeeId = null"
+                            >Done</Button
+                        ></DrawerFooter
+                    >
+                </div>
+            </DrawerContent>
+        </Drawer>
+        <Drawer
             :open="open"
             @update:open="
                 (value) => {
@@ -1588,7 +1780,7 @@ function editSetting(kind: string, row: Option) {
             "
             ><DrawerContent
                 class="max-h-[92vh] overflow-y-auto [color-scheme:light] md:inset-x-auto md:right-2 md:left-64 dark:[color-scheme:dark]"
-                ><DrawerHeader
+                ><DrawerHeader class="shrink-0"
                     ><div class="flex items-center gap-3">
                         <span
                             class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20"
@@ -1602,271 +1794,306 @@ function editSetting(kind: string, row: Option) {
                         </div>
                     </div></DrawerHeader
                 >
-                <form class="space-y-5" @submit.prevent="submit">
+                <form
+                    class="flex min-h-0 flex-1 flex-col overflow-hidden"
+                    @submit.prevent="submit"
+                >
                     <div
-                        class="grid gap-5 rounded-xl border p-4 md:grid-cols-2"
-                        :class="
-                            ['schedule', 'leave-type'].includes(
-                                String(form.kind),
-                            )
-                                ? 'gap-4'
-                                : ''
-                        "
+                        class="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4"
+                        data-hr-form-fields
+                        ref="formFields"
                     >
                         <div
-                            v-for="input in fields"
-                            :key="input.key"
-                            class="min-w-0 space-y-2"
+                            class="grid gap-5 rounded-xl border p-4 md:grid-cols-2"
                             :class="
-                                input.type === 'textarea' ||
-                                form.kind === 'leave-type' ||
-                                (form.kind === 'department' &&
-                                    input.key === 'name') ||
-                                (form.kind === 'schedule' &&
-                                    ['name', 'weekdays'].includes(input.key))
-                                    ? 'md:col-span-2'
+                                ['schedule', 'leave-type'].includes(
+                                    String(form.kind),
+                                )
+                                    ? 'gap-4'
                                     : ''
                             "
                         >
-                            <Label
-                                :id="`hr-label-${input.key}`"
-                                :for="
-                                    input.type === 'pay-status'
-                                        ? undefined
-                                        : `hr-${input.key}`
-                                "
-                                >{{ input.label }}</Label
-                            >
                             <div
-                                v-if="input.options"
-                                class="flex min-w-0 items-center gap-2"
+                                v-for="input in fields"
+                                :key="input.key"
+                                class="min-w-0 space-y-2"
+                                :class="
+                                    input.type === 'textarea' ||
+                                    form.kind === 'leave-type' ||
+                                    (form.kind === 'department' &&
+                                        input.key === 'name') ||
+                                    (form.kind === 'schedule' &&
+                                        ['name', 'weekdays'].includes(
+                                            input.key,
+                                        ))
+                                        ? 'md:col-span-2'
+                                        : ''
+                                "
                             >
-                                <Combobox
-                                    :model-value="String(form[input.key] || '')"
-                                    @update:model-value="
-                                        (value) => {
-                                            form[input.key] = value
-                                                ? Number(value)
-                                                : '';
-                                        }
+                                <Label
+                                    :id="`hr-label-${input.key}`"
+                                    :for="
+                                        input.type === 'pay-status'
+                                            ? undefined
+                                            : `hr-${input.key}`
                                     "
-                                    class="min-w-0 flex-1"
+                                    >{{ input.label }}</Label
                                 >
-                                    <ComboboxAnchor class="w-full"
-                                        ><ComboboxInput
-                                            :id="`hr-${input.key}`"
-                                            :aria-label="input.label"
-                                            placeholder="Search or select…"
-                                            :display-value="
-                                                (value) =>
-                                                    input.options?.find(
-                                                        (option) =>
-                                                            String(
-                                                                option.value,
-                                                            ) === String(value),
-                                                    )?.label || ''
-                                            "
-                                    /></ComboboxAnchor>
-                                    <ComboboxList
-                                        ><ComboboxEmpty
-                                            >No matching options.</ComboboxEmpty
-                                        ><ComboboxItem
-                                            v-for="option in input.options"
-                                            :key="option.value"
-                                            :value="String(option.value)"
-                                            >{{ option.label }}</ComboboxItem
-                                        ></ComboboxList
+                                <div
+                                    v-if="input.options"
+                                    class="flex min-w-0 items-center gap-2"
+                                >
+                                    <Combobox
+                                        :model-value="
+                                            String(form[input.key] || '')
+                                        "
+                                        @update:model-value="
+                                            (value) => {
+                                                form[input.key] = value
+                                                    ? Number(value)
+                                                    : '';
+                                            }
+                                        "
+                                        class="min-w-0 flex-1"
                                     >
-                                </Combobox>
-                                <Button
-                                    v-if="relatedKind(input.key)"
-                                    type="button"
-                                    size="icon"
-                                    variant="outline"
-                                    :aria-label="`Add ${input.label}`"
-                                    @click="addRelated(input)"
-                                    ><Plus class="size-4"
-                                /></Button>
-                            </div>
-                            <div
-                                v-else-if="input.type === 'pay-status'"
-                                role="radiogroup"
-                                :aria-labelledby="`hr-label-${input.key}`"
-                                class="grid gap-2 sm:grid-cols-2"
-                            >
-                                <label
-                                    v-for="choice in [
-                                        {
-                                            value: true,
-                                            title: 'Paid leave',
-                                            description:
-                                                'Classify this type as paid in HR records.',
-                                        },
-                                        {
-                                            value: false,
-                                            title: 'Unpaid leave',
-                                            description:
-                                                'Classify this type as unpaid in HR records.',
-                                        },
-                                    ]"
-                                    :key="String(choice.value)"
-                                    class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10"
+                                        <ComboboxAnchor class="w-full"
+                                            ><ComboboxInput
+                                                :id="`hr-${input.key}`"
+                                                :aria-label="input.label"
+                                                placeholder="Search or select…"
+                                                :display-value="
+                                                    (value) =>
+                                                        input.options?.find(
+                                                            (option) =>
+                                                                String(
+                                                                    option.value,
+                                                                ) ===
+                                                                String(value),
+                                                        )?.label || ''
+                                                "
+                                        /></ComboboxAnchor>
+                                        <ComboboxList
+                                            ><ComboboxEmpty
+                                                >No matching
+                                                options.</ComboboxEmpty
+                                            ><ComboboxItem
+                                                v-for="option in input.options"
+                                                :key="option.value"
+                                                :value="String(option.value)"
+                                                >{{
+                                                    option.label
+                                                }}</ComboboxItem
+                                            ></ComboboxList
+                                        >
+                                    </Combobox>
+                                    <Button
+                                        v-if="relatedKind(input.key)"
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        :aria-label="`Add ${input.label}`"
+                                        :data-related-key="input.key"
+                                        @click="addRelated(input)"
+                                        ><Plus class="size-4"
+                                    /></Button>
+                                </div>
+                                <div
+                                    v-else-if="input.type === 'pay-status'"
+                                    role="radiogroup"
+                                    :aria-labelledby="`hr-label-${input.key}`"
+                                    class="grid gap-2 sm:grid-cols-2"
                                 >
-                                    <input
-                                        v-model="form[input.key]"
-                                        type="radio"
-                                        :name="input.key"
-                                        :value="choice.value"
-                                        class="mt-1 accent-primary"
+                                    <label
+                                        v-for="choice in [
+                                            {
+                                                value: true,
+                                                title: 'Paid leave',
+                                                description:
+                                                    'Classify this type as paid in HR records.',
+                                            },
+                                            {
+                                                value: false,
+                                                title: 'Unpaid leave',
+                                                description:
+                                                    'Classify this type as unpaid in HR records.',
+                                            },
+                                        ]"
+                                        :key="String(choice.value)"
+                                        class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10"
+                                    >
+                                        <input
+                                            v-model="form[input.key]"
+                                            type="radio"
+                                            :name="input.key"
+                                            :value="choice.value"
+                                            class="mt-1 accent-primary"
+                                        />
+                                        <span class="min-w-0"
+                                            ><span
+                                                class="block text-sm font-medium"
+                                                >{{ choice.title }}</span
+                                            ><span
+                                                class="mt-1 block text-xs text-muted-foreground"
+                                                >{{ choice.description }}</span
+                                            ></span
+                                        >
+                                    </label>
+                                </div>
+                                <input
+                                    v-else-if="input.type === 'checkbox'"
+                                    :id="`hr-${input.key}`"
+                                    v-model="form[input.key]"
+                                    type="checkbox"
+                                    class="ml-3 size-4"
+                                />
+                                <div
+                                    v-else-if="input.type === 'weekdays'"
+                                    class="flex flex-wrap gap-2"
+                                    role="group"
+                                    aria-label="Working days"
+                                >
+                                    <label
+                                        v-for="(day, i) in [
+                                            'Mon',
+                                            'Tue',
+                                            'Wed',
+                                            'Thu',
+                                            'Fri',
+                                            'Sat',
+                                            'Sun',
+                                        ]"
+                                        :key="day"
+                                        class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10"
+                                        ><input
+                                            v-model="form[input.key]"
+                                            type="checkbox"
+                                            :value="i + 1"
+                                            class="accent-primary"
+                                        />{{ day }}</label
+                                    >
+                                </div>
+                                <textarea
+                                    v-else-if="input.type === 'textarea'"
+                                    :id="`hr-${input.key}`"
+                                    :value="String(form[input.key] ?? '')"
+                                    @input="
+                                        form[input.key] = (
+                                            $event.target as HTMLTextAreaElement
+                                        ).value
+                                    "
+                                    rows="3"
+                                    class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                />
+                                <div
+                                    v-else-if="
+                                        form.kind === 'schedule' &&
+                                        input.key === 'grace_minutes'
+                                    "
+                                    class="relative"
+                                >
+                                    <Input
+                                        :id="`hr-${input.key}`"
+                                        :model-value="
+                                            form[input.key] as string | number
+                                        "
+                                        type="number"
+                                        min="0"
+                                        max="120"
+                                        step="1"
+                                        inputmode="numeric"
+                                        aria-describedby="grace-period-help"
+                                        class="pr-20"
+                                        @update:model-value="
+                                            (value) => (form[input.key] = value)
+                                        "
                                     />
-                                    <span class="min-w-0"
-                                        ><span
-                                            class="block text-sm font-medium"
-                                            >{{ choice.title }}</span
-                                        ><span
-                                            class="mt-1 block text-xs text-muted-foreground"
-                                            >{{ choice.description }}</span
-                                        ></span
+                                    <span
+                                        class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground"
+                                        >minutes</span
                                     >
-                                </label>
-                            </div>
-                            <input
-                                v-else-if="input.type === 'checkbox'"
-                                :id="`hr-${input.key}`"
-                                v-model="form[input.key]"
-                                type="checkbox"
-                                class="ml-3 size-4"
-                            />
-                            <div
-                                v-else-if="input.type === 'weekdays'"
-                                class="flex flex-wrap gap-2"
-                                role="group"
-                                aria-label="Working days"
-                            >
-                                <label
-                                    v-for="(day, i) in [
-                                        'Mon',
-                                        'Tue',
-                                        'Wed',
-                                        'Thu',
-                                        'Fri',
-                                        'Sat',
-                                        'Sun',
-                                    ]"
-                                    :key="day"
-                                    class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10"
-                                    ><input
-                                        v-model="form[input.key]"
-                                        type="checkbox"
-                                        :value="i + 1"
-                                        class="accent-primary"
-                                    />{{ day }}</label
-                                >
-                            </div>
-                            <textarea
-                                v-else-if="input.type === 'textarea'"
-                                :id="`hr-${input.key}`"
-                                :value="String(form[input.key] ?? '')"
-                                @input="
-                                    form[input.key] = (
-                                        $event.target as HTMLTextAreaElement
-                                    ).value
-                                "
-                                rows="3"
-                                class="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                            />
-                            <div
-                                v-else-if="
-                                    form.kind === 'schedule' &&
-                                    input.key === 'grace_minutes'
-                                "
-                                class="relative"
-                            >
+                                </div>
                                 <Input
+                                    v-else
                                     :id="`hr-${input.key}`"
                                     :model-value="
                                         form[input.key] as string | number
                                     "
-                                    type="number"
-                                    min="0"
-                                    max="120"
-                                    step="1"
-                                    inputmode="numeric"
-                                    aria-describedby="grace-period-help"
-                                    class="pr-20"
+                                    :type="input.type || 'text'"
+                                    :placeholder="
+                                        form.kind === 'leave-type' &&
+                                        input.key === 'name'
+                                            ? 'e.g. Annual leave'
+                                            : undefined
+                                    "
                                     @update:model-value="
                                         (value) => (form[input.key] = value)
                                     "
                                 />
-                                <span
-                                    class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground"
-                                    >minutes</span
+                                <p
+                                    v-if="
+                                        form.kind === 'schedule' &&
+                                        input.key === 'grace_minutes'
+                                    "
+                                    class="text-xs text-muted-foreground"
+                                    id="grace-period-help"
                                 >
+                                    <template v-if="lateAfter"
+                                        >Check-ins at or after
+                                        {{ lateAfter }} are marked late (counted
+                                        in whole minutes).</template
+                                    >
+                                    <template v-else
+                                        >Enter a whole number between 0 and 120
+                                        minutes.</template
+                                    >
+                                </p>
+                                <p
+                                    v-if="
+                                        form.kind === 'schedule' &&
+                                        input.key === 'timezone'
+                                    "
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    Use a time zone such as Asia/Dhaka.
+                                </p>
+                                <p
+                                    v-if="
+                                        input.key === 'work_schedule_id' &&
+                                        method === 'put'
+                                    "
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    Leave empty to keep the existing schedule.
+                                </p>
+                                <InputError :message="form.errors[input.key]" />
                             </div>
-                            <Input
-                                v-else
-                                :id="`hr-${input.key}`"
-                                :model-value="
-                                    form[input.key] as string | number
-                                "
-                                :type="input.type || 'text'"
-                                :placeholder="
-                                    form.kind === 'leave-type' &&
-                                    input.key === 'name'
-                                        ? 'e.g. Annual leave'
-                                        : undefined
-                                "
-                                @update:model-value="
-                                    (value) => (form[input.key] = value)
-                                "
+                        </div>
+                        <div role="alert">
+                            <InputError
+                                v-for="[key, error] in visibleFormErrors"
+                                :key="key"
+                                :message="error"
                             />
-                            <p
-                                v-if="
-                                    form.kind === 'schedule' &&
-                                    input.key === 'grace_minutes'
-                                "
-                                class="text-xs text-muted-foreground"
-                                id="grace-period-help"
-                            >
-                                <template v-if="lateAfter"
-                                    >Check-ins at or after {{ lateAfter }} are
-                                    marked late (counted in whole
-                                    minutes).</template
-                                >
-                                <template v-else
-                                    >Enter a whole number between 0 and 120
-                                    minutes.</template
-                                >
-                            </p>
-                            <p
-                                v-if="
-                                    form.kind === 'schedule' &&
-                                    input.key === 'timezone'
-                                "
-                                class="text-xs text-muted-foreground"
-                            >
-                                Use a time zone such as Asia/Dhaka.
-                            </p>
-                            <InputError :message="form.errors[input.key]" />
                         </div>
                     </div>
-                    <div role="alert">
-                        <InputError
-                            v-for="[key, error] in visibleFormErrors"
-                            :key="key"
-                            :message="error"
-                        />
-                    </div>
                     <DrawerFooter
-                        class="sticky bottom-0 z-10 flex-row justify-end border-t bg-background px-0 py-4"
+                        class="shrink-0 flex-row justify-end border-t bg-background px-0 py-4"
                         ><Button
                             type="button"
                             variant="outline"
                             :disabled="form.processing"
                             @click="cancelForm()"
-                            >Cancel</Button
+                            >{{
+                                parents.length
+                                    ? 'Back without saving'
+                                    : 'Cancel'
+                            }}</Button
                         ><Button type="submit" :disabled="form.processing">{{
-                            form.processing ? 'Saving…' : 'Confirm & save'
+                            form.processing
+                                ? 'Saving…'
+                                : title === 'Add manager'
+                                  ? 'Save manager & return'
+                                  : 'Confirm & save'
                         }}</Button></DrawerFooter
                     >
                 </form></DrawerContent

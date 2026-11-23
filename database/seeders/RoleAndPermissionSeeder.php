@@ -28,6 +28,12 @@ class RoleAndPermissionSeeder extends Seeder
      * @var array<string, array<string, string>>
      */
     private const GROUPS = [
+        'Media Library' => [
+            'media.view' => 'Browse the media library',
+            'media.create' => 'Upload images',
+            'media.edit' => 'Edit image details and replace images',
+            'media.delete' => 'Permanently delete images',
+        ],
         'Database Backups' => [
             'backups.view' => 'View database backup history',
             'backups.create' => 'Create and retry database backups',

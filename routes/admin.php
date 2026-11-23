@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\LeadTokenController;
 use App\Http\Controllers\Admin\McpUsageController;
+use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Admin\ProposalController;
@@ -81,6 +82,14 @@ Route::prefix(config('admin.alias'))
 
             Route::get('dashboard', DashboardController::class)
                 ->name('dashboard');
+
+            Route::middleware('module:media')->prefix('media')->name('media.')->controller(MediaController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->middleware('throttle:30,1')->name('store');
+                Route::get('{media}/file', 'file')->name('file');
+                Route::patch('{media}', 'update')->name('update');
+                Route::delete('{media}', 'destroy')->name('destroy');
+            });
 
             Route::prefix('authorization')->group(function () {
                 Route::post('users/{user}/invite', [UserController::class, 'resendInvitation'])->middleware('throttle:3,1,user-invite')->name('users.invite');

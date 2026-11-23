@@ -12,4 +12,5 @@ return [
     'categories' => ['name' => 'Categories', 'description' => 'Shared category management for business records.'],
     'mcp' => ['name' => 'MCP & AI Tools', 'description' => 'AI tool configuration, tokens, and usage monitoring.'],
     'audit' => ['name' => 'Audit Logs', 'description' => 'Security and business activity history.'],
+    'media' => ['name' => 'Media Library', 'description' => 'Organize images and manage reusable single or multiple image uploads.'],
 ];

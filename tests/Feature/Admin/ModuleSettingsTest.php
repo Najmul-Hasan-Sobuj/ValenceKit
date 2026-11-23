@@ -98,6 +98,7 @@ test('disabled module routes return not found even with permission', function (s
     'MCP usage' => ['mcp', 'admin.mcp.usage.index'],
     'MCP settings' => ['mcp', 'admin.mcp.edit'],
     'audit logs' => ['audit', 'admin.audit-logs.index'],
+    'media library' => ['media', 'admin.media.index'],
 ]);
 
 test('disabled module state is shared separately from the settings page module list', function () {

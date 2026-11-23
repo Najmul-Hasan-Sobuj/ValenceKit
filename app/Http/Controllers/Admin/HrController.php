@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Hr\EmployeeRequest;
+use App\Http\Resources\Admin\MediaResource;
 use App\Models\Admin;
 use App\Models\Attendance;
 use App\Models\AttendanceCorrection;
@@ -13,6 +14,7 @@ use App\Models\Holiday;
 use App\Models\LeaveAllocation;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Models\Module;
 use App\Models\WorkSchedule;
 use App\Services\AuditLogService;
 use App\Services\HrService;
@@ -59,6 +61,10 @@ class HrController extends Controller
         $end = $filters['to'] ?? ($section === 'reports' ? CarbonImmutable::parse($month.'-01')->endOfMonth()->toDateString() : $date);
         $this->hr->check(CarbonImmutable::parse($start)->diffInDays(CarbonImmutable::parse($end)) <= 366, 'to', 'Select a range of at most 367 days.');
         $employees = (clone $query)->with('department:id,name')->orderBy('name')->orderBy('id')->paginate(15)->withQueryString();
+        $mediaEnabled = Module::enabled('media');
+        if ($mediaEnabled) {
+            $employees->load(['media' => fn ($query) => $query->where('collection', 'avatar')]);
+        }
         $leaves = LeaveRequest::whereIn('employee_id', clone $ids)->with(['employee:id,name,employee_code,admin_id,manager_id', 'leaveType:id,name'])
             ->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v))->when(isset($filters['from']), fn ($q) => $q->where('start_date', '<=', $end)->where('end_date', '>=', $start))->latest('id')->paginate(15, ['*'], 'leave_page')->withQueryString();
         $presentCount = Attendance::whereIn('employee_id', clone $ids)->whereBetween('work_date', [$start, $end])->distinct()->count('employee_id');
@@ -100,7 +106,10 @@ class HrController extends Controller
             'employeeChoices' => $this->hr->employees($actor)->orderBy('name')->get(['id', 'name']),
             'calendar' => $calendar, 'reportLinks' => $reportPaginator?->linkCollection() ?? [],
             'reportPagination' => $reportPaginator ? ['from' => $reportPaginator->firstItem(), 'to' => $reportPaginator->lastItem(), 'total' => $reportPaginator->total(), 'currentPage' => $reportPaginator->currentPage(), 'lastPage' => $reportPaginator->lastPage()] : null,
-            'employees' => $employees->through(fn ($employee) => $employee->only(['id', 'employee_code', 'name', 'email', 'phone', 'department_id', 'department', 'designation', 'manager_id', 'admin_id', 'joined_on', 'ended_on', 'is_active'])),
+            'employees' => $employees->through(fn ($employee) => [
+                ...$employee->only(['id', 'employee_code', 'name', 'email', 'phone', 'department_id', 'department', 'designation', 'manager_id', 'admin_id', 'joined_on', 'ended_on', 'is_active', 'emergency_contact', 'notes']),
+                'media' => $mediaEnabled ? MediaResource::collection($employee->media)->resolve($request) : [],
+            ]),
             'leaves' => $leaves, 'allocations' => $allocations, 'own' => $own,
             'corrections' => AttendanceCorrection::whereIn('employee_id', clone $ids)->with('employee:id,name')->where('status', 'pending')->orderBy('id')->paginate(15, ['*'], 'correction_page')->withQueryString(),
             'departments' => Department::orderBy('name')->get(), 'schedules' => WorkSchedule::orderBy('name')->get(),

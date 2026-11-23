@@ -107,6 +107,37 @@ it('creates employee records without granting account permissions', function () 
     $this->assertDatabaseHas('audit_logs', ['action' => 'hr.employee.saved']);
 });
 
+it('preserves every employee form field when creating and editing the record', function () {
+    $actor = Admin::factory()->create();
+    $actor->givePermissionTo(['employees.create', 'employees.view', 'employees.edit']);
+    $manager = hrEmployee();
+    $account = Admin::factory()->create();
+    $payload = [
+        'name' => 'Complete employee', 'email' => 'employee@example.test', 'phone' => '+8801700000000',
+        'designation' => 'Operations specialist', 'department_id' => $manager->department_id,
+        'manager_id' => $manager->id, 'admin_id' => $account->id, 'joined_on' => '2026-01-01',
+        'ended_on' => '2026-12-31', 'is_active' => true, 'work_schedule_id' => WorkSchedule::firstOrFail()->id,
+        'effective_from' => '2026-01-02', 'emergency_contact' => 'Emergency contact: +8801800000000',
+        'notes' => 'First line'.PHP_EOL.'Second line',
+    ];
+    $this->actingAs($actor, 'admin')->post(route('admin.hr.employees.store'), $payload)->assertRedirect()->assertSessionHasNoErrors();
+    $employee = Employee::where('email', 'employee@example.test')->firstOrFail();
+    $this->assertDatabaseHas('employee_schedules', ['employee_id' => $employee->id, 'effective_from' => '2026-01-02']);
+    $this->get(route('admin.hr.index', ['section' => 'employees', 'search' => 'Complete employee']))
+        ->assertOk()->assertInertia(fn (Assert $page) => $page->has('employees.data', 1)
+        ->where('employees.data.0.emergency_contact', $payload['emergency_contact'])
+        ->where('employees.data.0.notes', $payload['notes'])
+        ->where('employees.data.0.manager_id', $manager->id)
+        ->where('employees.data.0.admin_id', $account->id));
+    $payload['work_schedule_id'] = null;
+    $payload['effective_from'] = null;
+    $payload['notes'] = 'Updated notes';
+    $payload['emergency_contact'] = 'Updated emergency contact';
+    $this->put(route('admin.hr.employees.update', $employee), $payload)->assertRedirect()->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('employees', ['id' => $employee->id, 'notes' => 'Updated notes', 'emergency_contact' => 'Updated emergency contact', 'manager_id' => $manager->id, 'admin_id' => $account->id]);
+    expect($account->fresh()->getAllPermissions())->toHaveCount(0);
+});
+
 it('reserves working days and rejects overlaps and insufficient balances', function () {
     $actor = Admin::factory()->create();
     $actor->givePermissionTo('hr.self');
