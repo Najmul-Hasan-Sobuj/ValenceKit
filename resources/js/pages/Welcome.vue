@@ -477,7 +477,6 @@ const resetForm = () => {
                     </Card>
                 </div>
             </div>
-
         </main>
 
         <PublicFooter />

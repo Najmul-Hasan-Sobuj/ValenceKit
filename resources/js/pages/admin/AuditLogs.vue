@@ -212,7 +212,11 @@ defineOptions({
                 title="Audit Logs"
                 description="Review security and business activity across the workspace."
             />
-            <Button v-if="can('audit.export')" variant="secondary" @click="exportLogs">
+            <Button
+                v-if="can('audit.export')"
+                variant="secondary"
+                @click="exportLogs"
+            >
                 <Download class="size-4" />
                 Export CSV
             </Button>
@@ -260,7 +264,11 @@ defineOptions({
             v-if="search || action || dateRange"
             variant="ghost"
             class="self-start"
-            @click="search = ''; action = ''; dateRange = undefined"
+            @click="
+                search = '';
+                action = '';
+                dateRange = undefined;
+            "
         >
             Clear filters
         </Button>
@@ -289,7 +297,7 @@ defineOptions({
                                 }}</Badge>
                                 <p
                                     v-if="log.description"
-                                    class="mt-1 max-w-xs break-words text-xs text-muted-foreground"
+                                    class="mt-1 max-w-xs text-xs break-words text-muted-foreground"
                                 >
                                     {{ log.description }}
                                 </p>
@@ -344,7 +352,10 @@ defineOptions({
                             </TableCell>
                         </TableRow>
                         <TableRow v-if="expandedId === log.id">
-                            <TableCell colspan="6" class="bg-muted/30 whitespace-normal">
+                            <TableCell
+                                colspan="6"
+                                class="bg-muted/30 whitespace-normal"
+                            >
                                 <div class="grid gap-4 md:grid-cols-2">
                                     <div
                                         class="min-w-0 rounded-lg border bg-background p-3"
@@ -381,7 +392,7 @@ defineOptions({
                                                     {{ entry.label }}
                                                 </dt>
                                                 <dd
-                                                    class="min-w-0 break-words text-right font-medium text-foreground"
+                                                    class="min-w-0 text-right font-medium break-words text-foreground"
                                                 >
                                                     {{ entry.value }}
                                                 </dd>
@@ -429,7 +440,7 @@ defineOptions({
                                                     {{ entry.label }}
                                                 </dt>
                                                 <dd
-                                                    class="min-w-0 break-words text-right font-medium text-foreground"
+                                                    class="min-w-0 text-right font-medium break-words text-foreground"
                                                 >
                                                     {{ entry.value }}
                                                 </dd>
@@ -447,9 +458,13 @@ defineOptions({
                                     v-if="valueEntries(log.metadata).length"
                                     class="mt-4 space-y-2 rounded-lg border bg-background p-3 text-sm"
                                 >
-                                    <dt class="font-semibold">Additional context</dt>
+                                    <dt class="font-semibold">
+                                        Additional context
+                                    </dt>
                                     <dd
-                                        v-for="entry in valueEntries(log.metadata)"
+                                        v-for="entry in valueEntries(
+                                            log.metadata,
+                                        )"
                                         :key="entry.label"
                                         class="min-w-0 break-words"
                                     >

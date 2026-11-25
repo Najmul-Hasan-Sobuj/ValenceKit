@@ -27,7 +27,7 @@ const inputEmail = ref(props.email);
 
 <template>
     <Head title="Reset password">
-        <meta name="referrer" content="no-referrer" />
+        <meta name="referrer" content="same-origin" />
         <meta name="robots" content="noindex, nofollow" />
     </Head>
 

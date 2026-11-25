@@ -104,7 +104,9 @@ const conversationSearch = ref(props.filters.search);
 let appliedSearch = props.filters.search;
 const listRequest = useHttp<{}, CursorPage<ContactMessage>>({});
 const threadRequest = useHttp<{}, CursorPage<Reply>>({});
-const readRequest = useHttp<{ reply_id: number | null }, { read: boolean }>({ reply_id: null });
+const readRequest = useHttp<{ reply_id: number | null }, { read: boolean }>({
+    reply_id: null,
+});
 const conversationError = ref('');
 const threadError = ref('');
 const replies = ref<Reply[]>([]);

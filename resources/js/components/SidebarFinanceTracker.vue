@@ -45,7 +45,12 @@ const paymentMethods = computed(
 
 async function fetchSummary() {
     try {
-        const response = await fetch(getSummary.url());
+        const response = await fetch(getSummary.url(), {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
         if (response.ok) {
             summaryData.value = await response.json();
         }
