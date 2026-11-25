@@ -120,8 +120,7 @@ watchDebounced(search, () => filter(), { debounce: 350 });
                 <p
                     class="px-2 pt-2 text-xs leading-relaxed text-muted-foreground"
                 >
-                    Create a folder when uploading, or move an image in its
-                    details.
+                    Move an image to another folder in its details.
                 </p>
             </aside>
             <div class="min-w-0 space-y-5">
@@ -173,7 +172,7 @@ watchDebounced(search, () => filter(), { debounce: 350 });
                     :empty-message="
                         stats.total
                             ? 'No images match these filters. Try another search or folder.'
-                            : 'Your library is ready. Upload your first images above.'
+                            : 'No images in the library yet.'
                     "
                 />
                 <div

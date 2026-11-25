@@ -60,7 +60,7 @@ class ProposalResponseController extends Controller
         $data = $request->validate(['fingerprint' => ['required', 'string', 'size:64']]);
         $key = 'proposal-verification:'.$proposal->id;
         if (RateLimiter::tooManyAttempts($key, 3) || $this->documents->codeRetryAfter($proposal) > 0) {
-            return back()->withErrors(['verification_code' => 'Please wait before requesting another code. Maximum three codes per hour.']);
+            return to_route('proposals.public.show', $proposal)->withErrors(['verification_code' => 'Please wait before requesting another code. Maximum three codes per hour.']);
         }
         $code = (string) random_int(100000, 999999);
         $challenge = DB::transaction(function () use ($request, $proposal, $data, $code): array {
@@ -78,7 +78,7 @@ class ProposalResponseController extends Controller
             return $challenge;
         });
         if ($challenge === []) {
-            return back()->withErrors(['verification_code' => 'The document changed. Reload and review the latest revision before requesting a code.']);
+            return to_route('proposals.public.show', $proposal)->withErrors(['verification_code' => 'The document changed. Reload and review the latest revision before requesting a code.']);
         }
         RateLimiter::hit($key, 3600);
         RateLimiter::hit('proposal-code-cooldown:'.$proposal->id, 60);
@@ -92,10 +92,10 @@ class ProposalResponseController extends Controller
             }
         });
         if (! $sent) {
-            return back()->withErrors(['verification_code' => 'Email could not be sent. Please retry after the cooldown.']);
+            return to_route('proposals.public.show', $proposal)->withErrors(['verification_code' => 'Email could not be sent. Please retry after the cooldown.']);
         }
 
-        return back()->with('success', 'Verification code sent. It expires in 10 minutes.');
+        return to_route('proposals.public.show', $proposal)->with('success', 'Verification code sent. It expires in 10 minutes.');
     }
 
     public function show(Request $request, Proposal $proposal, AuditLogService $audit): Response
@@ -146,7 +146,7 @@ class ProposalResponseController extends Controller
             return true;
         });
         if (! $responded) {
-            return back()->withErrors(['verification_code' => 'The code is invalid, expired, exhausted, or this document has changed. Reload and review the document, then request a new code.'])->with('error', 'Your response could not be recorded.');
+            return to_route('proposals.public.show', $proposal)->withErrors(['verification_code' => 'The code is invalid, expired, exhausted, or this document has changed. Reload and review the document, then request a new code.'])->with('error', 'Your response could not be recorded.');
         }
         $proposal->refresh();
         $url = route('proposals.public.show', $proposal);
@@ -157,6 +157,6 @@ class ProposalResponseController extends Controller
             $this->documents->queueStatus($proposal, $creator->email, new ProposalStatusNotification($proposal->number, 'Client '.$proposal->status.' revision '.$proposal->revision.'.', route('admin.proposals.preview', $proposal)), 'proposal.admin_notified', $creator);
         }
 
-        return back()->with('success', 'Your verified response has been recorded.');
+        return to_route('proposals.public.show', $proposal)->with('success', 'Your verified response has been recorded.');
     }
 }

@@ -77,6 +77,8 @@ const selected = ref<MediaItem | null>(null);
 const deleting = ref<MediaItem | null>(null);
 const uploadingAllowed = computed(
     () =>
+        // Disable standalone uploads from /admin/media until library items can be attached elsewhere; keep owner-scoped uploads (e.g. HR employee photos) active.
+        Boolean(props.owner) &&
         props.editable &&
         can('media.create') &&
         (props.multiple || !props.items.length || can('media.edit')),

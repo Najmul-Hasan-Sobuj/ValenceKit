@@ -99,6 +99,7 @@ async function request(
         method,
         headers: {
             Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
             'X-XSRF-TOKEN': csrf(),
             'Content-Type': 'application/json',
         },

@@ -240,7 +240,7 @@ function submit(): void {
     >
         <Head v-if="!embedded" :title="`${proposal.type}: ${proposal.title}`">
             <meta name="robots" content="noindex, nofollow, noarchive" />
-            <meta name="referrer" content="no-referrer" />
+            <meta name="referrer" content="same-origin" />
         </Head>
         <Toaster v-if="!preview" />
         <component
